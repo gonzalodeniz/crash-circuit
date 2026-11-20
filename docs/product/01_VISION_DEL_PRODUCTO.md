@@ -1,6 +1,6 @@
-# Visión del producto — Juego de carreras arcade 3D
+# Visión del producto — Crash Circuit
 
-**Producto:** Carrera Arcade 3D (nombre provisional)  
+**Producto:** Crash Circuit  
 **Versión del documento:** 1.0  
 **Fecha:** 20 de noviembre de 2026  
 **Estado:** Visión funcional consensuada; detalles de calibración pendientes  
@@ -8,7 +8,7 @@
 
 ## 1. Resumen ejecutivo
 
-Carrera Arcade 3D es un videojuego de carreras para navegadores de escritorio, desarrollado con HTML5, CSS3, JavaScript y Three.js. El jugador compite desde una cámara situada detrás de su coche contra **nueve vehículos controlados por el juego**, en circuitos cerrados. La experiencia busca ser inmediata, dinámica y visualmente espectacular: conducción arcade, adelantamientos, colisiones con daños, destrucción de vehículos en impactos fuertes y reaparición después de tres segundos.
+Crash Circuit es un videojuego de carreras para navegadores de escritorio, desarrollado con HTML5, CSS3, JavaScript y Three.js. El jugador compite desde una cámara situada detrás de su coche contra **nueve vehículos controlados por el juego**, en circuitos cerrados. La experiencia busca ser inmediata, dinámica y visualmente espectacular: conducción arcade, adelantamientos, colisiones con daños, destrucción de vehículos en impactos fuertes y reaparición después de tres segundos.
 
 El jugador selecciona uno de **cuatro modelos de coche**, uno de **cuatro circuitos** y el número de vueltas (**1, 3, 5 o 10**). Cada circuito tiene un nivel de dificultad propio: **muy fácil, fácil, medio y difícil**. Una cuenta atrás de 3, 2, 1 precede a la salida simultánea de los diez vehículos. Gana quien complete primero la distancia de carrera, pero la sesión jugable del jugador termina cuando este cruza la meta, independientemente de su posición.
 

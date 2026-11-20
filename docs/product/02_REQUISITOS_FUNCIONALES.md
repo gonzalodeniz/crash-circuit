@@ -1,6 +1,6 @@
-# Especificación de requisitos — Juego de carreras arcade 3D
+# Especificación de requisitos — Crash Circuit
 
-**Producto:** Carrera Arcade 3D (nombre provisional)  
+**Producto:** Crash Circuit  
 **Versión:** 1.0 · **Fecha:** 20/11/2026  
 **Estado:** Línea base funcional; parámetros de ajuste señalados como propuestas  
 **Relación:** complementa la visión del producto y sirve como referencia de aceptación del roadmap.

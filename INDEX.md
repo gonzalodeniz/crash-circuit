@@ -4,7 +4,8 @@
 
 ## Raíz
 
-- `CLAUDE.md`: comportamiento general de los agentes, resumen del producto, restricciones de arquitectura, modelo de dominio y convenciones. Solo se modifica con autorización del usuario.
+- `CLAUDE.md`: comportamiento general de los agentes y convenciones de idioma. Solo se modifica con autorización del usuario.
+- `CONTEXT.md`: contexto del proyecto: resumen del producto, restricciones de arquitectura, modelo de dominio y configuración.
 - `COMMANDS.md`: comandos útiles para los agentes (build, lint, test, ejecución local). Solo comandos verificados.
 - `INDEX.md`: este índice.
 

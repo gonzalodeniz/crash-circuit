@@ -17,6 +17,7 @@ Referencia los IDs de requisitos (`RF-xxx`, `RN-xx`) al implementar o probar com
 - **Contenido fijo:** 4 modelos de auto (parámetros de rendimiento idénticos, visuales distintos), 4 circuitos (uno por dificultad: muy fácil, fácil, medio, difícil), 1/3/5/10 vueltas, 9 pilotos IA con nombres fijos. Eso da 64 combinaciones jugables, y todas deben funcionar.
 - **La dificultad proviene del circuito** (trazado y parámetros de la IA), nunca de las estadísticas del auto (RN-07, RF-031).
 - **Solo flechas del teclado**, y las flechas no deben disparar acciones del navegador durante una carrera (RF-010). Sin música, solo efectos de sonido (SFX). Sin soporte móvil.
+- **Ubicación del código:** el código fuente del juego va en `src/` y las pruebas automáticas en `tests/`. En la raíz solo van los ficheros de configuración de herramientas que lo exijan (p. ej. `package.json`). `docs/technical/ARQUITECTURA.md` puede detallar la estructura interna de esas carpetas, pero no cambiar esta regla.
 - **El orden de construcción sigue el roadmap:** ciclo de conducción, selección de contenido, IA, colisiones, destrucción/reaparición, HUD/puntaje, pulido. Mantén funcionando las entregas anteriores a medida que se agregan las siguientes.
 
 ## Modelo de dominio a preservar

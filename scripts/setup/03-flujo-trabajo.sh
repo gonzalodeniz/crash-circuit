@@ -43,7 +43,7 @@ MARCA_INDEX="<!-- indice-flujo-subagentes -->"
 read -r -d '' CONTENIDO_FLUJO <<'EOF' || true
 # Flujo de trabajo con subagentes
 
-Reglas comunes a todos los roles. Cada rol tiene además sus instrucciones en `.claude/agents/<rol>.md`. Si este documento y el de un rol se contradicen, prevalece este y el rol debe señalarlo como bloqueo (ver «Preguntas y bloqueos»).
+Reglas comunes a todos los roles. Cada rol tiene además sus instrucciones en `.claude/agents/<rol>.md`. Si este documento y el de un rol se contradicen, prevalece este: el rol lo sigue y anota la contradicción como `Supuesto:` en su comentario, sin bloquear.
 
 ## Roles
 
@@ -74,7 +74,7 @@ gh issue edit <N> --remove-label "estado:<actual>" --add-label "estado:<nuevo>"
 | `estado:validado` | `developer-teams` | Fusiona la PR (squash) y borra la rama; la issue se cierra sola. Le añade `changelog-pendiente`. |
 | Issue cerrada con `impacto-documental` | `doc-teams` | Documenta y retira la etiqueta `impacto-documental`. |
 | Issue cerrada con `changelog-pendiente` | `doc-teams` | Añade su entrada a `CHANGELOG.md` y retira la etiqueta `changelog-pendiente`. |
-| `requiere-decision` (cualquier estado) | Usuario | El orquestador se detiene y presenta la pregunta. |
+| `requiere-decision` (cualquier estado) | Usuario | El orquestador salta esa issue (y las que dependen de ella) y sigue con el resto; se detiene solo si bloquea la issue en curso, una aceptación de entrega o todo el trabajo restante. |
 | `Aceptación de la entrega Ek` respondida (sin `requiere-decision`) | `product-manager` | Cierra el milestone o crea issues para lo que falta. |
 | `Decisión de producto: …` respondida (sin `requiere-decision`) | `product-manager` | Aplica la decisión a las issues afectadas. |
 
@@ -148,13 +148,21 @@ Verificación manual pendiente: lo que solo puede comprobarse jugando (o «ningu
 
 ## Preguntas y bloqueos
 
-`CLAUDE.md` pide preguntar al usuario ante dudas o contradicciones. Un subagente no puede hablar con el usuario, así que:
+El flujo está pensado para ejecutarse desatendido: **escala solo los bloqueos importantes**. Escala con `requiere-decision` únicamente si:
+
+- `docs/product/` se contradice o no define algo que cambia lo que ve o hace el jugador, y no hay un valor «propuesta» aplicable;
+- la tarea exige modificar un fichero protegido, ampliar el alcance de la entrega o hacer algo irreversible;
+- un problema de entorno o de permisos te impide terminar y no puedes sortearlo dentro de tus reglas.
+
+Para todo lo demás (decisiones técnicas, detalles de implementación, valores «propuesta», ambigüedades menores con una lectura razonable) **decide tú**: elige la opción más conservadora y fácil de revertir, y regístrala en tu comentario (handoff, resultado de QA, issue o comentario de documentación) con una línea `Supuesto: <qué has decidido y por qué>`. El usuario revisa todos los supuestos al aceptar la entrega.
+
+Cuando sí debas escalar (un subagente no puede hablar con el usuario):
 
 1. Comenta en la issue con `Rol: <rol>` y un apartado `Pregunta:` concreto, con las opciones que ves y su consecuencia.
 2. Añade la etiqueta `requiere-decision`.
 3. Termina tu ejecución e informa del bloqueo en tu respuesta final.
 
-El orquestador no delega en ninguna issue con `requiere-decision` y presenta la pregunta al usuario. Cuando el usuario responde, el orquestador registra la respuesta en la issue con un comentario `Rol: orquestador` y un apartado `Decisión del usuario:` literal, retira la etiqueta y el flujo continúa. El usuario también puede responder directamente en GitHub y retirar él mismo la etiqueta.
+El orquestador no delega en ninguna issue con `requiere-decision`, sigue con el trabajo que no dependa de ella y, al final, presenta la pregunta al usuario. Cuando el usuario responde, el orquestador registra la respuesta en la issue con un comentario `Rol: orquestador` y un apartado `Decisión del usuario:` literal, retira la etiqueta y el flujo continúa. El usuario también puede responder directamente en GitHub y retirar él mismo la etiqueta.
 
 No decidas por tu cuenta nada que contradiga `docs/product/`. Los valores marcados como «propuesta» en los requisitos sí pueden usarse como punto de partida, siempre en el módulo de configuración.
 

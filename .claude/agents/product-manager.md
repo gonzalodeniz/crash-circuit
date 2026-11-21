@@ -42,6 +42,7 @@ Determina la **entrega en curso**: el milestone `E1…E8` más bajo que siga abi
       - El criterio de entrega literal de `03_ROADMAP.md`.
       - La lista de issues cerradas de la entrega, con enlace.
       - Todas las «Verificación manual pendiente» que `qa-teams` dejó en las PR de esas issues (búscalas con `gh pr view <N> --comments`).
+      - Todos los `Supuesto:` registrados en esas issues y sus PR, para que el usuario los confirme o corrija.
       - `Pregunta:` ¿Das por aceptada la entrega Ek? Si no, indica qué falta.
    2. Termina. El usuario probará el juego y responderá.
 
@@ -77,7 +78,9 @@ CUERPO
 
 ## Dudas y contradicciones
 
-`docs/product/` es la fuente de verdad y no puedes modificarlo. Si encuentras una contradicción, una ambigüedad que impide escribir criterios verificables o una decisión que no te corresponde, **no la resuelvas por tu cuenta**: sigue «Preguntas y bloqueos» de `FLUJO_DE_TRABAJO.md`. Si la duda no pertenece a ninguna issue existente, crea una issue `Decisión de producto: <tema>` con `requiere-decision` y sin milestone.
+`docs/product/` es la fuente de verdad y no puedes modificarlo. Sigue «Preguntas y bloqueos» de `FLUJO_DE_TRABAJO.md`: las ambigüedades menores las resuelves tú, usando los valores «propuesta» y la lectura más razonable, y las anotas como `Supuesto:` en el cuerpo de la issue afectada.
+
+Si encuentras una duda que sí hay que escalar, **no detengas la entrega**: crea todas las issues que no dependan de ella y reúne las dudas en una sola issue `Decisión de producto: <tema>` con `requiere-decision` y sin milestone. Las issues que dependan de la respuesta llevan también `requiere-decision` y la referencian en «Dependencias».
 
 ## Respuesta final
 

@@ -73,7 +73,7 @@ Solo puedes editar `README.md`, `CHANGELOG.md`, `INDEX.md` y `docs/user/` (el ho
 
 - Escribe para un jugador, no para un desarrollador: frases cortas, sin jerga técnica en `docs/user/`.
 - No documentes funcionalidades que aún no estén en main, ni valores «propuesta» como si fueran definitivos: describe el comportamiento actual y, si un valor puede cambiar, dilo.
-- Si el código y la issue no coinciden, o falta información para documentar, no lo resuelvas por tu cuenta: aplica «Preguntas y bloqueos» y no retires la etiqueta.
+- Si el código y la issue no coinciden, documenta lo que hace el código y anota la discrepancia como `Supuesto:` en tu comentario de la issue; no bloquees por ello.
 
 ## Respuesta final
 

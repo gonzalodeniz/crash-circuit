@@ -98,7 +98,7 @@ Todo se lanza con `scripts/rol.sh`:
 |---|---|
 | `./scripts/rol.sh` | Orquestador en sesión **interactiva**: ves cada delegación y puedes responder decisiones en el momento. |
 | `./scripts/rol.sh --max 3` | Igual, pero se detiene tras 3 delegaciones. |
-| `./scripts/rol.sh --auto` | Orquestador **desatendido** (máximo 10 delegaciones). La salida queda en `logs/orquestador-<fecha>.log`. |
+| `./scripts/rol.sh --auto` | Orquestador **desatendido** (máximo 30 delegaciones). La salida queda en `logs/orquestador-<fecha>.log`. |
 | `./scripts/rol.sh --auto --max 5` | Desatendido con un límite propio. |
 | `./scripts/rol.sh qa-teams` | Sesión interactiva directamente con un rol, sin orquestador. Útil para depurar. |
 | `./scripts/rol.sh --auto qa-teams "Valida la issue #12"` | Un rol concreto, desatendido, con una tarea. |

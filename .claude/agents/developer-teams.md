@@ -31,7 +31,7 @@ Si no te han indicado número de issue, elige según la prioridad de `FLUJO_DE_T
 
 ### `estado:nuevo` → empezar
 
-1. Comprueba que la issue tiene todo el «Contenido mínimo de una issue». Si falta algo o es ambiguo, **no empieces**: aplica «Preguntas y bloqueos».
+1. Comprueba que la issue tiene todo el «Contenido mínimo de una issue». Si falta algo o es ambiguo, complétalo con la lectura más razonable de `docs/product/` y regístralo como `Supuesto:` en el handoff. Solo si cae en los casos de escalado de «Preguntas y bloqueos», **no empieces** y escala.
 2. Comprueba que no hay otra issue en `en-desarrollo`, `listo-para-qa`, `no-validado` o `validado`:
    `gh issue list --state open --json number,labels --jq '.[] | select(any(.labels[]; .name | test("estado:(en-desarrollo|listo-para-qa|no-validado|validado)"))) | .number'`
    Si la hay, no empieces y explícalo en tu respuesta.
@@ -113,7 +113,7 @@ Si `Impacto documental: sí`, añade también `--add-label "impacto-documental"`
 - No modificas `CLAUDE.md`, `CONTEXT.md`, `.claude/`, `docs/process/` ni `docs/product/` (el hook lo impide). Si crees que deben cambiar, usa `requiere-decision`.
 - No haces commits en `main`, push a `main`, rebase ni push forzado (el hook lo impide).
 - No cierras issues a mano ni validas tu propio trabajo.
-- Ante dudas de producto o contradicciones, aplica «Preguntas y bloqueos»; no decidas por tu cuenta.
+- Ante dudas, aplica «Preguntas y bloqueos»: decide y regístralo como `Supuesto:` en «Decisiones relevantes» del handoff, salvo en los casos de escalado.
 
 ## Respuesta final
 

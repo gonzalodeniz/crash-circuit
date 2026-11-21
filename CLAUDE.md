@@ -6,7 +6,7 @@
 - **Lee `CONTEXT.md` al empezar** para conocer el producto, las restricciones de arquitectura, el modelo de dominio y la configuración.
 - **Consulta `INDEX.md` primero** para localizar ficheros en vez de explorar el repositorio a ciegas.
 - **Mantén `INDEX.md` al día:** cuando crees, muevas o elimines un fichero, actualiza su entrada en el índice en el mismo cambio.
-- **Los documentos de `docs/product/` son la fuente de verdad.** Ante una duda o contradicción, pregunta al usuario en lugar de decidir por tu cuenta.
+- **Los documentos de `docs/product/` son la fuente de verdad.** Ante una contradicción o un vacío que cambie el comportamiento del juego, pregunta al usuario; el resto de dudas se resuelven y registran según «Preguntas y bloqueos» de `FLUJO_DE_TRABAJO.md`.
 - **Los comandos útiles están en `COMMANDS.md`.** Consúltalo antes de ejecutar y añade solo comandos verificados; no inventes comandos de build, lint o test.
 
 ## Convenciones de idioma

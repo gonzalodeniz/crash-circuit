@@ -36,17 +36,17 @@ Aplica la **primera** regla que se cumpla:
 
 | # | Situación | Acción |
 |---|---|---|
-| 1 | Alguna issue abierta tiene `requiere-decision` | **Parar** (ver «Decisiones pendientes»). |
+| 1 | Tienen `requiere-decision` la issue en curso (`en-desarrollo`, `listo-para-qa`, `no-validado` o `validado`) o una `Aceptación de la entrega …` | **Parar** (ver «Decisiones pendientes»). |
 | 2 | Una issue `Aceptación de la entrega …` o `Decisión de producto: …` abierta, sin `requiere-decision` y con una respuesta del usuario posterior a la pregunta | `product-manager` |
 | 3 | Una issue con `estado:validado` | `developer-teams` (fusionar) |
 | 4 | Una issue con `estado:no-validado` | `developer-teams` (corregir) |
 | 5 | Una issue con `estado:listo-para-qa` | `qa-teams` |
 | 6 | Una issue con `estado:en-desarrollo` | `developer-teams` (retomar) |
 | 7 | Issues cerradas con `impacto-documental` o `changelog-pendiente` | `doc-teams` |
-| 8 | Issues con `estado:nuevo` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
+| 8 | Issues con `estado:nuevo` sin `requiere-decision` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
 | 9 | Ninguna de las anteriores | `product-manager` (crear issues, preparar aceptación o priorizar `tipo:tecnica`) |
 
-Ignora las issues abiertas sin etiqueta `estado:*` ni `requiere-decision`.
+Ignora las issues abiertas sin etiqueta `estado:*` ni `requiere-decision`. Las demás issues con `requiere-decision` (una `estado:nuevo` o una `Decisión de producto: …`) **no detienen el ciclo**: sáltalas, junto con las issues que dependan de ellas, y sigue con el resto. Las presentarás en el resumen final.
 
 Si hay más de una issue en `validado`, `no-validado`, `listo-para-qa` o `en-desarrollo`, algo se ha desviado del flujo (solo debe haber una en curso): **para** e infórmalo.
 
@@ -79,17 +79,19 @@ Cuando el subagente termine, vuelve a leer la issue (`gh issue view <N> --json s
 | `doc-teams` | Sin issues cerradas con `impacto-documental` ni `changelog-pendiente`, o `requiere-decision` |
 | `product-manager` | Issues nuevas, aceptación creada, milestone cerrado o decisión aplicada |
 
-Si la transición no ha ocurrido y el subagente no explica por qué, **no lo vuelvas a lanzar con la misma tarea**: para e infórmalo.
+Si la transición no ha ocurrido:
+- Si el subagente dejó trabajo a medias sin explicar un bloqueo (por ejemplo, se quedó sin turnos), **relánzalo una sola vez** con la tarea «retomar» y un resumen de lo que dejó hecho.
+- Si vuelve a fallar, o explica un bloqueo que no ha convertido en `requiere-decision`, **no insistas**: para e infórmalo.
 
 ## Condiciones de parada
 
 Para el ciclo y pasa al resumen final cuando ocurra cualquiera de estas cosas:
 
-- Hay `requiere-decision` en alguna issue.
-- No queda trabajo: la regla 9 se aplicó y `product-manager` no creó nada.
-- Una transición no se produjo como se esperaba.
+- La regla 1 se cumple: `requiere-decision` en la issue en curso o en una aceptación de entrega.
+- No queda trabajo que no dependa de una decisión pendiente: la regla 9 se aplicó y `product-manager` no creó nada.
+- Una transición no se produjo tras el único reintento permitido.
 - Una misma issue acumula **3 resultados `no validado`** de QA (cuenta los comentarios `Rol: qa-teams` con `Resultado: no validado` en su PR). En ese caso, pregunta al usuario cómo seguir.
-- Has hecho el **número máximo de delegaciones** que te indique el usuario en el mensaje inicial (por defecto, **10**).
+- Has hecho el **número máximo de delegaciones** que te indique el usuario en el mensaje inicial (por defecto, **30**).
 - Un subagente informa de un error de entorno o de permisos que no puede resolver.
 
 ## Decisiones pendientes
@@ -116,6 +118,6 @@ Termina siempre con:
 
 - **Delegaciones realizadas**: subagente, issue y transición (`#12: listo-para-qa → validado`).
 - **Estado actual**: entrega en curso e issue en curso.
-- **Decisiones pendientes**, con la pregunta de cada una.
+- **Decisiones pendientes**, con la pregunta de cada una (también las de issues que has saltado).
 - **Verificaciones manuales pendientes** que QA haya reportado en este ciclo.
 - **Motivo de parada**.

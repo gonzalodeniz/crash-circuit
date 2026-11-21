@@ -51,6 +51,29 @@ ALLOW_BASE=(
   "Bash(grep *)"
 )
 
+# Utilidades de lectura y de ficheros. En modo --auto nadie puede aprobar un
+# permiso, así que lo que no esté aquí se deniega y el agente se atasca. Lo que
+# cada rol puede o no puede tocar lo limita el hook guard.py, no esta lista.
+ALLOW_UTILIDADES=(
+  "Bash(head *)"
+  "Bash(tail *)"
+  "Bash(wc *)"
+  "Bash(find *)"
+  "Bash(sort *)"
+  "Bash(uniq *)"
+  "Bash(diff *)"
+  "Bash(jq *)"
+  "Bash(which *)"
+  "Bash(echo *)"
+  "Bash(printf *)"
+  "Bash(sed *)"
+  "Bash(mkdir *)"
+  "Bash(touch *)"
+  "Bash(cp *)"
+  "Bash(mv *)"
+  "Bash(rm *)"
+)
+
 # Comandos del stack (build/test). JavaScript + Three.js implica npm/node.
 # Ajusta esta lista cuando developer-teams fije las herramientas en
 # docs/technical/ARQUITECTURA.md y COMMANDS.md.
@@ -82,7 +105,7 @@ SETTINGS="$SETTINGS_DIR/settings.json"
 
 # Pasamos las listas a Python separadas por saltos de línea
 join_lines() { local IFS=$'\n'; echo "$*"; }
-ALLOW_ALL=("${ALLOW_BASE[@]}" ${ALLOW_STACK[@]+"${ALLOW_STACK[@]}"} ${EXTRA[@]+"${EXTRA[@]}"})
+ALLOW_ALL=("${ALLOW_BASE[@]}" "${ALLOW_UTILIDADES[@]}" ${ALLOW_STACK[@]+"${ALLOW_STACK[@]}"} ${EXTRA[@]+"${EXTRA[@]}"})
 
 NUEVO_JSON="$(
   ALLOW="$(join_lines "${ALLOW_ALL[@]}")" \

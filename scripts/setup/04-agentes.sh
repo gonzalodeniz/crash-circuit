@@ -105,6 +105,15 @@ try:
 except Exception:
     sys.exit(0)  # entrada inesperada: no bloquear
 
+# Cuando un rol es el agente principal (p. ej. el orquestador), su hook también se
+# ejecuta en las herramientas de sus subagentes. Si la orden viene de otro rol que
+# tiene su propio guard, se le cede el control a ese guard; cualquier otro subagente
+# (general-purpose, Explore…) sigue sujeto a las reglas del rol principal.
+ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams"}
+AGENTE = DATOS.get("agent_type") or ""
+if AGENTE and AGENTE != ROL and AGENTE in ROLES_CON_GUARD:
+    sys.exit(0)
+
 HERRAMIENTA = DATOS.get("tool_name", "")
 ENTRADA = DATOS.get("tool_input") or {}
 PROYECTO = os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or DATOS.get("cwd") or os.getcwd())
@@ -719,6 +728,7 @@ Determina la **entrega en curso**: el milestone `E1…E8` más bajo que siga abi
       - El criterio de entrega literal de `03_ROADMAP.md`.
       - La lista de issues cerradas de la entrega, con enlace.
       - Todas las «Verificación manual pendiente» que `qa-teams` dejó en las PR de esas issues (búscalas con `gh pr view <N> --comments`).
+      - Todos los `Supuesto:` registrados en esas issues y sus PR, para que el usuario los confirme o corrija.
       - `Pregunta:` ¿Das por aceptada la entrega Ek? Si no, indica qué falta.
    2. Termina. El usuario probará el juego y responderá.
 
@@ -754,7 +764,9 @@ CUERPO
 
 ## Dudas y contradicciones
 
-`docs/product/` es la fuente de verdad y no puedes modificarlo. Si encuentras una contradicción, una ambigüedad que impide escribir criterios verificables o una decisión que no te corresponde, **no la resuelvas por tu cuenta**: sigue «Preguntas y bloqueos» de `FLUJO_DE_TRABAJO.md`. Si la duda no pertenece a ninguna issue existente, crea una issue `Decisión de producto: <tema>` con `requiere-decision` y sin milestone.
+`docs/product/` es la fuente de verdad y no puedes modificarlo. Sigue «Preguntas y bloqueos» de `FLUJO_DE_TRABAJO.md`: las ambigüedades menores las resuelves tú, usando los valores «propuesta» y la lectura más razonable, y las anotas como `Supuesto:` en el cuerpo de la issue afectada.
+
+Si encuentras una duda que sí hay que escalar, **no detengas la entrega**: crea todas las issues que no dependan de ella y reúne las dudas en una sola issue `Decisión de producto: <tema>` con `requiere-decision` y sin milestone. Las issues que dependan de la respuesta llevan también `requiere-decision` y la referencian en «Dependencias».
 
 ## Respuesta final
 
@@ -803,7 +815,7 @@ Si no te han indicado número de issue, elige según la prioridad de `FLUJO_DE_T
 
 ### `estado:nuevo` → empezar
 
-1. Comprueba que la issue tiene todo el «Contenido mínimo de una issue». Si falta algo o es ambiguo, **no empieces**: aplica «Preguntas y bloqueos».
+1. Comprueba que la issue tiene todo el «Contenido mínimo de una issue». Si falta algo o es ambiguo, complétalo con la lectura más razonable de `docs/product/` y regístralo como `Supuesto:` en el handoff. Solo si cae en los casos de escalado de «Preguntas y bloqueos», **no empieces** y escala.
 2. Comprueba que no hay otra issue en `en-desarrollo`, `listo-para-qa`, `no-validado` o `validado`:
    `gh issue list --state open --json number,labels --jq '.[] | select(any(.labels[]; .name | test("estado:(en-desarrollo|listo-para-qa|no-validado|validado)"))) | .number'`
    Si la hay, no empieces y explícalo en tu respuesta.
@@ -885,7 +897,7 @@ Si `Impacto documental: sí`, añade también `--add-label "impacto-documental"`
 - No modificas `CLAUDE.md`, `CONTEXT.md`, `.claude/`, `docs/process/` ni `docs/product/` (el hook lo impide). Si crees que deben cambiar, usa `requiere-decision`.
 - No haces commits en `main`, push a `main`, rebase ni push forzado (el hook lo impide).
 - No cierras issues a mano ni validas tu propio trabajo.
-- Ante dudas de producto o contradicciones, aplica «Preguntas y bloqueos»; no decidas por tu cuenta.
+- Ante dudas, aplica «Preguntas y bloqueos»: decide y regístralo como `Supuesto:` en «Decisiones relevantes» del handoff, salvo en los casos de escalado.
 
 ## Respuesta final
 
@@ -1062,7 +1074,7 @@ Solo puedes editar `README.md`, `CHANGELOG.md`, `INDEX.md` y `docs/user/` (el ho
 
 - Escribe para un jugador, no para un desarrollador: frases cortas, sin jerga técnica en `docs/user/`.
 - No documentes funcionalidades que aún no estén en main, ni valores «propuesta» como si fueran definitivos: describe el comportamiento actual y, si un valor puede cambiar, dilo.
-- Si el código y la issue no coinciden, o falta información para documentar, no lo resuelvas por tu cuenta: aplica «Preguntas y bloqueos» y no retires la etiqueta.
+- Si el código y la issue no coinciden, documenta lo que hace el código y anota la discrepancia como `Supuesto:` en tu comentario de la issue; no bloquees por ello.
 
 ## Respuesta final
 
@@ -1117,17 +1129,17 @@ Aplica la **primera** regla que se cumpla:
 
 | # | Situación | Acción |
 |---|---|---|
-| 1 | Alguna issue abierta tiene `requiere-decision` | **Parar** (ver «Decisiones pendientes»). |
+| 1 | Tienen `requiere-decision` la issue en curso (`en-desarrollo`, `listo-para-qa`, `no-validado` o `validado`) o una `Aceptación de la entrega …` | **Parar** (ver «Decisiones pendientes»). |
 | 2 | Una issue `Aceptación de la entrega …` o `Decisión de producto: …` abierta, sin `requiere-decision` y con una respuesta del usuario posterior a la pregunta | `product-manager` |
 | 3 | Una issue con `estado:validado` | `developer-teams` (fusionar) |
 | 4 | Una issue con `estado:no-validado` | `developer-teams` (corregir) |
 | 5 | Una issue con `estado:listo-para-qa` | `qa-teams` |
 | 6 | Una issue con `estado:en-desarrollo` | `developer-teams` (retomar) |
 | 7 | Issues cerradas con `impacto-documental` o `changelog-pendiente` | `doc-teams` |
-| 8 | Issues con `estado:nuevo` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
+| 8 | Issues con `estado:nuevo` sin `requiere-decision` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
 | 9 | Ninguna de las anteriores | `product-manager` (crear issues, preparar aceptación o priorizar `tipo:tecnica`) |
 
-Ignora las issues abiertas sin etiqueta `estado:*` ni `requiere-decision`.
+Ignora las issues abiertas sin etiqueta `estado:*` ni `requiere-decision`. Las demás issues con `requiere-decision` (una `estado:nuevo` o una `Decisión de producto: …`) **no detienen el ciclo**: sáltalas, junto con las issues que dependan de ellas, y sigue con el resto. Las presentarás en el resumen final.
 
 Si hay más de una issue en `validado`, `no-validado`, `listo-para-qa` o `en-desarrollo`, algo se ha desviado del flujo (solo debe haber una en curso): **para** e infórmalo.
 
@@ -1160,17 +1172,19 @@ Cuando el subagente termine, vuelve a leer la issue (`gh issue view <N> --json s
 | `doc-teams` | Sin issues cerradas con `impacto-documental` ni `changelog-pendiente`, o `requiere-decision` |
 | `product-manager` | Issues nuevas, aceptación creada, milestone cerrado o decisión aplicada |
 
-Si la transición no ha ocurrido y el subagente no explica por qué, **no lo vuelvas a lanzar con la misma tarea**: para e infórmalo.
+Si la transición no ha ocurrido:
+- Si el subagente dejó trabajo a medias sin explicar un bloqueo (por ejemplo, se quedó sin turnos), **relánzalo una sola vez** con la tarea «retomar» y un resumen de lo que dejó hecho.
+- Si vuelve a fallar, o explica un bloqueo que no ha convertido en `requiere-decision`, **no insistas**: para e infórmalo.
 
 ## Condiciones de parada
 
 Para el ciclo y pasa al resumen final cuando ocurra cualquiera de estas cosas:
 
-- Hay `requiere-decision` en alguna issue.
-- No queda trabajo: la regla 9 se aplicó y `product-manager` no creó nada.
-- Una transición no se produjo como se esperaba.
+- La regla 1 se cumple: `requiere-decision` en la issue en curso o en una aceptación de entrega.
+- No queda trabajo que no dependa de una decisión pendiente: la regla 9 se aplicó y `product-manager` no creó nada.
+- Una transición no se produjo tras el único reintento permitido.
 - Una misma issue acumula **3 resultados `no validado`** de QA (cuenta los comentarios `Rol: qa-teams` con `Resultado: no validado` en su PR). En ese caso, pregunta al usuario cómo seguir.
-- Has hecho el **número máximo de delegaciones** que te indique el usuario en el mensaje inicial (por defecto, **10**).
+- Has hecho el **número máximo de delegaciones** que te indique el usuario en el mensaje inicial (por defecto, **30**).
 - Un subagente informa de un error de entorno o de permisos que no puede resolver.
 
 ## Decisiones pendientes
@@ -1197,7 +1211,7 @@ Termina siempre con:
 
 - **Delegaciones realizadas**: subagente, issue y transición (`#12: listo-para-qa → validado`).
 - **Estado actual**: entrega en curso e issue en curso.
-- **Decisiones pendientes**, con la pregunta de cada una.
+- **Decisiones pendientes**, con la pregunta de cada una (también las de issues que has saltado).
 - **Verificaciones manuales pendientes** que QA haya reportado en este ciclo.
 - **Motivo de parada**.
 EOF

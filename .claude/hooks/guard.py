@@ -27,6 +27,15 @@ try:
 except Exception:
     sys.exit(0)  # entrada inesperada: no bloquear
 
+# Cuando un rol es el agente principal (p. ej. el orquestador), su hook también se
+# ejecuta en las herramientas de sus subagentes. Si la orden viene de otro rol que
+# tiene su propio guard, se le cede el control a ese guard; cualquier otro subagente
+# (general-purpose, Explore…) sigue sujeto a las reglas del rol principal.
+ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams"}
+AGENTE = DATOS.get("agent_type") or ""
+if AGENTE and AGENTE != ROL and AGENTE in ROLES_CON_GUARD:
+    sys.exit(0)
+
 HERRAMIENTA = DATOS.get("tool_name", "")
 ENTRADA = DATOS.get("tool_input") or {}
 PROYECTO = os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or DATOS.get("cwd") or os.getcwd())

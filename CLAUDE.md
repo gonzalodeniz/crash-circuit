@@ -12,3 +12,10 @@
 ## Convenciones de idioma
 
 Los documentos de producto están en español. Escribe el código, los identificadores y los mensajes de commit en inglés, y los comentarios del código en español, salvo que el usuario pida otra cosa. Mantén trazables los términos de los documentos (p. ej. `checkpoint`, `grid`, `lap`) al mapearlos con el texto de requisitos en español.
+
+<!-- flujo-subagentes -->
+## Flujo de trabajo con subagentes
+
+El trabajo se reparte entre subagentes (`.claude/agents/`) coordinados por `orquestador`. Las reglas comunes (roles, estados, ramas, plantillas y cómo plantear preguntas cuando trabajas como subagente) están en:
+
+@docs/process/FLUJO_DE_TRABAJO.md

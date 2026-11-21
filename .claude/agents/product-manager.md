@@ -45,11 +45,13 @@ Determina la **entrega en curso**: el milestone `E1…E8` más bajo que siga abi
       - `Pregunta:` ¿Das por aceptada la entrega Ek? Si no, indica qué falta.
    2. Termina. El usuario probará el juego y responderá.
 
-**D. La issue de aceptación de Ek tiene respuesta del usuario**:
+**D. La issue de aceptación de Ek tiene respuesta del usuario** (un comentario suyo o un comentario `Rol: orquestador` con `Decisión del usuario:`) y ya no tiene `requiere-decision`:
    - Si acepta: comenta `Rol: product-manager` confirmándolo y cierra el milestone:
      `gh api -X PATCH "repos/{owner}/{repo}/milestones/<numero>" -f state=closed`.
      Después, la entrega siguiente pasa a ser la entrega en curso: aplica el caso A. (La issue de aceptación la cierra el usuario.)
-   - Si no acepta: crea las issues necesarias para lo que falta en ese mismo milestone con `estado:nuevo` y retira `requiere-decision` de la issue de aceptación.
+   - Si no acepta: crea las issues necesarias para lo que falta en ese mismo milestone con `estado:nuevo`.
+
+**E. Hay una issue `Decisión de producto: …` respondida y sin `requiere-decision`** → aplica la decisión: actualiza el cuerpo de las issues afectadas (`gh issue edit <N> --body-file -`) o crea las que falten, y comenta en la issue de decisión qué has cambiado. Si la decisión implica modificar `docs/product/`, no lo hagas: indícalo en tu respuesta final para que el usuario lo actualice.
 
 ## Cómo crear las issues
 
@@ -80,6 +82,6 @@ CUERPO
 ## Respuesta final
 
 Termina siempre con un resumen breve para el orquestador:
-- Caso aplicado (A, B, C o D).
+- Caso aplicado (A, B, C, D o E).
 - Issues creadas o modificadas: número, título y etiquetas.
 - Bloqueos abiertos con `requiere-decision`, si los hay.

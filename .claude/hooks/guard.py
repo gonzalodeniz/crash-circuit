@@ -57,6 +57,7 @@ SOLO_EN = {
     "product-manager": [],  # no edita ficheros
     "qa-teams": [],         # no edita ficheros
     "doc-teams": ["README.md", "INDEX.md", "docs/user/"],
+    "orquestador": [],      # no edita ficheros
 }
 
 
@@ -128,6 +129,16 @@ REGLAS = {
         (r"(rm|mv|cp|tee|sed\s+-i)\s",
          "qa-teams no modifica ficheros."),
     ],
+    "orquestador": [
+        (r"git\s+(commit|push|pull|merge|rebase|reset|checkout|switch|branch|tag|stash|cherry-pick|revert|restore)\b",
+         "el orquestador no modifica el repositorio: delega en el subagente que corresponda."),
+        (r"gh\s+pr\s+(create|merge|close|edit|ready|reopen|checkout|comment|review)\b",
+         "el orquestador no actúa sobre PR: delega en developer-teams o qa-teams."),
+        (r"gh\s+issue\s+(create|close|delete|transfer|reopen|develop|lock)\b",
+         "el orquestador no crea ni cierra issues: delega en product-manager."),
+        (r"(rm|mv|cp|tee|sed\s+-i)\s",
+         "el orquestador no modifica ficheros."),
+    ],
     "doc-teams": [
         (r"git\s+(switch|checkout)\s+(?!main(\s|$))",
          "doc-teams trabaja siempre sobre main."),
@@ -151,6 +162,14 @@ if ROL == "developer-teams" and re.search(INICIO + r"git\s+commit\b", cmd):
     cambia_rama = re.search(INICIO + r"git\s+(switch|checkout)\b", cmd)
     if not cambia_rama and run("git", "rev-parse", "--abbrev-ref", "HEAD") == "main":
         bloquear("estás en main: crea o cambia a la rama de la issue (feat/<N>-<slug>) antes de hacer commit.")
+
+# --- orquestador: solo puede retirar requiere-decision ----------------------
+if ROL == "orquestador" and re.search(INICIO + r"gh\s+issue\s+edit\b", cmd):
+    # Las etiquetas suelen ir entre comillas, así que se mira el comando original.
+    if (re.search(r"--(add-label|body|body-file|title|milestone|add-assignee|remove-assignee|add-project)\b", ORIGINAL)
+            or "requiere-decision" not in ORIGINAL):
+        bloquear("el orquestador solo puede usar 'gh issue edit <N> --remove-label requiere-decision' "
+                 "tras registrar la decisión del usuario; el resto de cambios los hacen los subagentes.")
 
 # --- doc-teams: commits y push solo en main ---------------------------------
 if ROL == "doc-teams" and re.search(INICIO + r"git\s+(commit|push)\b", cmd):

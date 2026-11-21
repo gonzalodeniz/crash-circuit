@@ -135,6 +135,7 @@ SOLO_EN = {
     "product-manager": [],  # no edita ficheros
     "qa-teams": [],         # no edita ficheros
     "doc-teams": ["README.md", "INDEX.md", "docs/user/"],
+    "orquestador": [],      # no edita ficheros
 }
 
 
@@ -206,6 +207,16 @@ REGLAS = {
         (r"(rm|mv|cp|tee|sed\s+-i)\s",
          "qa-teams no modifica ficheros."),
     ],
+    "orquestador": [
+        (r"git\s+(commit|push|pull|merge|rebase|reset|checkout|switch|branch|tag|stash|cherry-pick|revert|restore)\b",
+         "el orquestador no modifica el repositorio: delega en el subagente que corresponda."),
+        (r"gh\s+pr\s+(create|merge|close|edit|ready|reopen|checkout|comment|review)\b",
+         "el orquestador no actúa sobre PR: delega en developer-teams o qa-teams."),
+        (r"gh\s+issue\s+(create|close|delete|transfer|reopen|develop|lock)\b",
+         "el orquestador no crea ni cierra issues: delega en product-manager."),
+        (r"(rm|mv|cp|tee|sed\s+-i)\s",
+         "el orquestador no modifica ficheros."),
+    ],
     "doc-teams": [
         (r"git\s+(switch|checkout)\s+(?!main(\s|$))",
          "doc-teams trabaja siempre sobre main."),
@@ -229,6 +240,14 @@ if ROL == "developer-teams" and re.search(INICIO + r"git\s+commit\b", cmd):
     cambia_rama = re.search(INICIO + r"git\s+(switch|checkout)\b", cmd)
     if not cambia_rama and run("git", "rev-parse", "--abbrev-ref", "HEAD") == "main":
         bloquear("estás en main: crea o cambia a la rama de la issue (feat/<N>-<slug>) antes de hacer commit.")
+
+# --- orquestador: solo puede retirar requiere-decision ----------------------
+if ROL == "orquestador" and re.search(INICIO + r"gh\s+issue\s+edit\b", cmd):
+    # Las etiquetas suelen ir entre comillas, así que se mira el comando original.
+    if (re.search(r"--(add-label|body|body-file|title|milestone|add-assignee|remove-assignee|add-project)\b", ORIGINAL)
+            or "requiere-decision" not in ORIGINAL):
+        bloquear("el orquestador solo puede usar 'gh issue edit <N> --remove-label requiere-decision' "
+                 "tras registrar la decisión del usuario; el resto de cambios los hacen los subagentes.")
 
 # --- doc-teams: commits y push solo en main ---------------------------------
 if ROL == "doc-teams" and re.search(INICIO + r"git\s+(commit|push)\b", cmd):
@@ -312,11 +331,13 @@ Determina la **entrega en curso**: el milestone `E1…E8` más bajo que siga abi
       - `Pregunta:` ¿Das por aceptada la entrega Ek? Si no, indica qué falta.
    2. Termina. El usuario probará el juego y responderá.
 
-**D. La issue de aceptación de Ek tiene respuesta del usuario**:
+**D. La issue de aceptación de Ek tiene respuesta del usuario** (un comentario suyo o un comentario `Rol: orquestador` con `Decisión del usuario:`) y ya no tiene `requiere-decision`:
    - Si acepta: comenta `Rol: product-manager` confirmándolo y cierra el milestone:
      `gh api -X PATCH "repos/{owner}/{repo}/milestones/<numero>" -f state=closed`.
      Después, la entrega siguiente pasa a ser la entrega en curso: aplica el caso A. (La issue de aceptación la cierra el usuario.)
-   - Si no acepta: crea las issues necesarias para lo que falta en ese mismo milestone con `estado:nuevo` y retira `requiere-decision` de la issue de aceptación.
+   - Si no acepta: crea las issues necesarias para lo que falta en ese mismo milestone con `estado:nuevo`.
+
+**E. Hay una issue `Decisión de producto: …` respondida y sin `requiere-decision`** → aplica la decisión: actualiza el cuerpo de las issues afectadas (`gh issue edit <N> --body-file -`) o crea las que falten, y comenta en la issue de decisión qué has cambiado. Si la decisión implica modificar `docs/product/`, no lo hagas: indícalo en tu respuesta final para que el usuario lo actualice.
 
 ## Cómo crear las issues
 
@@ -347,7 +368,7 @@ CUERPO
 ## Respuesta final
 
 Termina siempre con un resumen breve para el orquestador:
-- Caso aplicado (A, B, C o D).
+- Caso aplicado (A, B, C, D o E).
 - Issues creadas o modificadas: número, título y etiquetas.
 - Bloqueos abiertos con `requiere-decision`, si los hay.
 EOF
@@ -644,6 +665,136 @@ EOF
 seleccionado doc-teams && instalar ".claude/agents/doc-teams.md" "$AGENTE_DOC"
 
 # =============================================================================
+# Agente: orquestador (se usa como agente principal de la sesión)
+#   claude --agent orquestador          (interactivo)
+#   claude -p --agent orquestador "…"   (desatendido; ver scripts/rol.sh)
+# =============================================================================
+read -r -d '' AGENTE_ORQ <<'EOF' || true
+---
+name: orquestador
+description: Coordina el ciclo de entrega de Crash Circuit (product-manager → developer-teams → qa-teams → doc-teams) según las etiquetas de estado de las issues. Se usa como agente principal de la sesión. No implementa, valida, documenta ni decide producto.
+tools: Read, Grep, Glob, Bash, Agent
+model: sonnet
+color: blue
+hooks:
+  PreToolUse:
+    - matcher: "Bash|Edit|Write|MultiEdit|NotebookEdit"
+      hooks:
+        - type: command
+          command: "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard.sh orquestador"
+---
+
+Eres el orquestador del proyecto **Crash Circuit**. Coordinas a cuatro subagentes siguiendo `docs/process/FLUJO_DE_TRABAJO.md`. Escribes en español.
+
+**Tu único trabajo es decidir a quién delegar, delegar y comprobar el resultado.** No implementas, no validas, no documentas, no creas issues y no tomas decisiones de producto. No modificas ficheros ni el repositorio (el hook lo impide).
+
+Subagentes que puedes usar, **siempre de uno en uno y nunca en paralelo**: `product-manager`, `developer-teams`, `qa-teams`, `doc-teams`. No uses ningún otro (tampoco `general-purpose`, `Explore` ni `Plan`).
+
+## Ciclo
+
+Repite estos pasos hasta que se cumpla una condición de parada:
+
+### 1. Leer el estado
+
+```bash
+gh issue list --state open --limit 200 --json number,title,labels,milestone
+gh issue list --state closed --label impacto-documental --json number,title
+```
+
+### 2. Decidir la siguiente acción
+
+Aplica la **primera** regla que se cumpla:
+
+| # | Situación | Acción |
+|---|---|---|
+| 1 | Alguna issue abierta tiene `requiere-decision` | **Parar** (ver «Decisiones pendientes»). |
+| 2 | Una issue `Aceptación de la entrega …` o `Decisión de producto: …` abierta, sin `requiere-decision` y con una respuesta del usuario posterior a la pregunta | `product-manager` |
+| 3 | Una issue con `estado:validado` | `developer-teams` (fusionar) |
+| 4 | Una issue con `estado:no-validado` | `developer-teams` (corregir) |
+| 5 | Una issue con `estado:listo-para-qa` | `qa-teams` |
+| 6 | Una issue con `estado:en-desarrollo` | `developer-teams` (retomar) |
+| 7 | Issues cerradas con `impacto-documental` | `doc-teams` |
+| 8 | Issues con `estado:nuevo` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
+| 9 | Ninguna de las anteriores | `product-manager` (crear issues, preparar aceptación o priorizar `tipo:tecnica`) |
+
+Ignora las issues abiertas sin etiqueta `estado:*` ni `requiere-decision`.
+
+Si hay más de una issue en `validado`, `no-validado`, `listo-para-qa` o `en-desarrollo`, algo se ha desviado del flujo (solo debe haber una en curso): **para** e infórmalo.
+
+Para comprobar las dependencias de una issue `estado:nuevo`, lee su apartado `**Dependencias:**` (`gh issue view <N> --json body`) y verifica que esas issues están cerradas. Si ninguna `estado:nuevo` tiene sus dependencias resueltas, **para** e infórmalo.
+
+### 3. Delegar
+
+Dale al subagente todo lo que necesita: no ve esta conversación. Usa este formato:
+
+```
+Issue: #<N> — <título>
+Estado actual: <etiqueta>
+PR: #<PR> (si existe)
+Tarea: <empezar | retomar | corregir los defectos de QA | fusionar | validar | documentar | caso que corresponda>
+Contexto: <lo relevante: defectos bloqueantes del último QA, decisión del usuario registrada, etc.>
+Sigue tus instrucciones y docs/process/FLUJO_DE_TRABAJO.md. Termina con tu resumen para el orquestador.
+```
+
+Para `doc-teams` y para la regla 9 de `product-manager` no hace falta número de issue.
+
+### 4. Verificar la transición
+
+Cuando el subagente termine, vuelve a leer la issue (`gh issue view <N> --json state,labels`) y comprueba que ha ocurrido la transición esperada:
+
+| Delegación | Resultado esperado |
+|---|---|
+| `developer-teams` empezar, retomar o corregir | `estado:listo-para-qa`, o `requiere-decision` |
+| `qa-teams` | `estado:validado` o `estado:no-validado` |
+| `developer-teams` fusionar | Issue cerrada |
+| `doc-teams` | Sin issues cerradas con `impacto-documental`, o `requiere-decision` |
+| `product-manager` | Issues nuevas, aceptación creada, milestone cerrado o decisión aplicada |
+
+Si la transición no ha ocurrido y el subagente no explica por qué, **no lo vuelvas a lanzar con la misma tarea**: para e infórmalo.
+
+## Condiciones de parada
+
+Para el ciclo y pasa al resumen final cuando ocurra cualquiera de estas cosas:
+
+- Hay `requiere-decision` en alguna issue.
+- No queda trabajo: la regla 9 se aplicó y `product-manager` no creó nada.
+- Una transición no se produjo como se esperaba.
+- Una misma issue acumula **3 resultados `no validado`** de QA (cuenta los comentarios `Rol: qa-teams` con `Resultado: no validado` en su PR). En ese caso, pregunta al usuario cómo seguir.
+- Has hecho el **número máximo de delegaciones** que te indique el usuario en el mensaje inicial (por defecto, **10**).
+- Un subagente informa de un error de entorno o de permisos que no puede resolver.
+
+## Decisiones pendientes
+
+Para cada issue con `requiere-decision`, lee la pregunta (`gh issue view <N> --comments`) y preséntala al usuario de forma breve: issue, quién pregunta, la pregunta y las opciones con su consecuencia.
+
+Si el usuario responde en esta sesión:
+
+1. Registra la respuesta en la issue:
+   ```bash
+   gh issue comment <N> --body-file - <<'DECISION'
+   Rol: orquestador
+   Decisión del usuario: <respuesta literal del usuario>
+   DECISION
+   gh issue edit <N> --remove-label "requiere-decision"
+   ```
+2. Continúa el ciclo.
+
+Nunca respondas tú una pregunta en nombre del usuario.
+
+## Resumen final
+
+Termina siempre con:
+
+- **Delegaciones realizadas**: subagente, issue y transición (`#12: listo-para-qa → validado`).
+- **Estado actual**: entrega en curso e issue en curso.
+- **Decisiones pendientes**, con la pregunta de cada una.
+- **Verificaciones manuales pendientes** que QA haya reportado en este ciclo.
+- **Motivo de parada**.
+EOF
+
+seleccionado orquestador && instalar ".claude/agents/orquestador.md" "$AGENTE_ORQ"
+
+# =============================================================================
 # Registrar en INDEX.md
 # =============================================================================
 LINEA_GUARD_ANTIGUA='- `.claude/hooks/guard.sh`: hook que bloquea los comandos prohibidos para cada rol. Se genera con `scripts/setup/04-agentes.sh`.'
@@ -666,6 +817,13 @@ PY
     fi
   fi
 fi
+
+LINEA_ROL='- `scripts/rol.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto; carga `.env`, impide ejecuciones simultáneas y guarda logs en `logs/`.'
+if [[ -f INDEX.md ]] && ! grep -qF 'scripts/rol.sh' INDEX.md && grep -qF '<!-- indice-flujo-subagentes -->' INDEX.md; then
+  echo "$LINEA_ROL" >> INDEX.md
+  echo "✔ scripts/rol.sh registrado en INDEX.md"
+fi
+[[ -f scripts/rol.sh ]] || echo "! Falta scripts/rol.sh: cópialo al proyecto para poder lanzar el orquestador"
 
 echo
 echo "Agentes instalados:"

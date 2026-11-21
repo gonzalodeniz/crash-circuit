@@ -74,8 +74,12 @@ gh issue edit <N> --remove-label "estado:<actual>" --add-label "estado:<nuevo>"
 | `estado:validado` | `developer-teams` | Fusiona la PR (squash) y borra la rama; la issue se cierra sola. |
 | Issue cerrada con `impacto-documental` | `doc-teams` | Documenta y retira la etiqueta `impacto-documental`. |
 | `requiere-decision` (cualquier estado) | Usuario | El orquestador se detiene y presenta la pregunta. |
+| `Aceptación de la entrega Ek` respondida (sin `requiere-decision`) | `product-manager` | Cierra el milestone o crea issues para lo que falta. |
+| `Decisión de producto: …` respondida (sin `requiere-decision`) | `product-manager` | Aplica la decisión a las issues afectadas. |
 
-Prioridad del orquestador, de mayor a menor: `requiere-decision` → `validado` → `no-validado` → `listo-para-qa` → `en-desarrollo` → documentación pendiente → `nuevo` → crear issues nuevas.
+Prioridad del orquestador, de mayor a menor: `requiere-decision` → decisiones respondidas → `validado` → `no-validado` → `listo-para-qa` → `en-desarrollo` → documentación pendiente → `nuevo` → crear issues nuevas.
+
+Las issues abiertas sin etiqueta `estado:*` ni `requiere-decision` (por ejemplo, una aceptación de entrega ya tramitada o una issue técnica aplazada) no generan trabajo.
 
 Solo hay **una issue en desarrollo a la vez** en todo el proyecto.
 
@@ -149,7 +153,7 @@ Verificación manual pendiente: lo que solo puede comprobarse jugando (o «ningu
 2. Añade la etiqueta `requiere-decision`.
 3. Termina tu ejecución e informa del bloqueo en tu respuesta final.
 
-El orquestador no delega en ninguna issue con `requiere-decision` y presenta la pregunta al usuario. Cuando el usuario responde, se retira la etiqueta y el flujo continúa.
+El orquestador no delega en ninguna issue con `requiere-decision` y presenta la pregunta al usuario. Cuando el usuario responde, el orquestador registra la respuesta en la issue con un comentario `Rol: orquestador` y un apartado `Decisión del usuario:` literal, retira la etiqueta y el flujo continúa. El usuario también puede responder directamente en GitHub y retirar él mismo la etiqueta.
 
 No decidas por tu cuenta nada que contradiga `docs/product/`. Los valores marcados como «propuesta» en los requisitos sí pueden usarse como punto de partida, siempre en el módulo de configuración.
 

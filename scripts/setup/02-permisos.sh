@@ -51,9 +51,13 @@ ALLOW_BASE=(
   "Bash(grep *)"
 )
 
-# Comandos del stack (build/test). Rellenar cuando se defina la tecnología.
-# Ejemplos: "Bash(make *)" "Bash(python3 -m pytest *)" "Bash(npm run *)"
+# Comandos del stack (build/test). JavaScript + Three.js implica npm/node.
+# Ajusta esta lista cuando developer-teams fije las herramientas en
+# docs/technical/ARQUITECTURA.md y COMMANDS.md.
 ALLOW_STACK=(
+  "Bash(npm *)"
+  "Bash(npx *)"
+  "Bash(node *)"
 )
 
 DENY=(

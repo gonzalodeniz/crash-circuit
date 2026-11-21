@@ -146,7 +146,7 @@ PROTEGIDOS_COMUNES = [
 SOLO_EN = {
     "product-manager": [],  # no edita ficheros
     "qa-teams": [],         # no edita ficheros
-    "doc-teams": ["README.md", "INDEX.md", "docs/user/"],
+    "doc-teams": ["README.md", "CHANGELOG.md", "INDEX.md", "docs/user/"],
     "orquestador": [],      # no edita ficheros
 }
 
@@ -231,7 +231,7 @@ SIN_FICHEROS = {
     "product-manager": "product-manager no modifica ficheros.",
     "qa-teams": "qa-teams no modifica ficheros.",
     "orquestador": "el orquestador no modifica ficheros.",
-    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de README.md, INDEX.md y docs/user/.",
+    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de README.md, CHANGELOG.md, INDEX.md y docs/user/.",
 }
 
 # ---------------------------------------------------------------------------
@@ -835,9 +835,9 @@ Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --json number,headR
    ```bash
    gh pr merge <PR> --squash --delete-branch
    git switch main && git pull --ff-only
-   gh issue edit <N> --remove-label "estado:validado"
+   gh issue edit <N> --remove-label "estado:validado" --add-label "changelog-pendiente"
    ```
-3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`).
+3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`) y que tiene `changelog-pendiente`, para que `doc-teams` la anote en `CHANGELOG.md`.
 
 El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`.
 
@@ -989,7 +989,7 @@ seleccionado qa-teams && instalar ".claude/agents/qa-teams.md" "$AGENTE_QA"
 read -r -d '' AGENTE_DOC <<'EOF' || true
 ---
 name: doc-teams
-description: Documentación de Crash Circuit. Úsalo cuando haya issues cerradas con la etiqueta impacto-documental. Actualiza README.md y la documentación de usuario en docs/user/ según lo fusionado en main, y retira la etiqueta. No modifica código.
+description: Documentación de Crash Circuit. Úsalo cuando haya issues cerradas con la etiqueta impacto-documental o changelog-pendiente. Actualiza README.md, la documentación de usuario en docs/user/ y CHANGELOG.md según lo fusionado en main, y retira las etiquetas. No modifica código.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 color: cyan
@@ -1010,35 +1010,53 @@ Eres el equipo de documentación de **Crash Circuit**, un juego de carreras arca
 |---|---|
 | `README.md` | Qué es el juego, requisitos (navegador de escritorio con WebGL), cómo arrancarlo en local, estado actual (qué entregas están disponibles) y enlaces al resto de documentación. |
 | `docs/user/MANUAL_USUARIO.md` | Cómo jugar: menú y selección, controles, reglas visibles para el jugador (vueltas válidas, posiciones, destrucción y reaparición, puntuación, resultados y estimaciones), pausa y opciones. |
+| `CHANGELOG.md` | Resumen de cada issue terminada, agrupado por entrega (ver «Formato del changelog»). |
 
-Solo puedes editar `README.md`, `INDEX.md` y `docs/user/` (el hook lo impide en el resto). `docs/technical/ARQUITECTURA.md` lo mantiene `developer-teams`; tú lo lees, no lo modificas.
+Solo puedes editar `README.md`, `CHANGELOG.md`, `INDEX.md` y `docs/user/` (el hook lo impide en el resto). `docs/technical/ARQUITECTURA.md` lo mantiene `developer-teams`; tú lo lees, no lo modificas.
 
 ## Flujo
 
 1. Lee `CONTEXT.md`, `docs/process/FLUJO_DE_TRABAJO.md` y `INDEX.md`.
 2. Sitúate en main actualizado: `git switch main && git pull --ff-only`.
-3. Lista las issues pendientes de documentar:
-   `gh issue list --state closed --label impacto-documental --json number,title`
+3. Lista las issues pendientes:
+   ```bash
+   gh issue list --state closed --label changelog-pendiente --json number,title,milestone
+   gh issue list --state closed --label impacto-documental --json number,title
+   ```
 4. Para cada una, en orden de número:
    1. Lee la issue y su PR fusionada, incluido el handoff de `developer-teams` y el resultado de `qa-teams`:
-      `gh pr list --state merged --search "Closes #<N>" --json number` y `gh pr view <PR> --comments`.
-   2. **Comprueba en el código de main** el comportamiento que vas a documentar (controles, valores de configuración, comandos de `COMMANDS.md`). Documenta lo que hace el juego, no lo que la issue pretendía.
-   3. Actualiza los documentos afectados. Si creas un fichero nuevo, regístralo en `INDEX.md`.
-   4. Commit y push en main:
+      `gh pr list --state merged --search "Closes #<N>" --json number,mergedAt` y `gh pr view <PR> --comments`.
+   2. Si tiene `impacto-documental`: **comprueba en el código de main** el comportamiento que vas a documentar (controles, valores de configuración, comandos de `COMMANDS.md`) y actualiza los documentos afectados. Documenta lo que hace el juego, no lo que la issue pretendía. Si creas un fichero nuevo, regístralo en `INDEX.md`.
+   3. Si tiene `changelog-pendiente`: añade su entrada a `CHANGELOG.md` (ver «Formato del changelog»).
+   4. Commit y push en main, añadiendo solo los ficheros que hayas cambiado:
       ```bash
-      git add README.md INDEX.md docs/user/
-      git commit -m "[doc-teams] Documenta <tema> (#<N>)"
+      git add <ficheros cambiados>
+      git commit -m "[doc-teams] Documenta <tema> (#<N>)"   # solo changelog: "[doc-teams] Anota #<N> en el changelog"
       git push
       ```
-   5. Retira la etiqueta y deja constancia:
+   5. Retira las etiquetas que hayas atendido (solo las que tenga la issue) y deja constancia:
       ```bash
-      gh issue edit <N> --remove-label "impacto-documental"
+      gh issue edit <N> --remove-label "changelog-pendiente" --remove-label "impacto-documental"
       gh issue comment <N> --body-file - <<'DOC'
       Rol: doc-teams
       Documentación actualizada: <ficheros>
       Commit: <hash>
       DOC
       ```
+
+## Formato del changelog
+
+`CHANGELOG.md` agrupa las issues terminadas por entrega, de la más reciente a la más antigua; dentro de cada entrega, las entradas van en orden de fusión (la última, al final). Si la sección de la entrega no existe, créala con el nombre que tiene en `docs/product/03_ROADMAP.md`. Si el fichero no existe, créalo con la cabecera `# Changelog` y regístralo en `INDEX.md`.
+
+```markdown
+## E1 — <nombre de la entrega>
+
+- **#12 <título de la issue>** (PR #15, <fecha de fusión AAAA-MM-DD>): qué puede hacer ahora el jugador o qué cambia en el proyecto, en 1–2 frases. Requisitos: RF-009, RF-010.
+```
+
+- Escribe el resumen a partir del handoff y de lo que hay en main, no de la intención de la issue.
+- Las issues `tipo:tecnica` también se anotan, con un resumen orientado al proyecto.
+- No reescribas entradas anteriores salvo para corregir un error.
 
 ## Criterios
 
@@ -1090,6 +1108,7 @@ Repite estos pasos hasta que se cumpla una condición de parada:
 ```bash
 gh issue list --state open --limit 200 --json number,title,labels,milestone
 gh issue list --state closed --label impacto-documental --json number,title
+gh issue list --state closed --label changelog-pendiente --json number,title
 ```
 
 ### 2. Decidir la siguiente acción
@@ -1104,7 +1123,7 @@ Aplica la **primera** regla que se cumpla:
 | 4 | Una issue con `estado:no-validado` | `developer-teams` (corregir) |
 | 5 | Una issue con `estado:listo-para-qa` | `qa-teams` |
 | 6 | Una issue con `estado:en-desarrollo` | `developer-teams` (retomar) |
-| 7 | Issues cerradas con `impacto-documental` | `doc-teams` |
+| 7 | Issues cerradas con `impacto-documental` o `changelog-pendiente` | `doc-teams` |
 | 8 | Issues con `estado:nuevo` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
 | 9 | Ninguna de las anteriores | `product-manager` (crear issues, preparar aceptación o priorizar `tipo:tecnica`) |
 
@@ -1138,7 +1157,7 @@ Cuando el subagente termine, vuelve a leer la issue (`gh issue view <N> --json s
 | `developer-teams` empezar, retomar o corregir | `estado:listo-para-qa`, o `requiere-decision` |
 | `qa-teams` | `estado:validado` o `estado:no-validado` |
 | `developer-teams` fusionar | Issue cerrada |
-| `doc-teams` | Sin issues cerradas con `impacto-documental`, o `requiere-decision` |
+| `doc-teams` | Sin issues cerradas con `impacto-documental` ni `changelog-pendiente`, o `requiere-decision` |
 | `product-manager` | Issues nuevas, aceptación creada, milestone cerrado o decisión aplicada |
 
 Si la transición no ha ocurrido y el subagente no explica por qué, **no lo vuelvas a lanzar con la misma tarea**: para e infórmalo.

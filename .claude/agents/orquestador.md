@@ -27,6 +27,7 @@ Repite estos pasos hasta que se cumpla una condición de parada:
 ```bash
 gh issue list --state open --limit 200 --json number,title,labels,milestone
 gh issue list --state closed --label impacto-documental --json number,title
+gh issue list --state closed --label changelog-pendiente --json number,title
 ```
 
 ### 2. Decidir la siguiente acción
@@ -41,7 +42,7 @@ Aplica la **primera** regla que se cumpla:
 | 4 | Una issue con `estado:no-validado` | `developer-teams` (corregir) |
 | 5 | Una issue con `estado:listo-para-qa` | `qa-teams` |
 | 6 | Una issue con `estado:en-desarrollo` | `developer-teams` (retomar) |
-| 7 | Issues cerradas con `impacto-documental` | `doc-teams` |
+| 7 | Issues cerradas con `impacto-documental` o `changelog-pendiente` | `doc-teams` |
 | 8 | Issues con `estado:nuevo` | `developer-teams` con la de **número más bajo** del milestone abierto más bajo cuyas dependencias estén todas cerradas |
 | 9 | Ninguna de las anteriores | `product-manager` (crear issues, preparar aceptación o priorizar `tipo:tecnica`) |
 
@@ -75,7 +76,7 @@ Cuando el subagente termine, vuelve a leer la issue (`gh issue view <N> --json s
 | `developer-teams` empezar, retomar o corregir | `estado:listo-para-qa`, o `requiere-decision` |
 | `qa-teams` | `estado:validado` o `estado:no-validado` |
 | `developer-teams` fusionar | Issue cerrada |
-| `doc-teams` | Sin issues cerradas con `impacto-documental`, o `requiere-decision` |
+| `doc-teams` | Sin issues cerradas con `impacto-documental` ni `changelog-pendiente`, o `requiere-decision` |
 | `product-manager` | Issues nuevas, aceptación creada, milestone cerrado o decisión aplicada |
 
 Si la transición no ha ocurrido y el subagente no explica por qué, **no lo vuelvas a lanzar con la misma tarea**: para e infórmalo.

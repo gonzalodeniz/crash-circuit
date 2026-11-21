@@ -68,7 +68,7 @@ PROTEGIDOS_COMUNES = [
 SOLO_EN = {
     "product-manager": [],  # no edita ficheros
     "qa-teams": [],         # no edita ficheros
-    "doc-teams": ["README.md", "INDEX.md", "docs/user/"],
+    "doc-teams": ["README.md", "CHANGELOG.md", "INDEX.md", "docs/user/"],
     "orquestador": [],      # no edita ficheros
 }
 
@@ -153,7 +153,7 @@ SIN_FICHEROS = {
     "product-manager": "product-manager no modifica ficheros.",
     "qa-teams": "qa-teams no modifica ficheros.",
     "orquestador": "el orquestador no modifica ficheros.",
-    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de README.md, INDEX.md y docs/user/.",
+    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de README.md, CHANGELOG.md, INDEX.md y docs/user/.",
 }
 
 # ---------------------------------------------------------------------------

@@ -53,7 +53,7 @@ Reglas comunes a todos los roles. Cada rol tiene además sus instrucciones en `.
 | `product-manager` | Convierte `docs/product/` en issues ejecutables, por entregas del roadmap (E1…E8). | Escribir código. Cambiar `docs/product/` sin autorización del usuario. |
 | `developer-teams` | Implementa una issue, abre la PR, corrige tras QA y fusiona cuando está validada. | Fusionar sin `estado:validado`. Trabajar en dos issues a la vez. |
 | `qa-teams` | Valida la PR contra los criterios de aceptación y los `RF`/`RN`/`CA` referenciados. | Modificar código, fusionar ni cerrar issues. |
-| `doc-teams` | Actualiza `README.md` y la documentación de usuario (`docs/user/`) tras una fusión con impacto documental. | Modificar código, `docs/product/` ni `docs/technical/`. |
+| `doc-teams` | Actualiza `README.md` y la documentación de usuario (`docs/user/`) tras una fusión con impacto documental, y anota cada issue terminada en `CHANGELOG.md`. | Modificar código, `docs/product/` ni `docs/technical/`. |
 | `quality-auditor`, `security-auditor` | Auditorías periódicas (cron), fuera del ciclo del orquestador. Sus hallazgos se convierten en issues `tipo:tecnica`. | Implementar correcciones. |
 
 ## Estados de una issue (etiquetas)
@@ -71,13 +71,14 @@ gh issue edit <N> --remove-label "estado:<actual>" --add-label "estado:<nuevo>"
 | `estado:en-desarrollo` | `developer-teams` | Continúa → `estado:listo-para-qa` (PR lista para revisión). |
 | `estado:listo-para-qa` | `qa-teams` | → `estado:validado` o `estado:no-validado`. |
 | `estado:no-validado` | `developer-teams` | Corrige en la misma rama y PR → `estado:listo-para-qa`. |
-| `estado:validado` | `developer-teams` | Fusiona la PR (squash) y borra la rama; la issue se cierra sola. |
+| `estado:validado` | `developer-teams` | Fusiona la PR (squash) y borra la rama; la issue se cierra sola. Le añade `changelog-pendiente`. |
 | Issue cerrada con `impacto-documental` | `doc-teams` | Documenta y retira la etiqueta `impacto-documental`. |
+| Issue cerrada con `changelog-pendiente` | `doc-teams` | Añade su entrada a `CHANGELOG.md` y retira la etiqueta `changelog-pendiente`. |
 | `requiere-decision` (cualquier estado) | Usuario | El orquestador se detiene y presenta la pregunta. |
 | `Aceptación de la entrega Ek` respondida (sin `requiere-decision`) | `product-manager` | Cierra el milestone o crea issues para lo que falta. |
 | `Decisión de producto: …` respondida (sin `requiere-decision`) | `product-manager` | Aplica la decisión a las issues afectadas. |
 
-Prioridad del orquestador, de mayor a menor: `requiere-decision` → decisiones respondidas → `validado` → `no-validado` → `listo-para-qa` → `en-desarrollo` → documentación pendiente → `nuevo` → crear issues nuevas.
+Prioridad del orquestador, de mayor a menor: `requiere-decision` → decisiones respondidas → `validado` → `no-validado` → `listo-para-qa` → `en-desarrollo` → documentación pendiente (`impacto-documental` o `changelog-pendiente`) → `nuevo` → crear issues nuevas.
 
 Las issues abiertas sin etiqueta `estado:*` ni `requiere-decision` (por ejemplo, una aceptación de entrega ya tramitada o una issue técnica aplazada) no generan trabajo.
 

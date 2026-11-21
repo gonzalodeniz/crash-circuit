@@ -158,7 +158,8 @@ Si `developer-teams` incorpora una herramienta cuyo comando no está permitido, 
 nuevo ──► en-desarrollo ──► listo-para-qa ──► validado ──► (fusionada y cerrada)
                                  ▲     │                         │
                                  │     ▼                         ▼
-                                 └─ no-validado          impacto-documental ──► doc-teams
+                                 └─ no-validado          impacto-documental  ──► doc-teams
+                                                         changelog-pendiente ──► doc-teams
 ```
 
 | Etiqueta | Significado | Siguiente rol |
@@ -169,6 +170,7 @@ nuevo ──► en-desarrollo ──► listo-para-qa ──► validado ──�
 | `estado:no-validado` | QA ha encontrado defectos bloqueantes | developer-teams |
 | `estado:validado` | QA aprueba | developer-teams (fusiona) |
 | `impacto-documental` | Al cerrarse, hay que documentar | doc-teams |
+| `changelog-pendiente` | Fusionada; hay que anotarla en `CHANGELOG.md` | doc-teams |
 | `requiere-decision` | Bloqueada esperando tu respuesta | tú |
 | `tipo:tecnica` | Deuda técnica o hallazgo de auditoría | product-manager la prioriza |
 
@@ -184,7 +186,7 @@ Las restricciones no dependen solo del prompt: el hook `.claude/hooks/guard.py` 
 | product-manager | opus | Crear y editar issues, cerrar milestones | Modificar ficheros o git; gestionar PR; cerrar issues |
 | developer-teams | sonnet (effort high) | Código, ramas, PR, fusionar | Commit o push en `main`, rebase, push forzado, fusionar sin `estado:validado`, cerrar issues |
 | qa-teams | sonnet (effort high) | Descargar la PR, ejecutar pruebas, comentar | Modificar ficheros o git; fusionar; crear o cerrar issues |
-| doc-teams | sonnet | Editar `README.md`, `INDEX.md` y `docs/user/`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
+| doc-teams | sonnet | Editar `README.md`, `CHANGELOG.md`, `INDEX.md` y `docs/user/`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
 
 Además, **ningún rol** puede editar `CLAUDE.md`, `CONTEXT.md`, `.claude/`, `docs/process/` ni `docs/product/`, ni escribir fuera del proyecto.
 

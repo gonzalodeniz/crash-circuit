@@ -63,9 +63,9 @@ Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --json number,headR
    ```bash
    gh pr merge <PR> --squash --delete-branch
    git switch main && git pull --ff-only
-   gh issue edit <N> --remove-label "estado:validado"
+   gh issue edit <N> --remove-label "estado:validado" --add-label "changelog-pendiente"
    ```
-3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`).
+3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`) y que tiene `changelog-pendiente`, para que `doc-teams` la anote en `CHANGELOG.md`.
 
 El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`.
 

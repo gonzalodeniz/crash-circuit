@@ -8,6 +8,8 @@
 - `CONTEXT.md`: contexto del proyecto: resumen del producto, restricciones de arquitectura, modelo de dominio y configuración.
 - `COMMANDS.md`: comandos útiles para los agentes (build, lint, test, ejecución local). Solo comandos verificados.
 - `INDEX.md`: este índice.
+- `README.md`: descripción del juego y cómo arrancarlo. Lo mantiene `doc-teams`.
+- `CHANGELOG.md`: resumen de cada issue terminada, agrupado por entrega. Lo mantiene `doc-teams`.
 - `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*` y `logs/`).
 
 ## `docs/product/` (fuente de verdad del producto, en español)

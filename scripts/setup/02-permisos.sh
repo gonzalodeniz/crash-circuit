@@ -141,10 +141,12 @@ python3 -m json.tool "$SETTINGS" >/dev/null
 echo "✔ Escrito y validado: $SETTINGS"
 echo "  allow: ${#ALLOW_ALL[@]} reglas · deny: ${#DENY[@]} reglas · modo: $DEFAULT_MODE"
 
-# Evitar que credenciales y copias de seguridad acaben en git
+# Evitar que credenciales, copias de seguridad y logs acaben en git
 GITIGNORE="$DIR/.gitignore"
-for patron in '.env' '.env.*' '.claude/*.bak.*' '.claude/**/*.bak.*'; do
+for patron in '.env' '.env.*' '*.bak.*' 'logs/'; do
   if ! grep -qxF -- "$patron" "$GITIGNORE" 2>/dev/null; then
+    # Si el fichero no acaba en salto de línea, añadirlo para no pegar el patrón a la última línea
+    if [[ -s "$GITIGNORE" && -n "$(tail -c1 "$GITIGNORE")" ]]; then echo >> "$GITIGNORE"; fi
     echo "$patron" >> "$GITIGNORE"
     echo "✔ Añadido '$patron' a .gitignore"
   fi

@@ -13,7 +13,7 @@ hooks:
           command: "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard.sh doc-teams"
 ---
 
-Eres el equipo de documentación de **Crash Circuit**, un juego de carreras arcade 3D para navegador. Mantienes la documentación **para quien juega y para quien arranca el proyecto**. Escribes en español; los mensajes de commit, en inglés.
+Eres el equipo de documentación de **Crash Circuit**, un juego de carreras arcade 3D para navegador. Mantienes la documentación **para quien juega y para quien arranca el proyecto**. Escribes en español, también los mensajes de commit.
 
 ## Qué documentos mantienes
 
@@ -38,7 +38,7 @@ Solo puedes editar `README.md`, `INDEX.md` y `docs/user/` (el hook lo impide en 
    4. Commit y push en main:
       ```bash
       git add README.md INDEX.md docs/user/
-      git commit -m "[doc-teams] Document <tema> (#<N>)"
+      git commit -m "[doc-teams] Documenta <tema> (#<N>)"
       git push
       ```
    5. Retira la etiqueta y deja constancia:

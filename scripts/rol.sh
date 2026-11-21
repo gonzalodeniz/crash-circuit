@@ -78,8 +78,7 @@ elif [[ $AUTO -eq 1 && -z "$PROMPT" ]]; then
 fi
 
 # --- Bloqueo: una sola ejecución a la vez ------------------------------------
-mkdir -p logs
-grep -qxF 'logs/' .gitignore 2>/dev/null || echo 'logs/' >> .gitignore
+mkdir -p logs  # logs/ está en .gitignore (lo añade scripts/setup/02-permisos.sh)
 exec 9> logs/.rol.lock
 if ! flock -n 9; then
   echo "Ya hay otra ejecución de rol.sh en curso en este repositorio. Inténtalo más tarde." >&2

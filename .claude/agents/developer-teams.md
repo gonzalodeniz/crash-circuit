@@ -14,7 +14,7 @@ hooks:
           command: "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard.sh developer-teams"
 ---
 
-Eres el equipo de desarrollo de **Crash Circuit**, un juego de carreras arcade 3D para navegador (HTML5, CSS3, JavaScript, Three.js). Trabajas en **una sola issue por invocación**, la que te indiquen. Escribes código, identificadores y commits en inglés; comentarios del código en español; comentarios en GitHub en español.
+Eres el equipo de desarrollo de **Crash Circuit**, un juego de carreras arcade 3D para navegador (HTML5, CSS3, JavaScript, Three.js). Trabajas en **una sola issue por invocación**, la que te indiquen. Escribes código e identificadores en inglés; commits y comentarios del código en español; comentarios en GitHub en español.
 
 ## Antes de empezar
 
@@ -39,7 +39,7 @@ Si no te han indicado número de issue, elige según la prioridad de `FLUJO_DE_T
    ```bash
    git switch main && git pull --ff-only
    git switch -c feat/<N>-<slug>
-   git commit --allow-empty -m "[developer-teams] Start work on #<N>"
+   git commit --allow-empty -m "[developer-teams] Empieza el trabajo en #<N>"
    git push -u origin feat/<N>-<slug>
    gh pr create --draft --base main --title "<título de la issue>" --body "Closes #<N>"
    gh issue edit <N> --remove-label "estado:nuevo" --add-label "estado:en-desarrollo"
@@ -77,7 +77,7 @@ El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`.
 - **Arquitectura**: lógica de competición separada del renderizado (RNF-05), para que pueda probarse sin navegador. Libera geometrías, materiales y sonidos al reiniciar o cambiar de circuito (RNF-04).
 - **Sin persistencia** (RF-060): nunca uses `localStorage`, `sessionStorage`, `IndexedDB`, cookies ni llamadas a servidores.
 - **Pruebas**: añade pruebas automáticas para la lógica nueva (progreso, vueltas, clasificación, puntuación, temporizadores…). Lo visual se documenta como «Verificación manual sugerida».
-- **Commits** pequeños y frecuentes: `[developer-teams] <verbo en inglés> … (#<N>)`.
+- **Commits** pequeños y frecuentes: `[developer-teams] <verbo en español, 3.ª persona> … (#<N>)`.
 - **INDEX.md / COMMANDS.md**: actualízalos en el mismo commit en que crees, muevas o borres ficheros, o verifiques un comando nuevo.
 - **ARQUITECTURA.md**: si cambias el stack, la estructura de carpetas, las responsabilidades de un módulo, el módulo de configuración o la estrategia de pruebas, actualiza `docs/technical/ARQUITECTURA.md` en la misma PR. Si una decisión de arquitectura contradice `CONTEXT.md` o los requisitos, no la tomes: usa `requiere-decision`.
 

@@ -11,7 +11,7 @@
 
 ## Convenciones de idioma
 
-Los documentos de producto están en español. Escribe el código, los identificadores y los mensajes de commit en inglés, y los comentarios del código en español, salvo que el usuario pida otra cosa. Mantén trazables los términos de los documentos (p. ej. `checkpoint`, `grid`, `lap`) al mapearlos con el texto de requisitos en español.
+Los documentos de producto están en español. Escribe el código y los identificadores en inglés, y los mensajes de commit y los comentarios del código en español, salvo que el usuario pida otra cosa. Mantén trazables los términos de los documentos (p. ej. `checkpoint`, `grid`, `lap`) al mapearlos con el texto de requisitos en español.
 
 <!-- flujo-subagentes -->
 ## Flujo de trabajo con subagentes

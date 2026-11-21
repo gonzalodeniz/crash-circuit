@@ -105,15 +105,15 @@ Cada issue se asigna al milestone de su entrega (`E1`, `E2`…).
 ## Ramas, commits y PR
 
 - Rama por issue: `feat/<N>-<slug>` (o `fix/<N>-<slug>`), creada desde `main` actualizado.
-- Commits en inglés con prefijo del rol y referencia a la issue: `[developer-teams] Add checkpoint-based lap validation (#12)`.
+- Commits en español con prefijo del rol y referencia a la issue: `[developer-teams] Añade la validación de vueltas por checkpoints (#12)`.
 - Una PR por issue, con `Closes #<N>` en la descripción. Se abre en borrador al empezar y se marca lista al pasar a QA.
 - La PR se sincroniza con `main` antes de cada paso a QA.
 - Fusión siempre con *squash* y borrado de la rama: `gh pr merge <PR> --squash --delete-branch`.
-- `main` no recibe commits directos, salvo los de `product-manager` y `doc-teams` sobre documentación.
+- `main` no recibe commits directos, salvo los de `doc-teams` sobre documentación.
 
 ## Comentarios estructurados
 
-Todo comentario en issues o PR empieza con `Rol: <rol>`. Los textos de issues y comentarios van en español; el código y los commits, en inglés (ver `CLAUDE.md`).
+Todo comentario en issues o PR empieza con `Rol: <rol>`. Los textos de issues, comentarios y commits van en español; el código, en inglés (ver `CLAUDE.md`).
 
 **Handoff de `developer-teams` a QA** (comentario en la PR):
 
@@ -213,7 +213,7 @@ $MARCA_INDEX
 
 - \`$FLUJO\`: reglas comunes de los subagentes (roles, estados, ramas, plantillas, bloqueos). Solo se modifica con autorización del usuario.
 - \`.claude/settings.json\`: permisos de Claude Code. Se genera con \`scripts/setup/02-permisos.sh\`.
-- \`.claude/agents/\`: definiciones de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams, quality-auditor, security-auditor).
+- \`.claude/agents/\`: definiciones de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams). Se generan con \`scripts/setup/04-agentes.sh\`.
 - \`scripts/setup/\`: scripts para reconstruir la configuración desde cero, numerados en orden de ejecución.
 EOF
   echo "✔ Sección añadida a INDEX.md"

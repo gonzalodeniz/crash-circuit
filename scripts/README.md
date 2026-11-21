@@ -77,7 +77,7 @@ chmod +x scripts/rol.sh scripts/setup/*.sh
 # 4. Subagentes (.claude/agents/) y hook de protección (.claude/hooks/)
 ./scripts/setup/04-agentes.sh
 
-git add -A && git commit -m "[setup] Install subagent workflow"
+git add -A && git commit -m "[setup] Instala el flujo de subagentes"
 git push
 ```
 
@@ -188,7 +188,7 @@ Las restricciones no dependen solo del prompt: el hook `.claude/hooks/guard.py` 
 
 Además, **ningún rol** puede editar `CLAUDE.md`, `CONTEXT.md`, `.claude/`, `docs/process/` ni `docs/product/`, ni escribir fuera del proyecto.
 
-> El hook previene errores de los agentes, no ataques deliberados: un comando envuelto en `bash -c "…"` podría eludirlo.
+> El hook analiza cada orden del comando (también las que van tras saltos de línea o dentro de `bash -c`, `eval` y `$(…)`), pero previene errores de los agentes, no ataques deliberados: por ejemplo, un script de Python o Node que escriba ficheros no se detecta.
 
 ## Modificar la configuración
 

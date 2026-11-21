@@ -8,7 +8,7 @@
 - `CONTEXT.md`: contexto del proyecto: resumen del producto, restricciones de arquitectura, modelo de dominio y configuración.
 - `COMMANDS.md`: comandos útiles para los agentes (build, lint, test, ejecución local). Solo comandos verificados.
 - `INDEX.md`: este índice.
-- `.gitignore`: ficheros excluidos de git (copias de seguridad `.claude/*.bak.*`).
+- `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*` y `logs/`).
 
 ## `docs/product/` (fuente de verdad del producto, en español)
 
@@ -21,11 +21,12 @@
 
 - `docs/process/FLUJO_DE_TRABAJO.md`: reglas comunes de los subagentes (roles, estados, ramas, plantillas, bloqueos). Solo se modifica con autorización del usuario.
 - `.claude/settings.json`: permisos de Claude Code. Se genera con `scripts/setup/02-permisos.sh`.
-- `.claude/agents/`: definiciones de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams, quality-auditor, security-auditor).
+- `.claude/agents/`: definiciones de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams). Se generan con `scripts/setup/04-agentes.sh`.
 - `scripts/setup/`: scripts para reconstruir la configuración desde cero, numerados en orden de ejecución.
   - `scripts/setup/01-etiquetas.sh`: crea las etiquetas de GitHub del flujo de trabajo.
   - `scripts/setup/02-permisos.sh`: genera `.claude/settings.json` con los permisos de Claude Code.
   - `scripts/setup/03-flujo-trabajo.sh`: instala `docs/process/FLUJO_DE_TRABAJO.md` y las referencias en `CLAUDE.md` e `INDEX.md`.
+  - `scripts/setup/04-agentes.sh`: instala los subagentes de `.claude/agents/` y el hook `guard` (`.claude/hooks/`).
 - `.claude/hooks/guard.sh` y `.claude/hooks/guard.py`: hook que bloquea, por rol, comandos y ediciones de ficheros prohibidos. Se generan con `scripts/setup/04-agentes.sh`.
 - `scripts/rol.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto; carga `.env`, impide ejecuciones simultáneas y guarda logs en `logs/`.
 - `scripts/README.md`: manual de uso del sistema de subagentes (instalación, uso diario, decisiones, aceptación de entregas, solución de problemas).

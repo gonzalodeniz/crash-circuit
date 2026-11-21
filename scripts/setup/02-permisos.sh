@@ -48,6 +48,7 @@ ALLOW_BASE=(
   "Bash(ls *)"
   "Bash(tree *)"
   "Bash(date *)"
+  "Bash(grep *)"
 )
 
 # Comandos del stack (build/test). Rellenar cuando se defina la tecnología.

@@ -10,7 +10,11 @@
       "Bash(gh repo view *)",
       "Bash(ls *)",
       "Bash(tree *)",
-      "Bash(date *)"
+      "Bash(date *)",
+      "Bash(grep *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)"
     ],
     "deny": [
       "Read(./.env)",

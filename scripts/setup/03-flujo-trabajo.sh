@@ -53,7 +53,7 @@ Reglas comunes a todos los roles. Cada rol tiene además sus instrucciones en `.
 | `product-manager` | Convierte `docs/product/` en issues ejecutables, por entregas del roadmap (E1…E8). | Escribir código. Cambiar `docs/product/` sin autorización del usuario. |
 | `developer-teams` | Implementa una issue, abre la PR, corrige tras QA y fusiona cuando está validada. | Fusionar sin `estado:validado`. Trabajar en dos issues a la vez. |
 | `qa-teams` | Valida la PR contra los criterios de aceptación y los `RF`/`RN`/`CA` referenciados. | Modificar código, fusionar ni cerrar issues. |
-| `doc-teams` | Actualiza la documentación de usuario y técnica tras una fusión con impacto documental. | Modificar código ni `docs/product/`. |
+| `doc-teams` | Actualiza `README.md` y la documentación de usuario (`docs/user/`) tras una fusión con impacto documental. | Modificar código, `docs/product/` ni `docs/technical/`. |
 | `quality-auditor`, `security-auditor` | Auditorías periódicas (cron), fuera del ciclo del orquestador. Sus hallazgos se convierten en issues `tipo:tecnica`. | Implementar correcciones. |
 
 ## Estados de una issue (etiquetas)
@@ -121,6 +121,7 @@ Criterios cubiertos: lista de criterios de la issue y cómo se cumplen
 Pruebas ejecutadas: comandos de COMMANDS.md y resultado
 Verificación manual sugerida: pasos para comprobarlo jugando (o «ninguna»)
 Decisiones relevantes: …
+Arquitectura: ARQUITECTURA.md actualizado|sin cambios
 Limitaciones y deuda técnica: … (o «ninguna»)
 Impacto documental: sí|no
 ```
@@ -156,6 +157,7 @@ No decidas por tu cuenta nada que contradiga `docs/product/`. Los valores marcad
 
 - `CLAUDE.md`, `.claude/**` y `docs/process/FLUJO_DE_TRABAJO.md`: solo con autorización explícita del usuario.
 - `docs/product/**`: fuente de verdad; ningún rol la modifica sin autorización.
+- `docs/technical/ARQUITECTURA.md`: decisiones técnicas (stack, estructura de carpetas, módulos y responsabilidades, módulo de configuración, estrategia de pruebas). Lo crea `developer-teams` en la issue de base técnica de E1 y lo actualiza en la misma PR que cambie cualquiera de esas decisiones. `qa-teams` comprueba que el código coincide con él.
 - `INDEX.md` y `COMMANDS.md`: cualquier rol que cree, mueva o borre ficheros, o verifique un comando nuevo, los actualiza en el mismo cambio.
 - Cuando se incorpore una herramienta nueva (build, test, lint), `developer-teams` la añade a `COMMANDS.md` e indica en su handoff que hay que permitir el comando en `.claude/settings.json`.
 EOF

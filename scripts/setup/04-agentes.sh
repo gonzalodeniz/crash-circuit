@@ -825,6 +825,12 @@ if [[ -f INDEX.md ]] && ! grep -qF 'scripts/rol.sh' INDEX.md && grep -qF '<!-- i
 fi
 [[ -f scripts/rol.sh ]] || echo "! Falta scripts/rol.sh: cópialo al proyecto para poder lanzar el orquestador"
 
+LINEA_README='- `scripts/README.md`: manual de uso del sistema de subagentes (instalación, uso diario, decisiones, aceptación de entregas, solución de problemas).'
+if [[ -f INDEX.md ]] && ! grep -qF 'scripts/README.md' INDEX.md && grep -qF '<!-- indice-flujo-subagentes -->' INDEX.md; then
+  echo "$LINEA_README" >> INDEX.md
+  echo "✔ scripts/README.md registrado en INDEX.md"
+fi
+
 echo
 echo "Agentes instalados:"
 ls -1 .claude/agents/*.md 2>/dev/null | sed 's/^/  /'

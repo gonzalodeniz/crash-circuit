@@ -141,9 +141,11 @@ python3 -m json.tool "$SETTINGS" >/dev/null
 echo "✔ Escrito y validado: $SETTINGS"
 echo "  allow: ${#ALLOW_ALL[@]} reglas · deny: ${#DENY[@]} reglas · modo: $DEFAULT_MODE"
 
-# Evitar que las copias de seguridad acaben en git
+# Evitar que credenciales y copias de seguridad acaben en git
 GITIGNORE="$DIR/.gitignore"
-if ! grep -qxF '.claude/*.bak.*' "$GITIGNORE" 2>/dev/null; then
-  echo '.claude/*.bak.*' >> "$GITIGNORE"
-  echo "✔ Añadido '.claude/*.bak.*' a .gitignore"
-fi
+for patron in '.env' '.env.*' '.claude/*.bak.*' '.claude/**/*.bak.*'; do
+  if ! grep -qxF -- "$patron" "$GITIGNORE" 2>/dev/null; then
+    echo "$patron" >> "$GITIGNORE"
+    echo "✔ Añadido '$patron' a .gitignore"
+  fi
+done

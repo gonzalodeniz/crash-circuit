@@ -28,3 +28,4 @@
   - `scripts/setup/03-flujo-trabajo.sh`: instala `docs/process/FLUJO_DE_TRABAJO.md` y las referencias en `CLAUDE.md` e `INDEX.md`.
 - `.claude/hooks/guard.sh` y `.claude/hooks/guard.py`: hook que bloquea, por rol, comandos y ediciones de ficheros prohibidos. Se generan con `scripts/setup/04-agentes.sh`.
 - `scripts/rol.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto; carga `.env`, impide ejecuciones simultáneas y guarda logs en `logs/`.
+- `scripts/README.md`: manual de uso del sistema de subagentes (instalación, uso diario, decisiones, aceptación de entregas, solución de problemas).

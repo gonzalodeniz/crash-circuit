@@ -36,6 +36,24 @@ export const CONFIG = deepFreeze({
     targetFps: 60,
   },
 
+  // Rendimiento del coche, compartido por todos los modelos y pilotos (RF-003, RN-07):
+  // la dificultad nunca sale de aquí. Valores iniciales de la conducción arcade (RF-011),
+  // pendientes de calibrar jugando. Unidades: metros, segundos y radianes.
+  carPerformance: {
+    maxSpeed: 45, // m/s hacia delante
+    maxReverseSpeed: 12, // m/s marcha atrás
+    acceleration: 20, // m/s² con la flecha arriba
+    reverseAcceleration: 10, // m/s² en marcha atrás
+    brakeDeceleration: 40, // m/s² al frenar (mayor que la inercia, para detener antes)
+    coastDeceleration: 8, // m/s² sin pedal (inercia)
+    steerRate: 1.9, // rad/s de giro con la dirección a fondo
+    steerResponse: 6, // variación máxima de la dirección por segundo (de -1 a 1): suaviza el volante
+    fullSteerSpeed: 8, // m/s a partir de los cuales el coche gira con toda su capacidad
+    highSpeedSteerLoss: 0.35, // fracción de giro que se pierde a velocidad máxima (de 0 a 1)
+    stopSpeedEpsilon: 0.05, // m/s por debajo de los cuales se considera que el coche está parado
+    maxStep: 1 / 30, // s: paso de tiempo máximo por actualización, para evitar saltos
+  },
+
   // Textos de la interfaz (no son «propuesta» de producto; nombres finales pendientes de calibrar).
   ui: {
     menu: {

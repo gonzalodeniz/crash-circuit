@@ -1,5 +1,6 @@
 // Estado de la carrera: trazado y participantes. Lógica pura (RNF-05).
 import { buildTrack, gridSlot } from './track.js';
+import { createCarState } from './driving.js';
 
 /**
  * Crea una carrera con sus participantes colocados en la parrilla.
@@ -26,9 +27,7 @@ export function createRace(config, entries = [config.race.player]) {
       name: entry.name,
       isPlayer: Boolean(entry.isPlayer),
       gridIndex: index,
-      x: slot.x,
-      z: slot.z,
-      heading: slot.heading,
+      ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
     };
   });
 

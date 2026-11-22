@@ -4,7 +4,7 @@ Crash Circuit es un juego de carreras arcade en 3D para el navegador de escritor
 
 ## Estado actual
 
-El juego está en desarrollo. Ahora mismo solo está disponible la base técnica de la entrega E1: al abrir el juego se ve una escena 3D de prueba (un plano verde con cielo azul) a pantalla completa, que se adapta al tamaño de la ventana. Todavía no hay menú, circuito, coche ni carrera.
+El juego está en desarrollo. Ahora mismo están disponibles la base técnica y el menú principal de la entrega E1. Al abrir el juego aparece el menú con el botón «Empezar». Al pulsarlo se ve una escena 3D de prueba (un plano verde con cielo azul) a pantalla completa, que se adapta al tamaño de la ventana. Todavía no hay circuito, coche ni carrera.
 
 ## Requisitos
 
@@ -25,7 +25,7 @@ El juego no guarda nada ni usa servidores: al recargar la página todo vuelve al
 
 ## Entregas disponibles
 
-- E1 (en curso): base técnica disponible. Consulta el [changelog](CHANGELOG.md) para ver qué se ha terminado.
+- E1 (en curso): base técnica y menú principal disponibles. Consulta el [changelog](CHANGELOG.md) para ver qué se ha terminado.
 
 ## Más documentación
 

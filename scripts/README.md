@@ -271,7 +271,7 @@ Tras cambiar agentes, el hook o `CLAUDE.md`, abre una sesión nueva de Claude Co
 | `/list-agents` no muestra los agentes | Es normal: muestra agentes **en ejecución**, no los definidos. Usa `./scripts/rol.sh --list`. |
 | `ERROR: gh no autenticado` | Falta `GITHUB_PAT` en `.env` o el token ha caducado. |
 | `Ya hay otra ejecución de rol.sh en curso` | Otra ejecución tiene el bloqueo. Espera a que termine; si no hay ninguna, borra `logs/.rol.lock`. |
-| Un agente se queda pidiendo permiso para un comando | El comando no está en `.claude/settings.json`. Si es legítimo, añádelo a `permisos_extra` y relanza `02-permisos.sh`. |
+| Un agente se queda pidiendo permiso para un comando | Si es de Bash, `.claude/settings.json` está desactualizado: relanza `02-permisos.sh`, que permite todo Bash salvo la lista `deny`. Si es de otra herramienta, añade la regla a `permisos_extra` y relanza el script. Para ejecuciones desatendidas usa `rol.sh --auto`: nunca se queda esperando una respuesta. |
 | `Bloqueado por guard (<rol>): …` | El hook ha impedido una acción prohibida. Normalmente el agente corrige solo; si se repite, revisa si la regla del hook o `proyecto.json` es demasiado estricta. |
 | `product-manager` no crea issues para una funcionalidad nueva | Falta la línea `**Requisitos:**` en la entrega, los IDs no existen en el documento de requisitos o la entrega anterior no está aceptada. Revisa la issue `Decisión de producto: planificación del roadmap`. |
 | El orquestador para con «la transición no se produjo» | Revisa la issue y el resumen del subagente. Corrige la situación (etiqueta, PR) y relanza. |

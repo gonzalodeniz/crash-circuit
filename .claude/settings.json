@@ -2,36 +2,7 @@
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": [
-      "Bash(git *)",
-      "Bash(gh issue *)",
-      "Bash(gh pr *)",
-      "Bash(gh label *)",
-      "Bash(gh api *)",
-      "Bash(gh repo view *)",
-      "Bash(ls *)",
-      "Bash(tree *)",
-      "Bash(date *)",
-      "Bash(grep *)",
-      "Bash(head *)",
-      "Bash(tail *)",
-      "Bash(wc *)",
-      "Bash(find *)",
-      "Bash(sort *)",
-      "Bash(uniq *)",
-      "Bash(diff *)",
-      "Bash(jq *)",
-      "Bash(which *)",
-      "Bash(echo *)",
-      "Bash(printf *)",
-      "Bash(sed *)",
-      "Bash(mkdir *)",
-      "Bash(touch *)",
-      "Bash(cp *)",
-      "Bash(mv *)",
-      "Bash(rm *)",
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(node *)"
+      "Bash"
     ],
     "deny": [
       "Read(./.env)",
@@ -43,7 +14,10 @@
       "Bash(git reset --hard*)",
       "Bash(git clean -f*)",
       "Bash(gh repo delete*)",
-      "Bash(rm -rf *)"
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(rm -r -f *)",
+      "Bash(rm -f -r *)"
     ]
   }
 }

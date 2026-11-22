@@ -34,45 +34,18 @@ done
 
 # ---------------------------------------------------------------------------
 # Modo por defecto: acceptEdits = edita archivos sin preguntar; los comandos
-# fuera de "allow" piden confirmación.
+# de Bash están todos permitidos (ver ALLOW_BASE) salvo los de DENY.
 # ---------------------------------------------------------------------------
 DEFAULT_MODE="acceptEdits"
 
-# Comandos comunes del flujo (git + GitHub)
+# Bash sin patrón: permite cualquier comando, también los que Claude Code no
+# puede analizar por prefijo (sustitución de procesos <(…), órdenes encadenadas).
+# Con reglas por prefijo, esos comandos piden confirmación en sesión interactiva
+# (el flujo se queda esperando) y se deniegan en modo --auto. Lo que cada rol
+# puede o no puede hacer lo limita el hook guard.py; lo peligroso, la lista DENY,
+# que prevalece sobre "allow" en todos los modos de permisos.
 ALLOW_BASE=(
-  "Bash(git *)"
-  "Bash(gh issue *)"
-  "Bash(gh pr *)"
-  "Bash(gh label *)"
-  "Bash(gh api *)"
-  "Bash(gh repo view *)"
-  "Bash(ls *)"
-  "Bash(tree *)"
-  "Bash(date *)"
-  "Bash(grep *)"
-)
-
-# Utilidades de lectura y de ficheros. En modo --auto nadie puede aprobar un
-# permiso, así que lo que no esté aquí se deniega y el agente se atasca. Lo que
-# cada rol puede o no puede tocar lo limita el hook guard.py, no esta lista.
-ALLOW_UTILIDADES=(
-  "Bash(head *)"
-  "Bash(tail *)"
-  "Bash(wc *)"
-  "Bash(find *)"
-  "Bash(sort *)"
-  "Bash(uniq *)"
-  "Bash(diff *)"
-  "Bash(jq *)"
-  "Bash(which *)"
-  "Bash(echo *)"
-  "Bash(printf *)"
-  "Bash(sed *)"
-  "Bash(mkdir *)"
-  "Bash(touch *)"
-  "Bash(cp *)"
-  "Bash(mv *)"
-  "Bash(rm *)"
+  "Bash"
 )
 
 # Los comandos del stack (build/test) son propios de cada proyecto: se leen de
@@ -89,6 +62,9 @@ DENY=(
   "Bash(git clean -f*)"
   "Bash(gh repo delete*)"
   "Bash(rm -rf *)"
+  "Bash(rm -fr *)"
+  "Bash(rm -r -f *)"
+  "Bash(rm -f -r *)"
 )
 
 # --- Comprobaciones previas -------------------------------------------------
@@ -125,7 +101,7 @@ fi
 
 # Pasamos las listas a Python separadas por saltos de línea
 join_lines() { local IFS=$'\n'; echo "$*"; }
-ALLOW_ALL=("${ALLOW_BASE[@]}" "${ALLOW_UTILIDADES[@]}" ${ALLOW_STACK[@]+"${ALLOW_STACK[@]}"} ${EXTRA[@]+"${EXTRA[@]}"})
+ALLOW_ALL=("${ALLOW_BASE[@]}" ${ALLOW_STACK[@]+"${ALLOW_STACK[@]}"} ${EXTRA[@]+"${EXTRA[@]}"})
 
 NUEVO_JSON="$(
   ALLOW="$(join_lines "${ALLOW_ALL[@]}")" \
@@ -153,7 +129,10 @@ def uniq(items):
 
 perms = data.get("permissions", {})
 perms["defaultMode"] = os.environ["MODE"]
-perms["allow"] = uniq(os.environ["ALLOW"].split("\n"))
+allow = uniq(os.environ["ALLOW"].split("\n"))
+if "Bash" in allow:  # "Bash" ya cubre cualquier regla Bash(...): se omiten por redundantes
+    allow = [r for r in allow if not r.startswith("Bash(")]
+perms["allow"] = allow
 perms["deny"] = uniq(os.environ["DENY_L"].split("\n"))
 data["permissions"] = perms
 
@@ -182,7 +161,12 @@ fi
 printf '%s\n' "$NUEVO_JSON" > "$SETTINGS"
 python3 -m json.tool "$SETTINGS" >/dev/null
 echo "✔ Escrito y validado: $SETTINGS"
-echo "  allow: ${#ALLOW_ALL[@]} reglas · deny: ${#DENY[@]} reglas · modo: $DEFAULT_MODE"
+# Cuenta las reglas del fichero escrito (allow puede quedar reducido al omitir las redundantes)
+python3 -I -c '
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]
+print("  allow: %d reglas · deny: %d reglas · modo: %s" % (len(p["allow"]), len(p["deny"]), p["defaultMode"]))
+' "$SETTINGS"
 
 # Evitar que credenciales, copias de seguridad y logs acaben en git
 GITIGNORE="$DIR/.gitignore"

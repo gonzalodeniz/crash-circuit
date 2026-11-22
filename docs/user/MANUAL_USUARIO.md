@@ -43,8 +43,21 @@ Al pulsar «Empezar», el coche espera en la parrilla y aparece en pantalla una 
 
 La duración de la cuenta atrás es un valor inicial y puede cambiar tras probarla. Todavía no hay sonido en la cuenta atrás ni pausa.
 
+## Vueltas
+
+Arriba a la izquierda ves la vuelta en la que vas, por ejemplo «Vuelta 1/1». El primer número es tu vuelta actual y el segundo, el total de vueltas de la carrera. Por ahora la carrera es de una sola vuelta; más adelante podrás elegir cuántas.
+
+Para que una vuelta cuente, tienes que hacerla entera:
+
+- En el circuito hay varios puntos de control invisibles repartidos por la pista (por ahora, 8). No se ven, pero el juego los anota.
+- Tienes que pasar por todos, en orden, y después cruzar la línea de meta hacia delante. Solo entonces suma la vuelta.
+- Si recortas por fuera de la calzada y te saltas un punto de control, al cruzar la meta la vuelta no cuenta.
+- Si das marcha atrás o retrocedes por el circuito, no ganas ni pierdes vueltas. Cruzar la meta hacia atrás y volver a cruzarla hacia delante tampoco suma nada.
+- Cada punto de control es algo más ancho que la calzada. Si cortas por la hierba pegada al borde, puede seguir contando. Este margen puede cambiar tras probarlo.
+- Cuando completas la última vuelta, el contador se queda en «Vuelta 1/1». Todavía no hay fin de carrera ni resultados.
+
 ## Qué falta
 
-Todavía no hay selección de coche o circuito, rivales, vueltas, choques, carrera completa, puntuación ni resultados. Se irán añadiendo en las próximas entregas.
+Todavía no hay selección de coche o circuito, rivales, choques, fin de carrera, puntuación ni resultados. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

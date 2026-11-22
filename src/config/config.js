@@ -44,11 +44,49 @@ export const CONFIG = deepFreeze({
     },
   },
 
-  // Parámetros de la escena de arranque (no son «propuesta» de producto).
+  // Carrera (no son «propuesta» de producto).
+  race: {
+    // Contenido fijo: 10 participantes (RF-016). En E1 solo compite el jugador.
+    maxParticipants: 10,
+    player: { id: 'player', name: 'Jugador', isPlayer: true },
+    // Dimensiones del coche en metros (el rendimiento es idéntico para todos los modelos, RN-07).
+    car: { length: 4.4, width: 2 },
+  },
+
+  // Circuito de E1: nombre provisional y trazado simple a la espera de nombres y assets definitivos.
+  // Los circuitos definitivos llegan en E2. Coordenadas [x, z] en metros; la meta es el primer punto
+  // y el sentido de la carrera es el orden de los puntos.
+  track: {
+    name: 'Circuito provisional',
+    width: 16,
+    samplesPerSegment: 16,
+    controlPoints: [
+      [0, -100], [60, -100], [130, -80], [170, -20], [150, 50], [90, 80], [40, 50],
+      [0, 70], [-60, 100], [-130, 70], [-150, 0], [-120, -60], [-60, -100],
+    ],
+  },
+
+  // Parrilla de salida: posiciones por detrás de la meta, en filas de dos coches (RF-019).
+  grid: {
+    firstSlotDistance: 8, // metros desde la meta hasta la primera fila
+    slotSpacing: 9, // metros entre filas
+    lateralOffset: 3.5, // metros a cada lado de la línea central
+  },
+
+  // Parámetros de la escena de arranque y de la carrera (no son «propuesta» de producto).
   render: {
     backgroundColor: 0x87ceeb,
     camera: { fov: 60, near: 0.1, far: 1000, position: [0, 8, 14], lookAt: [0, 0, 0] },
-    ground: { size: 40, color: 0x3a7d44 },
+    // Cámara de seguimiento (RF-009): detrás y por encima del coche, mirando hacia delante.
+    chaseCamera: { distance: 9, height: 4, lookAhead: 6, lookHeight: 1 },
+    ground: { size: 1200, color: 0x3a7d44 },
+    road: {
+      color: 0x3a3a3f,
+      borderColor: 0xf2f2f2,
+      borderExtra: 1, // metros de borde blanco a cada lado de la calzada
+      finishLine: { depth: 2, checkerColumns: 16, checkerRows: 2 }, // metros de fondo y casillas
+    },
+    car: { bodyColor: 0xd62828, cabinColor: 0x222831, wheelColor: 0x111111, height: 1.1, wheelRadius: 0.4 },
     light: {
       sunColor: 0xffffff,
       sunIntensity: 2.5,

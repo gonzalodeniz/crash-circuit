@@ -68,3 +68,14 @@ test('no se permiten saltos que se salten estados del flujo', () => {
   assert.equal(canTransition(GameState.CUENTA_ATRAS, GameState.RESULTADOS), false);
   assert.equal(canTransition(GameState.RESULTADOS, GameState.EN_CARRERA), false);
 });
+
+test('onChange avisa de cada cambio de estado y permite darse de baja', () => {
+  const machine = new GameStateMachine();
+  const changes = [];
+  const off = machine.onChange((from, to) => changes.push([from, to]));
+  machine.startRace();
+  assert.deepEqual(changes, [[GameState.MENU, GameState.PARRILLA]]);
+  off();
+  machine.transitionTo(GameState.CUENTA_ATRAS);
+  assert.equal(changes.length, 1);
+});

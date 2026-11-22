@@ -30,6 +30,7 @@ export function canTransition(from, to) {
 
 export class GameStateMachine {
   #state = GameState.MENU;
+  #listeners = new Set();
 
   get state() {
     return this.#state;
@@ -40,8 +41,16 @@ export class GameStateMachine {
     if (!canTransition(this.#state, next)) {
       throw new Error(`Transición no permitida: ${this.#state} -> ${next}`);
     }
+    const previous = this.#state;
     this.#state = next;
+    for (const listener of this.#listeners) listener(previous, next);
     return this.#state;
+  }
+
+  /** Registra una función que recibe `(anterior, nuevo)` en cada cambio de estado; devuelve cómo darla de baja. */
+  onChange(listener) {
+    this.#listeners.add(listener);
+    return () => this.#listeners.delete(listener);
   }
 
   /** Inicia una carrera desde el menú principal (MENU -> PARRILLA). */

@@ -78,7 +78,7 @@ Para comprobar que el kit sigue siendo portable: `./scripts/setup/03-kit.sh --co
 GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxx
 ```
 
-`scripts/rol.sh` lo carga y lo exporta como `GH_TOKEN`. Si prefieres no usar `.env`, ejecuta `gh auth login` una vez.
+`scripts/orquestador.sh` lo carga y lo exporta como `GH_TOKEN`. Si prefieres no usar `.env`, ejecuta `gh auth login` una vez.
 
 ## Instalación
 
@@ -112,34 +112,34 @@ Los milestones no se crean en la instalación: los crea `product-manager` a part
 ### Comprobar la instalación
 
 ```bash
-./scripts/rol.sh --list      # debe listar los cinco roles
+./scripts/orquestador.sh --list      # debe listar los cinco roles
 claude                       # y en el prompt escribe @orq: debe aparecer "orquestador (agent)"
 ```
 
 ## Uso diario
 
-Todo se lanza con `scripts/rol.sh`:
+Todo se lanza con `scripts/orquestador.sh`:
 
 | Comando | Qué hace |
 |---|---|
-| `./scripts/rol.sh` | Orquestador en sesión **interactiva**: ves cada delegación y puedes responder decisiones en el momento. |
-| `./scripts/rol.sh --max 3` | Igual, pero se detiene tras 3 delegaciones. |
-| `./scripts/rol.sh --auto` | Orquestador **desatendido** (máximo 30 delegaciones). La salida queda en `logs/orquestador-<fecha>.log`. |
-| `./scripts/rol.sh --auto --max 5` | Desatendido con un límite propio. |
-| `./scripts/rol.sh qa-teams` | Sesión interactiva directamente con un rol, sin orquestador. Útil para depurar. |
-| `./scripts/rol.sh --auto qa-teams "Valida la issue #12"` | Un rol concreto, desatendido, con una tarea. |
-| `./scripts/rol.sh --list` | Roles disponibles. |
+| `./scripts/orquestador.sh` | Orquestador en sesión **interactiva**: ves cada delegación y puedes responder decisiones en el momento. |
+| `./scripts/orquestador.sh --max 3` | Igual, pero se detiene tras 3 delegaciones. |
+| `./scripts/orquestador.sh --auto` | Orquestador **desatendido** (máximo 30 delegaciones). La salida queda en `logs/orquestador-<fecha>.log`. |
+| `./scripts/orquestador.sh --auto --max 5` | Desatendido con un límite propio. |
+| `./scripts/orquestador.sh qa-teams` | Sesión interactiva directamente con un rol, sin orquestador. Útil para depurar. |
+| `./scripts/orquestador.sh --auto qa-teams "Valida la issue #12"` | Un rol concreto, desatendido, con una tarea. |
+| `./scripts/orquestador.sh --list` | Roles disponibles. |
 
 Cualquier texto que no sea un rol se envía como mensaje al orquestador:
 
 ```bash
-./scripts/rol.sh "Ejecuta el ciclo, pero no empieces issues nuevas"
+./scripts/orquestador.sh "Ejecuta el ciclo, pero no empieces issues nuevas"
 ```
 
 **Recomendaciones:**
 
 - Empieza en modo interactivo con `--max` bajo hasta confiar en el comportamiento de cada rol.
-- Al comenzar una entrega, lanza `./scripts/rol.sh --max 1`: solo creará las issues, y podrás revisarlas en GitHub antes de que empiece el desarrollo.
+- Al comenzar una entrega, lanza `./scripts/orquestador.sh --max 1`: solo creará las issues, y podrás revisarlas en GitHub antes de que empiece el desarrollo.
 - El lanzador usa un bloqueo: si ya hay una ejecución en curso, la segunda termina con código 3 sin hacer nada.
 
 ### Dónde ver lo que ha pasado
@@ -268,10 +268,10 @@ Tras cambiar agentes, el hook o `CLAUDE.md`, abre una sesión nueva de Claude Co
 | Síntoma | Causa probable y solución |
 |---|---|
 | `@orquestador` no aparece en el autocompletado | La sesión se abrió antes de crear `.claude/agents/`. Sal y vuelve a entrar. |
-| `/list-agents` no muestra los agentes | Es normal: muestra agentes **en ejecución**, no los definidos. Usa `./scripts/rol.sh --list`. |
+| `/list-agents` no muestra los agentes | Es normal: muestra agentes **en ejecución**, no los definidos. Usa `./scripts/orquestador.sh --list`. |
 | `ERROR: gh no autenticado` | Falta `GITHUB_PAT` en `.env` o el token ha caducado. |
-| `Ya hay otra ejecución de rol.sh en curso` | Otra ejecución tiene el bloqueo. Espera a que termine; si no hay ninguna, borra `logs/.rol.lock`. |
-| Un agente se queda pidiendo permiso para un comando | Si es de Bash, `.claude/settings.json` está desactualizado: relanza `02-permisos.sh`, que permite todo Bash salvo la lista `deny`. Si es de otra herramienta, añade la regla a `permisos_extra` y relanza el script. Para ejecuciones desatendidas usa `rol.sh --auto`: nunca se queda esperando una respuesta. |
+| `Ya hay otra ejecución de orquestador.sh en curso` | Otra ejecución tiene el bloqueo. Espera a que termine; si no hay ninguna, borra `logs/.orquestador.lock`. |
+| Un agente se queda pidiendo permiso para un comando | Si es de Bash, `.claude/settings.json` está desactualizado: relanza `02-permisos.sh`, que permite todo Bash salvo la lista `deny`. Si es de otra herramienta, añade la regla a `permisos_extra` y relanza el script. Para ejecuciones desatendidas usa `orquestador.sh --auto`: nunca se queda esperando una respuesta. |
 | `Bloqueado por guard (<rol>): …` | El hook ha impedido una acción prohibida. Normalmente el agente corrige solo; si se repite, revisa si la regla del hook o `proyecto.json` es demasiado estricta. |
 | `product-manager` no crea issues para una funcionalidad nueva | Falta la línea `**Requisitos:**` en la entrega, los IDs no existen en el documento de requisitos o la entrega anterior no está aceptada. Revisa la issue `Decisión de producto: planificación del roadmap`. |
 | El orquestador para con «la transición no se produjo» | Revisa la issue y el resumen del subagente. Corrige la situación (etiqueta, PR) y relanza. |
@@ -304,7 +304,7 @@ docs/
     └── ARQUITECTURA.md        decisiones técnicas (lo crea developer-teams)
 scripts/
 ├── README.md              este documento
-├── rol.sh                 lanzador
+├── orquestador.sh         lanzador
 └── setup/
     ├── 01-etiquetas.sh    etiquetas del flujo en GitHub
     ├── 02-permisos.sh     genera .claude/settings.json

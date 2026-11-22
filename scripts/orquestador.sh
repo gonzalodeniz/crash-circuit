@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # =============================================================================
-# rol.sh — Lanza el orquestador o un subagente concreto del flujo de trabajo
+# orquestador.sh — Lanza el orquestador o un subagente concreto del flujo de trabajo
 #
 # Uso:
-#   ./scripts/rol.sh                          # orquestador, sesión interactiva
-#   ./scripts/rol.sh --max 5                  # ídem, con un máximo de 5 delegaciones
-#   ./scripts/rol.sh --auto                   # orquestador desatendido (log en logs/)
-#   ./scripts/rol.sh --auto --max 3           # desatendido, máximo 3 delegaciones
-#   ./scripts/rol.sh qa-teams                 # sesión interactiva como qa-teams
-#   ./scripts/rol.sh --auto qa-teams "Valida la issue #12"
-#   ./scripts/rol.sh --list                   # roles disponibles
+#   ./scripts/orquestador.sh                          # orquestador, sesión interactiva
+#   ./scripts/orquestador.sh --max 5                  # ídem, con un máximo de 5 delegaciones
+#   ./scripts/orquestador.sh --auto                   # orquestador desatendido (log en logs/)
+#   ./scripts/orquestador.sh --auto --max 3           # desatendido, máximo 3 delegaciones
+#   ./scripts/orquestador.sh qa-teams                 # sesión interactiva como qa-teams
+#   ./scripts/orquestador.sh --auto qa-teams "Valida la issue #12"
+#   ./scripts/orquestador.sh --list                   # roles disponibles
 #
 # - Carga .env si existe y exporta GH_TOKEN (desde GH_TOKEN o GITHUB_PAT).
 # - Impide dos ejecuciones simultáneas sobre el repositorio (bloqueo con flock).
@@ -79,9 +79,9 @@ fi
 
 # --- Bloqueo: una sola ejecución a la vez ------------------------------------
 mkdir -p logs  # logs/ está en .gitignore (lo añade scripts/setup/02-permisos.sh)
-exec 9> logs/.rol.lock
+exec 9> logs/.orquestador.lock
 if ! flock -n 9; then
-  echo "Ya hay otra ejecución de rol.sh en curso en este repositorio. Inténtalo más tarde." >&2
+  echo "Ya hay otra ejecución de orquestador.sh en curso en este repositorio. Inténtalo más tarde." >&2
   exit 3
 fi
 

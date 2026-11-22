@@ -23,6 +23,6 @@
 - `.claude/agents/`: definiciones genéricas de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams).
 - `.claude/hooks/guard.sh` y `.claude/hooks/guard.py`: hook que bloquea, por rol, comandos y ediciones de ficheros prohibidos.
 - `.claude/settings.json`: permisos de Claude Code. Lo genera `scripts/setup/02-permisos.sh`.
-- `scripts/rol.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto.
+- `scripts/orquestador.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto.
 - `scripts/README.md`: manual de uso del sistema de subagentes.
 - `scripts/setup/`: scripts de instalación (`01-etiquetas.sh`, `02-permisos.sh`, `03-kit.sh`) y plantillas del proyecto (`plantillas/`).

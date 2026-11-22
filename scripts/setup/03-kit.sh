@@ -55,7 +55,7 @@ KIT=(
   ".claude/hooks/guard.py"
   "docs/process/FLUJO_DE_TRABAJO.md"
   "scripts/README.md"
-  "scripts/rol.sh"
+  "scripts/orquestador.sh"
   "scripts/setup/01-etiquetas.sh"
   "scripts/setup/02-permisos.sh"
   "scripts/setup/03-kit.sh"
@@ -73,7 +73,7 @@ PLANTILLAS=(
   "scripts/setup/plantillas/COMMANDS.md|COMMANDS.md"
 )
 
-EJECUTABLES=(".claude/hooks/guard.sh" ".claude/hooks/guard.py" "scripts/rol.sh"
+EJECUTABLES=(".claude/hooks/guard.sh" ".claude/hooks/guard.py" "scripts/orquestador.sh"
              "scripts/setup/01-etiquetas.sh" "scripts/setup/02-permisos.sh" "scripts/setup/03-kit.sh")
 
 es_ejecutable() {
@@ -182,5 +182,5 @@ Siguientes pasos en $DESTINO:
   4. ./scripts/setup/01-etiquetas.sh   (etiquetas del flujo en GitHub)
   5. ./scripts/setup/02-permisos.sh    (genera .claude/settings.json)
   6. ./scripts/setup/03-kit.sh --comprobar
-  7. Abre una sesión nueva de Claude Code y lanza ./scripts/rol.sh --max 1
+  7. Abre una sesión nueva de Claude Code y lanza ./scripts/orquestador.sh --max 1
 EOF

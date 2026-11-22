@@ -9,10 +9,32 @@ Al abrir el juego ves el título «Crash Circuit» y el botón «Empezar». El b
 - Con el ratón: haz clic en «Empezar».
 - Con el teclado: pulsa Intro o Espacio.
 
-Al empezar, el menú desaparece y el juego pasa a la parrilla de salida. Por ahora solo se ve una escena 3D de prueba a pantalla completa, que se adapta si cambias el tamaño de la ventana. Para volver al menú, recarga la página.
+Al empezar, el menú desaparece y ves un circuito cerrado provisional con tu coche en la parrilla de salida, visto desde una cámara situada detrás. La escena se adapta si cambias el tamaño de la ventana. Para volver al menú, recarga la página.
+
+## Controles
+
+Se juega solo con las flechas del teclado. Mientras estás en la carrera, las flechas no mueven la página ni hacen nada más en el navegador.
+
+| Flecha | Qué hace |
+|---|---|
+| Arriba | Acelera. |
+| Abajo | Frena. Si el coche está parado, da marcha atrás. |
+| Izquierda | Gira a la izquierda. |
+| Derecha | Gira a la derecha. |
+
+Cómo se conduce:
+
+- La conducción es arcade: el coche acelera hasta una velocidad máxima y no la supera.
+- Si sueltas el acelerador, el coche va perdiendo velocidad poco a poco. Frenar lo detiene antes.
+- El coche solo gira cuando se mueve. A mucha velocidad gira un poco menos.
+- La marcha atrás solo se activa si pulsas abajo con el coche parado. Si frenas en marcha y mantienes la flecha, el coche se queda parado: suelta y vuelve a pulsar para ir marcha atrás.
+- Si pulsas arriba y abajo a la vez, gana el freno.
+- La cámara acompaña al coche y se mantiene detrás al girar.
+
+Por ahora puedes conducir en cuanto aparece el coche, sin cuenta atrás. Tampoco hay penalización por salirte de la pista ni choques. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
 
 ## Qué falta
 
-Todavía no hay selección de coche o circuito, controles de conducción, carrera, puntuación ni resultados. Se irán añadiendo en las próximas entregas.
+Todavía no hay selección de coche o circuito, cuenta atrás, rivales, vueltas, choques, carrera completa, puntuación ni resultados. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

@@ -20,6 +20,7 @@
 - `src/main.js`: punto de entrada; une la lógica con el renderizado y arranca el bucle.
 - `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
 - `src/logic/gameState.js`: estados del juego y máquina de estados (sin Three.js ni DOM).
+- `src/ui/mainMenu.js`: menú principal (DOM); muestra el título y la opción «Empezar» y avisa con una función de retorno.
 - `src/render/sceneRenderer.js`: escena, cámara y renderizador de Three.js, con ajuste de tamaño y liberación de recursos.
 
 ## `tests/` (pruebas automáticas, sin navegador)

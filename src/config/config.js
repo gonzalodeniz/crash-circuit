@@ -60,6 +60,10 @@ export const CONFIG = deepFreeze({
       title: 'Crash Circuit',
       startLabel: 'Empezar',
     },
+    // Señal de salida que sustituye al número al terminar la cuenta atrás.
+    hud: {
+      goLabel: '¡YA!',
+    },
   },
 
   // Carrera (no son «propuesta» de producto).
@@ -69,6 +73,12 @@ export const CONFIG = deepFreeze({
     player: { id: 'player', name: 'Jugador', isPlayer: true },
     // Dimensiones del coche en metros (el rendimiento es idéntico para todos los modelos, RN-07).
     car: { length: 4.4, width: 2 },
+    // Cuenta atrás de salida «3, 2, 1» (RF-020). Duraciones iniciales, pendientes de calibrar jugando.
+    countdown: {
+      steps: 3, // números de la cuenta (3, 2, 1)
+      stepDuration: 1, // s que dura cada número
+      goDisplayDuration: 1, // s que se muestra la señal de salida tras la cuenta
+    },
   },
 
   // Circuito de E1: nombre provisional y trazado simple a la espera de nombres y assets definitivos.

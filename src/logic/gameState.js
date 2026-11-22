@@ -53,6 +53,16 @@ export class GameStateMachine {
     return () => this.#listeners.delete(listener);
   }
 
+  /** Empieza la cuenta atrás de salida (PARRILLA -> CUENTA_ATRAS). */
+  beginCountdown() {
+    return this.transitionTo(GameState.CUENTA_ATRAS);
+  }
+
+  /** Da la señal de salida (CUENTA_ATRAS -> EN_CARRERA). */
+  startGo() {
+    return this.transitionTo(GameState.EN_CARRERA);
+  }
+
   /** Inicia una carrera desde el menú principal (MENU -> PARRILLA). */
   startRace() {
     if (this.#state !== GameState.MENU) {

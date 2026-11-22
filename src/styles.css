@@ -55,3 +55,37 @@ body {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
+
+/* HUD de la carrera: cuenta atrás y cronómetro */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.hud[hidden] {
+  display: none;
+}
+
+.hud__signal {
+  position: absolute;
+  top: 30%;
+  width: 100%;
+  text-align: center;
+  font-size: 9rem;
+  font-weight: bold;
+}
+
+.hud__timer {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 0.4rem;
+}

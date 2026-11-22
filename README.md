@@ -4,7 +4,7 @@ Crash Circuit es un juego de carreras arcade en 3D para el navegador de escritor
 
 ## Estado actual
 
-El juego está en desarrollo. Ahora mismo están disponibles la base técnica, el menú principal, un circuito provisional con tu coche y su conducción con las flechas, la cuenta atrás de salida, el cronómetro y el contador de vueltas de la entrega E1. Al abrir el juego aparece el menú con el botón «Empezar». Al pulsarlo ves el circuito y puedes conducir tu coche con las flechas (arriba acelera, abajo frena y da marcha atrás, izquierda y derecha giran). Antes de salir hay una cuenta atrás 3, 2, 1 y, al empezar, un cronómetro cuenta el tiempo y el contador «Vuelta X/Y» avanza cuando completas una vuelta válida, pasando por todos los puntos de control. Todavía no hay rivales ni carrera completa.
+El juego está en desarrollo. Ahora mismo están disponibles la base técnica, el menú principal, un circuito provisional con tu coche y su conducción con las flechas, la cuenta atrás de salida, el cronómetro, el contador de vueltas y la pantalla de resultados de la entrega E1. Al abrir el juego aparece el menú con el botón «Empezar». Al pulsarlo ves el circuito y puedes conducir tu coche con las flechas (arriba acelera, abajo frena y da marcha atrás, izquierda y derecha giran). Antes de salir hay una cuenta atrás 3, 2, 1 y, al empezar, un cronómetro cuenta el tiempo y el contador «Vuelta X/Y» avanza cuando completas una vuelta válida, pasando por todos los puntos de control. Al completar la carrera ves tu tiempo y puedes repetir o volver al menú. Todavía no hay rivales.
 
 ## Requisitos
 
@@ -25,7 +25,7 @@ El juego no guarda nada ni usa servidores: al recargar la página todo vuelve al
 
 ## Entregas disponibles
 
-- E1 (en curso): base técnica, menú principal, circuito, conducción con las flechas, cuenta atrás, cronómetro y vueltas válidas disponibles. Consulta el [changelog](CHANGELOG.md) para ver qué se ha terminado.
+- E1 (en curso): base técnica, menú principal, circuito, conducción con las flechas, cuenta atrás, cronómetro, vueltas válidas y fin de carrera con resultados (repetir o volver al menú) disponibles. Consulta el [changelog](CHANGELOG.md) para ver qué se ha terminado.
 
 ## Más documentación
 

@@ -9,7 +9,7 @@ Al abrir el juego ves el título «Crash Circuit» y el botón «Empezar». El b
 - Con el ratón: haz clic en «Empezar».
 - Con el teclado: pulsa Intro o Espacio.
 
-Al empezar, el menú desaparece y ves un circuito cerrado provisional con tu coche en la parrilla de salida, visto desde una cámara situada detrás. Enseguida empieza la cuenta atrás (ver «Salida y cronómetro»). La escena se adapta si cambias el tamaño de la ventana. Para volver al menú, recarga la página.
+Al empezar, el menú desaparece y ves un circuito cerrado provisional con tu coche en la parrilla de salida, visto desde una cámara situada detrás. Enseguida empieza la cuenta atrás (ver «Salida y cronómetro»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
 
 ## Controles
 
@@ -54,10 +54,25 @@ Para que una vuelta cuente, tienes que hacerla entera:
 - Si recortas por fuera de la calzada y te saltas un punto de control, al cruzar la meta la vuelta no cuenta.
 - Si das marcha atrás o retrocedes por el circuito, no ganas ni pierdes vueltas. Cruzar la meta hacia atrás y volver a cruzarla hacia delante tampoco suma nada.
 - Cada punto de control es algo más ancho que la calzada. Si cortas por la hierba pegada al borde, puede seguir contando. Este margen puede cambiar tras probarlo.
-- Cuando completas la última vuelta, el contador se queda en «Vuelta 1/1». Todavía no hay fin de carrera ni resultados.
+- Cuando completas la última vuelta, la carrera termina (ver «Fin de carrera y resultados»).
+
+## Fin de carrera y resultados
+
+Al completar la última vuelta válida, tu carrera termina:
+
+- Tus flechas dejan de controlar el coche. El coche sigue rodando un poco por inercia y se detiene.
+- Tu tiempo final queda fijo. Es el que marcaba el cronómetro en ese momento.
+- El cronómetro y el contador de vueltas desaparecen y aparece la pantalla de resultados, con el texto «Carrera terminada» y «Tu tiempo».
+
+En la pantalla de resultados hay dos botones. Se activan con el ratón o con el teclado (Tab cambia de botón; Intro o Espacio lo pulsa). «Repetir» está seleccionado al abrirse.
+
+- **Repetir:** empieza una carrera nueva con la misma configuración. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
+- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior.
+
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
 
 ## Qué falta
 
-Todavía no hay selección de coche o circuito, rivales, choques, fin de carrera, puntuación ni resultados. Se irán añadiendo en las próximas entregas.
+Todavía no hay selección de coche o circuito, rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

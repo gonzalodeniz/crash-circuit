@@ -23,7 +23,7 @@ src/                Código del juego
   config/           Módulo único de configuración
   logic/            Lógica del juego y de la competición (sin Three.js ni DOM)
   render/           Renderizado con Three.js
-  ui/               Interfaz DOM (menús y, más adelante, HUD)
+  ui/               Interfaz DOM y entrada de teclado (menús y, más adelante, HUD)
 tests/              Pruebas automáticas (*.test.js), ejecutables sin navegador
 dist/               Resultado de `npm run build` (no se versiona)
 ```
@@ -39,9 +39,11 @@ En la raíz solo van `package.json`, `package-lock.json` y `vite.config.js`, que
 - `src/logic/race.js`: `createRace(CONFIG, entries)` crea el trazado y la lista de participantes (solo el jugador en E1, hasta 10 desde E3), cada uno con su pose en la parrilla.
 - `src/logic/chaseCamera.js`: `computeChaseCamera()` calcula posición y punto de mira de la cámara trasera; el renderizado solo los aplica.
 - `src/render/sceneRenderer.js`: crea el `WebGLRenderer`, la escena, las luces y la cámara y adapta el lienzo a la ventana. `buildRace(race)` dibuja suelo, calzada con borde, línea de meta a cuadros y un coche por participante; `disposeRace()` libera geometrías, materiales y texturas de la carrera y la quita de la escena; `dispose()` libera además el contexto WebGL (RNF-04). Los coches usan geometrías simples (assets definitivos pendientes).
-- `src/main.js`: único punto donde se juntan lógica y renderizado; contiene el bucle `requestAnimationFrame`. Escucha `GameStateMachine.onChange`: al entrar en `PARRILLA` crea la carrera y su escena; al volver a `MENU` o `SELECCION` la libera.
+- `src/logic/driving.js`: modelo de conducción arcade (RF-010, RF-011). `stepCar(state, input, dt, params)` devuelve el nuevo estado (`x`, `z`, `heading`, `speed`, `steer` y los indicadores de la marcha atrás) sin mutar el anterior; limita `dt` a `maxStep`. Acelerar, frenar e inercia (desaceleración sin pedal) cambian la velocidad con límites; el freno nunca pasa a marcha atrás en el mismo pulso: solo se activa si el freno se pulsa con el coche parado. La dirección se suaviza y el giro depende de la velocidad (parado no gira; en marcha atrás se invierte). `inputFromKeys` traduce teclas a entradas con `CONFIG.controls`. Los parámetros salen de `CONFIG.carPerformance`, compartido por todos los modelos y pilotos.
+- `src/ui/keyboardInput.js`: guarda las teclas de conducción pulsadas y llama a `preventDefault` solo mientras está activa (durante la carrera), para que las flechas no desplacen la página (RF-010). Se vacía al perder el foco.
+- `src/main.js`: único punto donde se juntan lógica y renderizado; contiene el bucle `requestAnimationFrame`, que calcula el paso de tiempo, avanza el coche del jugador con `stepCar` y orienta la cámara con su pose. Escucha `GameStateMachine.onChange`: al entrar en `PARRILLA` crea la carrera y su escena; al volver a `MENU` o `SELECCION` la libera.
 
-Regla de dependencias (RNF-05): `logic/` (todos sus ficheros) no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. Las pruebas comprueban que `logic/gameState.js`, `track.js`, `race.js` y `chaseCamera.js` no mencionan Three.js ni el DOM.
+Regla de dependencias (RNF-05): `logic/` (todos sus ficheros) no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. Las pruebas comprueban que `logic/gameState.js`, `track.js`, `race.js`, `chaseCamera.js` y `driving.js` no mencionan Three.js ni el DOM.
 
 ## Configuración
 

@@ -75,6 +75,7 @@ El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`.
 - **Perfil**: respeta «Restricciones de arquitectura», «Modelo de dominio» y «Configuración». Ningún valor marcado como «propuesta» va fijo en el código.
 - **Pruebas**: añade pruebas automáticas para la lógica nueva, como mínimo la que exige «Comprobaciones obligatorias». Lo que solo se comprueba usando el producto (ver «Verificación manual») se documenta como «Verificación manual sugerida».
 - **Commits** pequeños y frecuentes: `[developer-teams] <verbo en 3.ª persona> … (#<N>)`.
+- **.gitignore**: si tu trabajo introduce una herramienta, un directorio generado o un tipo de fichero que no deba versionarse (dependencias, salida de build, cachés, informes de pruebas, ficheros de entorno o locales, temporales), añádelo a `.gitignore` en el mismo commit, con un comentario en español por sección. Nunca ignores lo que deba versionarse (lockfiles, assets del juego, `docs/`, `.claude/` salvo `settings.local.json`).
 - **INDEX.md / COMMANDS.md**: actualízalos en el mismo commit en que crees, muevas o borres ficheros, o verifiques un comando nuevo.
 - **ARQUITECTURA.md**: si cambias el stack, la estructura de carpetas, las responsabilidades de un módulo, el módulo de configuración o la estrategia de pruebas, actualiza `docs/technical/ARQUITECTURA.md` en la misma PR. Si una decisión de arquitectura contradice el perfil o los requisitos, no la tomes: usa `requiere-decision`.
 
@@ -91,8 +92,9 @@ Si necesitas un comando que los permisos no permiten, no lo esquives: indícalo 
 1. Ejecuta todas las pruebas de `COMMANDS.md`. No hay handoff con pruebas en rojo.
 2. Ejecuta todas las «Comprobaciones obligatorias» del perfil y anota el resultado de cada una.
 3. Revisa tu propio diff (`git diff origin/main...HEAD`): alcance, legibilidad, duplicación y valores fijos que deberían estar en configuración.
-4. Sincroniza con main y resuelve conflictos: `git fetch origin && git merge origin/main`. Vuelve a pasar las pruebas.
-5. `git push`.
+4. Revisa `.gitignore`: `git status --short` no debe mostrar ficheros generados o locales sin versionar (`node_modules/`, `dist/`, cachés, informes, ficheros de entorno), y `git ls-files -ci --exclude-standard` no debe devolver nada. Añade lo que falte y comprueba que no ignoras nada que deba versionarse.
+5. Sincroniza con main y resuelve conflictos: `git fetch origin && git merge origin/main`. Vuelve a pasar las pruebas.
+6. `git push`.
 
 ## Handoff a QA
 

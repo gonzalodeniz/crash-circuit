@@ -8,6 +8,9 @@
   los comentarios se ignoran, para no bloquear por palabras de una issue o PR.
 - developer-teams: no hace commit ni push en main ni fusiona PR sin estado:validado.
 
+Es parte del kit de agentes y no contiene nada del proyecto: las rutas protegidas
+propias y las que puede editar doc-teams se leen de docs/project/proyecto.json.
+
 Previene errores de los agentes; no es un sandbox frente a un uso hostil
 (p. ej. `python -c` que escriba ficheros no se detecta).
 
@@ -65,19 +68,43 @@ def dentro_del_proyecto(ruta):
 # Ficheros protegidos
 # ---------------------------------------------------------------------------
 # Rutas relativas a la raíz; las que terminan en "/" protegen todo el directorio.
-PROTEGIDOS_COMUNES = [
+# Las del kit son fijas; las del proyecto se leen de docs/project/proyecto.json.
+CONFIG_PROYECTO = "docs/project/proyecto.json"
+PROTEGIDOS_KIT = [
     "CLAUDE.md",
-    "CONTEXT.md",
     ".claude/",
     "docs/process/",
-    "docs/product/",
+    "docs/project/",
 ]
+PROTEGIDOS_POR_DEFECTO = ["docs/product/"]  # si proyecto.json no existe o no define rutas_protegidas
+DOC_TEAMS_POR_DEFECTO = ["README.md", "CHANGELOG.md", "INDEX.md", "docs/user/"]
+
+
+def leer_config_proyecto():
+    """Devuelve el contenido de proyecto.json, o {} si no existe o no es válido."""
+    try:
+        with open(os.path.join(PROYECTO, CONFIG_PROYECTO), encoding="utf-8") as f:
+            datos = json.load(f)
+        return datos if isinstance(datos, dict) else {}
+    except Exception:
+        return {}
+
+
+def lista_de_rutas(valor, por_defecto):
+    if isinstance(valor, list) and all(isinstance(v, str) and v for v in valor):
+        return [v[2:] if v.startswith("./") else v for v in valor]
+    return por_defecto
+
+
+CONFIG = leer_config_proyecto()
+PROTEGIDOS_COMUNES = PROTEGIDOS_KIT + lista_de_rutas(CONFIG.get("rutas_protegidas"), PROTEGIDOS_POR_DEFECTO)
+RUTAS_DOC_TEAMS = lista_de_rutas(CONFIG.get("rutas_doc_teams"), DOC_TEAMS_POR_DEFECTO)
 
 # Roles que solo pueden editar dentro de estas rutas (si no figuran, sin restricción extra).
 SOLO_EN = {
     "product-manager": [],  # no edita ficheros
     "qa-teams": [],         # no edita ficheros
-    "doc-teams": ["README.md", "CHANGELOG.md", "INDEX.md", "docs/user/"],
+    "doc-teams": RUTAS_DOC_TEAMS,
     "orquestador": [],      # no edita ficheros
 }
 
@@ -162,7 +189,7 @@ SIN_FICHEROS = {
     "product-manager": "product-manager no modifica ficheros.",
     "qa-teams": "qa-teams no modifica ficheros.",
     "orquestador": "el orquestador no modifica ficheros.",
-    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de README.md, CHANGELOG.md, INDEX.md y docs/user/.",
+    "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de " + ", ".join(RUTAS_DOC_TEAMS) + ".",
 }
 
 # ---------------------------------------------------------------------------

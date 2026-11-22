@@ -3,11 +3,12 @@ import { buildTrack, gridSlot } from './track.js';
 import { createCarState, stepCar } from './driving.js';
 import { GameState } from './gameState.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
+import { createProgress, stepProgress } from './progress.js';
 
 /**
  * Crea una carrera con sus participantes colocados en la parrilla.
  * La lista admite hasta `race.maxParticipants` (10 desde E3); en E1 solo contiene al jugador.
- * @param {object} config CONFIG (secciones `track`, `grid` y `race`)
+ * @param {object} config CONFIG (secciones `track`, `grid` y `race`; `race.laps` fija las vueltas)
  * @param {Array<{id: string, name: string, isPlayer?: boolean}>} entries participantes en orden de parrilla
  */
 export function createRace(config, entries = [config.race.player]) {
@@ -31,12 +32,14 @@ export function createRace(config, entries = [config.race.player]) {
       gridIndex: index,
       status: GameState.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
+      progress: createProgress(track, slot), // vueltas válidas, checkpoints y distancia válida (RN-01)
     };
   });
 
   return {
     track,
     car: config.race.car,
+    totalLaps: config.race.laps,
     participants,
     clock: createRaceClock(), // cuenta atrás y cronómetro de carrera
     get player() {
@@ -54,6 +57,7 @@ export function createRace(config, entries = [config.race.player]) {
  * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
  * @param {object} config CONFIG (secciones `race` y `carPerformance`)
+ * Tras mover cada coche se actualiza su progreso (vueltas y checkpoints válidos) con el desplazamiento real.
  * @returns {{started: boolean}} `started` es verdadero solo en el paso de la señal de salida
  */
 export function stepRace(race, inputs, dt, config) {
@@ -74,6 +78,7 @@ export function stepRace(race, inputs, dt, config) {
       if (participant.status !== GameState.EN_CARRERA) continue;
       const input = inputs[participant.id] ?? { accelerate: false, brake: false, left: false, right: false };
       Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
+      participant.progress = stepProgress(participant.progress, race.track, participant);
     }
   }
   return { started };

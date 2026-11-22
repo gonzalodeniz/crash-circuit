@@ -1,0 +1,29 @@
+{
+  "nombre": "Crash Circuit",
+  "rutas_protegidas": [
+    "docs/product/"
+  ],
+  "rutas_doc_teams": [
+    "README.md",
+    "CHANGELOG.md",
+    "INDEX.md",
+    "docs/user/"
+  ],
+  "permisos_extra": [
+    "Bash(npm *)",
+    "Bash(npx *)",
+    "Bash(node *)"
+  ],
+  "terminos_no_portables": [
+    "Three",
+    "WebGL",
+    "jugador",
+    "juego",
+    "carrera",
+    "circuito",
+    "RF-0",
+    "RN-0",
+    "RNF-0",
+    "E1…E8"
+  ]
+}

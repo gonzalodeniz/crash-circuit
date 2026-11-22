@@ -1,7 +1,7 @@
 // Punto de entrada: conecta la lógica del juego con el renderizado.
 import { CONFIG } from './config/config.js';
 import { GameState, GameStateMachine } from './logic/gameState.js';
-import { createRace, stepRace } from './logic/race.js';
+import { createRace, raceTimeOf, stepRace } from './logic/race.js';
 import { computeChaseCamera } from './logic/chaseCamera.js';
 import { inputFromKeys } from './logic/driving.js';
 import { lapCounterText } from './logic/progress.js';
@@ -9,6 +9,7 @@ import { GO_SIGNAL, countdownSignal, formatRaceTime } from './logic/raceClock.js
 import { KeyboardInput } from './ui/keyboardInput.js';
 import { MainMenu } from './ui/mainMenu.js';
 import { RaceHud } from './ui/raceHud.js';
+import { ResultsScreen } from './ui/resultsScreen.js';
 import { SceneRenderer } from './render/sceneRenderer.js';
 
 const canvas = document.getElementById('game-canvas');
@@ -25,20 +26,34 @@ const mainMenu = new MainMenu(document.body, CONFIG.ui.menu, () => {
   mainMenu.hide();
 });
 
+// Igual que el menú: la pantalla de resultados solo avisa y la máquina de estados decide (RF-057, RF-008).
+const resultsScreen = new ResultsScreen(document.body, CONFIG.ui.results, {
+  onRepeat: () => stateMachine.repeatRace(),
+  onMenu: () => stateMachine.backToMenu(),
+});
+
 // La escena de la carrera se crea al entrar en PARRILLA y se libera al salir de la carrera (RNF-04).
 stateMachine.onChange((from, to) => {
   if (to === GameState.PARRILLA) {
+    // También al repetir desde resultados: una carrera nueva, sin nada de la anterior (RF-057).
+    resultsScreen.hide();
     race = createRace(CONFIG);
     sceneRenderer.buildRace(race);
     lastTime = null;
     keyboard.setEnabled(true); // las flechas conducen y no actúan sobre el navegador (RF-010)
     hud.show();
     stateMachine.beginCountdown(); // la parrilla da paso a la cuenta atrás (RF-020)
+  } else if (to === GameState.RESULTADOS) {
+    keyboard.setEnabled(false); // los controles del jugador se detienen (RF-025)
+    hud.hide();
+    resultsScreen.show(formatRaceTime(raceTimeOf(race, race.player)));
   } else if (to === GameState.MENU || to === GameState.SELECCION) {
     keyboard.setEnabled(false);
     hud.hide();
+    resultsScreen.hide();
     sceneRenderer.disposeRace();
     race = null;
+    if (to === GameState.MENU) mainMenu.show();
   }
 });
 
@@ -49,16 +64,19 @@ function frame(time) {
     // La lógica limita el paso de tiempo (CONFIG.carPerformance.maxStep) para evitar saltos.
     // Durante la cuenta atrás los coches no se mueven; con la señal de salida pasan todos a EN_CARRERA.
     const input = inputFromKeys(keyboard.pressedKeys, CONFIG.controls);
-    const { started } = stepRace(race, { [race.player.id]: input }, dt, CONFIG);
+    const { started, finished } = stepRace(race, { [race.player.id]: input }, dt, CONFIG);
     if (started) stateMachine.startGo();
+    // Cuando termina el jugador se abren los resultados; el coche sigue rodando por inercia (RN-03, RF-025).
+    const playerFinished = finished.includes(race.player.id);
     const signal = countdownSignal(race.clock, CONFIG.race.countdown);
     hud.update(
       signal === GO_SIGNAL ? CONFIG.ui.hud.goLabel : (signal ?? ''),
-      formatRaceTime(race.clock.raceTime),
+      formatRaceTime(raceTimeOf(race, race.player)),
       lapCounterText(CONFIG.ui.hud.lapLabel, race.player.progress, race.totalLaps),
     );
     for (const participant of race.participants) sceneRenderer.updateCar(participant);
     sceneRenderer.setCamera(computeChaseCamera(race.player, CONFIG.render.chaseCamera));
+    if (playerFinished) stateMachine.finishRace();
   }
   sceneRenderer.render();
   requestAnimationFrame(frame);

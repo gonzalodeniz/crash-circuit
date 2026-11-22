@@ -60,6 +60,13 @@ export const CONFIG = deepFreeze({
       title: 'Crash Circuit',
       startLabel: 'Empezar',
     },
+    // Pantalla de resultados al terminar la carrera (RF-056).
+    results: {
+      title: 'Carrera terminada',
+      timeLabel: 'Tu tiempo',
+      repeatLabel: 'Repetir',
+      menuLabel: 'Menú',
+    },
     // Señal de salida que sustituye al número al terminar la cuenta atrás.
     hud: {
       goLabel: '¡YA!',

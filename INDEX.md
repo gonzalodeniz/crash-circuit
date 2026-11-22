@@ -27,6 +27,10 @@
 - `tests/config.test.js`: pruebas del módulo de configuración.
 - `tests/gameState.test.js`: pruebas de los estados del juego y de la separación lógica/renderizado.
 
+## `docs/user/`
+
+- `docs/user/MANUAL_USUARIO.md`: manual del jugador (cómo jugar). Lo mantiene `doc-teams`.
+
 ## `docs/technical/`
 
 - `docs/technical/ARQUITECTURA.md`: stack, estructura de carpetas, módulos, configuración, pruebas y decisiones descartadas.

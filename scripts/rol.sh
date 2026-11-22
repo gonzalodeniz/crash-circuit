@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# rol.sh — Lanza el orquestador o un subagente concreto de Crash Circuit
+# rol.sh — Lanza el orquestador o un subagente concreto del flujo de trabajo
 #
 # Uso:
 #   ./scripts/rol.sh                          # orquestador, sesión interactiva

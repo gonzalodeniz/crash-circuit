@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 01-etiquetas.sh — Crea o actualiza etiquetas de estado y milestones en GitHub
+# 01-etiquetas.sh — Crea o actualiza las etiquetas del flujo en GitHub
 #
 # El orquestador decide a qué subagente delegar según estas etiquetas.
-# Los milestones E1..E8 agrupan las issues por entrega del roadmap.
-# Es idempotente: si una etiqueta ya existe, actualiza su color y descripción;
-# si un milestone ya existe, lo deja como está.
+# Los milestones (uno por entrega del roadmap) no se crean aquí: los crea
+# product-manager a partir del roadmap del proyecto.
+# Es idempotente: si una etiqueta ya existe, actualiza su color y descripción.
 #
 # Uso:
 #   ./scripts/setup/01-etiquetas.sh                 # repo del directorio actual
@@ -93,35 +93,6 @@ if [[ $PURGE_DEFAULT -eq 1 ]]; then
     run gh label delete "$nombre" --yes "${REPO_ARGS[@]}" 2>/dev/null || true
   done
 fi
-
-# --- Milestones (una por entrega del roadmap) --------------------------------
-MILESTONES=(
-  "E1|MVP: primera carrera"
-  "E2|Personalización de carrera"
-  "E3|Competición contra rivales"
-  "E4|Colisiones y obstáculos"
-  "E5|Destrucción y reaparición"
-  "E6|Información de carrera, minimapa y puntuación"
-  "E7|Experiencia arcade completa"
-  "E8|Producto completo (v1.0)"
-)
-
-echo
-echo "Milestones:"
-if [[ $DRY_RUN -eq 0 ]]; then
-  EXISTENTES="$(gh api "repos/${REPO}/milestones?state=all&per_page=100" --jq '.[].title')"
-else
-  EXISTENTES=""
-fi
-for def in "${MILESTONES[@]}"; do
-  IFS='|' read -r titulo desc <<< "$def"
-  if grep -qxF "$titulo" <<< "$EXISTENTES"; then
-    echo "  = $titulo ya existe"
-  else
-    run gh api "repos/${REPO:-OWNER/REPO}/milestones" -f title="$titulo" -f description="$desc" --silent
-    [[ $DRY_RUN -eq 0 ]] && echo "  ✔ $titulo"
-  fi
-done
 
 # --- Verificación ------------------------------------------------------------
 if [[ $DRY_RUN -eq 0 ]]; then

@@ -8,12 +8,13 @@
 #
 # Uso:
 #   ./scripts/setup/02-permisos.sh                       # en el directorio actual
-#   ./scripts/setup/02-permisos.sh --dir /opt/apps/crash-circuit
-#   ./scripts/setup/02-permisos.sh --extra "Bash(npm *)" --extra "Bash(npx *)"
+#   ./scripts/setup/02-permisos.sh --dir /ruta/al/proyecto
+#   ./scripts/setup/02-permisos.sh --extra "Bash(make *)"  # regla puntual
 #   ./scripts/setup/02-permisos.sh --dry-run             # muestra el JSON final
 #
-# Cuando se defina el stack, añade sus comandos a ALLOW_STACK (abajo) o
-# pásalos con --extra.
+# Los comandos propios del proyecto (build, test…) se leen de "permisos_extra"
+# en docs/project/proyecto.json. Para añadir uno de forma duradera, edita ese
+# fichero y relanza este script.
 # =============================================================================
 set -euo pipefail
 
@@ -74,14 +75,8 @@ ALLOW_UTILIDADES=(
   "Bash(rm *)"
 )
 
-# Comandos del stack (build/test). JavaScript + Three.js implica npm/node.
-# Ajusta esta lista cuando developer-teams fije las herramientas en
-# docs/technical/ARQUITECTURA.md y COMMANDS.md.
-ALLOW_STACK=(
-  "Bash(npm *)"
-  "Bash(npx *)"
-  "Bash(node *)"
-)
+# Los comandos del stack (build/test) son propios de cada proyecto: se leen de
+# "permisos_extra" en docs/project/proyecto.json (ver más abajo).
 
 DENY=(
   "Read(./.env)"
@@ -102,6 +97,31 @@ command -v python3 >/dev/null || { echo "ERROR: falta python3" >&2; exit 1; }
 
 SETTINGS_DIR="$DIR/.claude"
 SETTINGS="$SETTINGS_DIR/settings.json"
+CONFIG_PROYECTO="$DIR/docs/project/proyecto.json"
+
+# Permisos propios del proyecto (permisos_extra de proyecto.json)
+LEER_PERMISOS='
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        datos = json.load(f)
+except (OSError, json.JSONDecodeError) as e:
+    sys.exit(f"ERROR: no se puede leer {sys.argv[1]} ({e})")
+reglas = datos.get("permisos_extra", []) if isinstance(datos, dict) else []
+if not isinstance(reglas, list) or not all(isinstance(r, str) for r in reglas):
+    sys.exit("ERROR: permisos_extra debe ser una lista de cadenas")
+print("\n".join(reglas))
+'
+ALLOW_STACK=()
+if [[ -f "$CONFIG_PROYECTO" ]]; then
+  REGLAS_PROYECTO="$(python3 -I -c "$LEER_PERMISOS" "$CONFIG_PROYECTO")"
+  while IFS= read -r regla; do
+    [[ -n "$regla" ]] && ALLOW_STACK+=("$regla")
+  done <<< "$REGLAS_PROYECTO"
+  echo "Permisos del proyecto (docs/project/proyecto.json): ${#ALLOW_STACK[@]} reglas" >&2
+else
+  echo "Aviso: no existe docs/project/proyecto.json; solo se aplican los permisos base." >&2
+fi
 
 # Pasamos las listas a Python separadas por saltos de línea
 join_lines() { local IFS=$'\n'; echo "$*"; }

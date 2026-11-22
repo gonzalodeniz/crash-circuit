@@ -1,0 +1,14 @@
+{
+  "nombre": "<nombre del proyecto>",
+  "rutas_protegidas": [
+    "docs/product/"
+  ],
+  "rutas_doc_teams": [
+    "README.md",
+    "CHANGELOG.md",
+    "INDEX.md",
+    "docs/user/"
+  ],
+  "permisos_extra": [],
+  "terminos_no_portables": []
+}

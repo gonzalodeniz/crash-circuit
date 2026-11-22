@@ -1,21 +1,23 @@
 # Desarrollo con subagentes de Claude Code
 
-Crash Circuit se desarrolla con un equipo de subagentes de Claude Code coordinados por un orquestador. Este documento explica cómo instalar el sistema, cómo usarlo a diario y cómo intervenir cuando te necesita.
+Este proyecto se desarrolla con un equipo de subagentes de Claude Code coordinados por un orquestador. Los agentes forman un **kit portable**: son iguales en cualquier proyecto, y todo lo específico vive en `docs/project/` y `docs/product/`. Este documento explica cómo instalar el kit, cómo usarlo a diario, cómo añadir funcionalidades nuevas y cómo intervenir cuando te necesita.
 
-> El `README.md` de la raíz describe el juego y lo mantiene `doc-teams`. Este documento trata solo del sistema de agentes.
+> El `README.md` de la raíz describe el producto y lo mantiene `doc-teams`. Este documento trata solo del sistema de agentes.
 
 ## Índice
 
 1. [Cómo funciona](#cómo-funciona)
-2. [Requisitos](#requisitos)
-3. [Instalación desde cero](#instalación-desde-cero)
-4. [Uso diario](#uso-diario)
-5. [Tu papel: decisiones y aceptación de entregas](#tu-papel-decisiones-y-aceptación-de-entregas)
-6. [Estados de una issue](#estados-de-una-issue)
-7. [Qué puede y qué no puede hacer cada rol](#qué-puede-y-qué-no-puede-hacer-cada-rol)
-8. [Modificar la configuración](#modificar-la-configuración)
-9. [Solución de problemas](#solución-de-problemas)
-10. [Ficheros del sistema](#ficheros-del-sistema)
+2. [Kit y proyecto](#kit-y-proyecto)
+3. [Requisitos](#requisitos)
+4. [Instalación](#instalación)
+5. [Uso diario](#uso-diario)
+6. [Añadir funcionalidades nuevas](#añadir-funcionalidades-nuevas)
+7. [Tu papel: decisiones y aceptación de entregas](#tu-papel-decisiones-y-aceptación-de-entregas)
+8. [Estados de una issue](#estados-de-una-issue)
+9. [Qué puede y qué no puede hacer cada rol](#qué-puede-y-qué-no-puede-hacer-cada-rol)
+10. [Modificar la configuración](#modificar-la-configuración)
+11. [Solución de problemas](#solución-de-problemas)
+12. [Ficheros del sistema](#ficheros-del-sistema)
 
 ## Cómo funciona
 
@@ -27,16 +29,38 @@ Crash Circuit se desarrolla con un equipo de subagentes de Claude Code coordinad
      ▼              ▼              ▼              ▼
 product-manager  developer-teams  qa-teams      doc-teams
 crea issues      implementa,      valida la PR  documenta lo
-por entrega      abre PR, fusiona               fusionado
+por cobertura    abre PR, fusiona               fusionado
 ```
 
 - **GitHub es el estado compartido.** Cada issue abierta lleva una etiqueta `estado:*` que indica en qué punto está. Los subagentes no se hablan entre sí: se comunican mediante issues, PR y comentarios con plantillas fijas.
-- **El orquestador** aplica la primera regla que se cumple (decisiones pendientes → fusionar → corregir → validar → continuar → documentar → empezar → crear issues), delega en un subagente, comprueba que la transición se ha producido y repite.
+- **El orquestador** aplica la primera regla que se cumple (decisiones pendientes → fusionar → corregir → validar → continuar → documentar → empezar → product-manager), delega en un subagente, comprueba que la transición se ha producido y repite.
 - **Una sola issue en curso** en todo el proyecto. El trabajo avanza en serie.
-- **Las entregas siguen el roadmap** (`docs/product/03_ROADMAP.md`), con un milestone de GitHub por entrega (E1…E8).
-- **Tú intervienes** cuando un agente necesita una decisión y al final de cada entrega, para aceptarla tras probar el juego.
+- **Las entregas siguen el roadmap**, con un milestone de GitHub por entrega. `product-manager` crea los milestones y las issues que falten comparando el roadmap con las issues existentes (**cobertura**).
+- **Tú intervienes** cuando un agente necesita una decisión y al final de cada entrega, para aceptarla tras comprobarla.
 
 Las reglas completas están en `docs/process/FLUJO_DE_TRABAJO.md`.
+
+## Kit y proyecto
+
+| Capa | Ficheros | ¿Cambia entre proyectos? |
+|---|---|---|
+| **Kit** | `CLAUDE.md`, `.claude/agents/`, `.claude/hooks/`, `docs/process/`, `scripts/` | No. Se copia tal cual con `03-kit.sh`. |
+| **Contrato del proyecto** | `docs/project/PERFIL.md` y `docs/project/proyecto.json` | Sí. Se escribe una vez por proyecto. |
+| **Producto** | `docs/product/` | Sí. Es la fuente de verdad y la mantienes tú. |
+| **Generado** | `.claude/settings.json` | Lo genera `02-permisos.sh` a partir de `proyecto.json`. |
+
+- **`PERFIL.md`** contiene en prosa las reglas que aplican los agentes: producto, idioma, fuentes de verdad y formato de los IDs, restricciones, modelo de dominio, configuración, base técnica, comprobaciones obligatorias, verificación manual, documentación de usuario y nombre de las entregas. Sus títulos de sección son fijos, porque los agentes los citan. `CLAUDE.md` lo importa, así que todos los agentes lo tienen siempre en contexto.
+- **`proyecto.json`** contiene lo que leen las máquinas:
+
+  | Clave | Quién la usa | Para qué |
+  |---|---|---|
+  | `nombre` | `03-kit.sh --comprobar` | Detectar el nombre del proyecto dentro del kit. |
+  | `rutas_protegidas` | hook `guard.py` | Rutas propias que ningún rol puede editar (se suman a las del kit). |
+  | `rutas_doc_teams` | hook `guard.py` | Únicas rutas que puede editar `doc-teams`. |
+  | `permisos_extra` | `02-permisos.sh` | Comandos del stack que se añaden a `settings.json`. |
+  | `terminos_no_portables` | `03-kit.sh --comprobar` | Palabras del proyecto que no deben aparecer en el kit. |
+
+Para comprobar que el kit sigue siendo portable: `./scripts/setup/03-kit.sh --comprobar`.
 
 ## Requisitos
 
@@ -45,7 +69,7 @@ Las reglas completas están en `docs/process/FLUJO_DE_TRABAJO.md`.
 | Claude Code ≥ 2.1 | `claude --version` |
 | GitHub CLI | `gh --version` |
 | git, python3, flock | `git --version && python3 --version && flock --version` |
-| Node.js y npm (los usará el juego) | `node --version && npm --version` |
+| Las herramientas del stack del proyecto | ver `COMMANDS.md` |
 | Repositorio en GitHub con remoto `origin` | `git remote -v` |
 
 **Credenciales de GitHub:** crea un fichero `.env` en la raíz (no se sube a git) con un token que tenga permisos sobre issues, PR y contenido del repositorio:
@@ -56,34 +80,36 @@ GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxx
 
 `scripts/rol.sh` lo carga y lo exporta como `GH_TOKEN`. Si prefieres no usar `.env`, ejecuta `gh auth login` una vez.
 
-## Instalación desde cero
+## Instalación
 
-Los scripts de `scripts/setup/` están numerados en orden de ejecución. Todos son **idempotentes**: puedes relanzarlos sin duplicar nada, y no sobrescriben ficheros que hayas editado salvo que uses `--force` (en ese caso guardan una copia `.bak`).
+### En un proyecto nuevo
+
+Desde un repositorio que ya tenga el kit:
 
 ```bash
-cd /opt/apps/crash-circuit
-chmod +x scripts/rol.sh scripts/setup/*.sh
-
-# 1. Etiquetas de estado y milestones E1…E8 en GitHub
-./scripts/setup/01-etiquetas.sh --dry-run    # revisa qué hará
-./scripts/setup/01-etiquetas.sh
-
-# 2. Permisos de Claude Code (.claude/settings.json)
-./scripts/setup/02-permisos.sh
-
-# 3. Reglas del flujo (docs/process/FLUJO_DE_TRABAJO.md + sección en CLAUDE.md + INDEX.md)
-./scripts/setup/03-flujo-trabajo.sh
-
-# 4. Subagentes (.claude/agents/) y hook de protección (.claude/hooks/)
-./scripts/setup/04-agentes.sh
-
-git add -A && git commit -m "[setup] Instala el flujo de subagentes"
-git push
+./scripts/setup/03-kit.sh --destino /ruta/otro-proyecto --dry-run   # revisa qué hará
+./scripts/setup/03-kit.sh --destino /ruta/otro-proyecto
 ```
 
-Después, **abre una sesión nueva** de Claude Code: las sesiones que ya estaban abiertas no detectan los agentes.
+Copia el kit y crea desde plantillas, solo si no existen, `docs/project/PERFIL.md`, `docs/project/proyecto.json`, `INDEX.md` y `COMMANDS.md`. Después, en el proyecto nuevo:
 
-Para comprobar la instalación:
+1. Rellena `docs/project/PERFIL.md` sin cambiar los títulos de las secciones.
+2. Rellena `docs/project/proyecto.json`.
+3. Escribe `docs/product/`: visión, requisitos con IDs estables y un roadmap en el que cada entrega lleve una línea `**Requisitos:** …`.
+4. Ejecuta los scripts de configuración:
+   ```bash
+   ./scripts/setup/01-etiquetas.sh --dry-run && ./scripts/setup/01-etiquetas.sh   # etiquetas en GitHub
+   ./scripts/setup/02-permisos.sh                                              # .claude/settings.json
+   ./scripts/setup/03-kit.sh --comprobar                                       # portabilidad
+   git add -A && git commit -m "[setup] Instala el flujo de subagentes" && git push
+   ```
+5. **Abre una sesión nueva** de Claude Code: las sesiones que ya estaban abiertas no detectan los agentes.
+
+Todos los scripts son **idempotentes**: puedes relanzarlos sin duplicar nada, y no sobrescriben ficheros que hayas editado salvo que uses `--force` (en ese caso guardan una copia `.bak`).
+
+Los milestones no se crean en la instalación: los crea `product-manager` a partir del roadmap la primera vez que se ejecuta.
+
+### Comprobar la instalación
 
 ```bash
 ./scripts/rol.sh --list      # debe listar los cinco roles
@@ -122,35 +148,61 @@ Cualquier texto que no sea un rol se envía como mensaje al orquestador:
 - **GitHub:** issues (estado y comentarios), PR (handoffs de desarrollo y resultados de QA) y milestones.
 - **`logs/`:** salida completa de las ejecuciones desatendidas.
 
+## Añadir funcionalidades nuevas
+
+`product-manager` no necesita que le digas qué ha cambiado. Cada vez que se ejecuta compara el roadmap con las issues de cada milestone y crea solo lo que falta. Para una funcionalidad nueva o una release nueva:
+
+1. **Requisitos:** añádelos al documento de requisitos con **IDs nuevos**. Nunca reutilices un ID. Si cambias un requisito ya entregado, márcalo en el propio requisito (p. ej. «Modificado en E9») en vez de reescribirlo sin dejar rastro.
+2. **Roadmap:** añade una entrega nueva **al final**, con su objetivo, su criterio de entrega y su línea de requisitos:
+   ```markdown
+   ## E9 — <nombre>
+
+   **Requisitos:** RF-101, RF-102, RF-120 (modificado)
+
+   **Criterio de entrega:** …
+   ```
+   También puedes añadir IDs a una entrega que todavía no hayas aceptado.
+3. **Ejecuta el orquestador.** Cuando no quede trabajo en curso, delegará en `product-manager`, que:
+   - crea el milestone de la entrega nueva;
+   - calcula la cobertura (IDs de la entrega menos IDs ya citados en sus issues);
+   - crea las issues que falten, con `estado:nuevo`.
+
+Reglas que aplica `product-manager`:
+
+- Una entrega aceptada (milestone cerrado) **no se reabre**. Si añades IDs a una entrega ya aceptada, te pregunta en qué entrega nueva deben ir.
+- Si un requisito no aparece en ninguna entrega, o una entrega cita un ID que no existe, abre una issue `Decisión de producto: planificación del roadmap` con su propuesta y espera tu respuesta.
+- Una entrega nueva no empieza hasta aceptar la anterior: la entrega en curso es siempre la primera, en el orden del roadmap, con el milestone abierto.
+
 ## Tu papel: decisiones y aceptación de entregas
 
 ### Decisiones (`requiere-decision`)
 
-Cuando un agente encuentra una ambigüedad, una contradicción con `docs/product/` o algo que no le corresponde decidir, deja en la issue un comentario con una `Pregunta:` y la etiqueta `requiere-decision`. El orquestador se detiene en cuanto ve esa etiqueta.
+Cuando un agente encuentra una contradicción en los documentos de producto o algo que no le corresponde decidir, deja en la issue un comentario con una `Pregunta:` y la etiqueta `requiere-decision`. El orquestador salta esa issue y sigue con el resto; se detiene si bloquea la issue en curso, una aceptación o todo el trabajo restante.
 
 Puedes responder de dos formas:
 
 - **En la sesión interactiva:** el orquestador te presenta la pregunta. Al responder, registra tu respuesta en la issue (`Decisión del usuario: …`), retira la etiqueta y continúa.
 - **En GitHub:** responde en la issue con un comentario y retira tú la etiqueta `requiere-decision`. En la siguiente ejecución, el flujo continúa.
 
-Si la decisión implica cambiar `docs/product/`, actualiza tú esos documentos: ningún agente puede modificarlos.
+Si la decisión implica cambiar los documentos de producto, actualízalos tú: ningún agente puede modificarlos.
 
 ### Aceptación de una entrega
 
-Los agentes no pueden jugar. Cuando se cierran todas las issues de una entrega, `product-manager` crea la issue **«Aceptación de la entrega Ek»** con:
+Los agentes no pueden comprobar lo que solo se ve usando el producto. Cuando se cierran todas las issues de una entrega, `product-manager` crea la issue **«Aceptación de la entrega <ID>»** con:
 
 - el criterio de entrega del roadmap,
 - las issues que la componen,
-- todas las *verificaciones manuales pendientes* que QA fue anotando.
+- todas las *verificaciones manuales pendientes* que QA fue anotando,
+- todos los *supuestos* que tomaron los agentes.
 
-Prueba el juego siguiendo esa lista y responde:
+Comprueba la entrega siguiendo esa lista y responde:
 
-- **Aceptada:** `product-manager` cierra el milestone y crea las issues de la entrega siguiente. Cierra tú la issue de aceptación.
+- **Aceptada:** `product-manager` cierra el milestone y pasa a la entrega siguiente. Cierra tú la issue de aceptación.
 - **No aceptada:** indica qué falta; `product-manager` creará las issues correspondientes en esa misma entrega.
 
 ### Permisos de comandos nuevos
 
-Si `developer-teams` incorpora una herramienta cuyo comando no está permitido, lo indica en su handoff con la regla exacta (por ejemplo `Bash(make *)`). Añádela a `ALLOW_STACK` en `scripts/setup/02-permisos.sh` y relanza el script.
+Si `developer-teams` incorpora una herramienta cuyo comando no está permitido, lo indica en su handoff con la regla exacta (por ejemplo `Bash(make *)`). Añádela a `permisos_extra` de `docs/project/proyecto.json` y relanza `./scripts/setup/02-permisos.sh`.
 
 ## Estados de una issue
 
@@ -183,30 +235,33 @@ Las restricciones no dependen solo del prompt: el hook `.claude/hooks/guard.py` 
 | Rol | Modelo | Puede | El hook le impide |
 |---|---|---|---|
 | orquestador | sonnet | Leer GitHub, delegar, registrar tus decisiones | Tocar ficheros, PR o etiquetas de estado; crear o cerrar issues |
-| product-manager | opus | Crear y editar issues, cerrar milestones | Modificar ficheros o git; gestionar PR; cerrar issues |
+| product-manager | opus | Crear y editar issues, crear y cerrar milestones | Modificar ficheros o git; gestionar PR; cerrar issues |
 | developer-teams | sonnet (effort high) | Código, ramas, PR, fusionar | Commit o push en `main`, rebase, push forzado, fusionar sin `estado:validado`, cerrar issues |
 | qa-teams | sonnet (effort high) | Descargar la PR, ejecutar pruebas, comentar | Modificar ficheros o git; fusionar; crear o cerrar issues |
-| doc-teams | sonnet | Editar `README.md`, `CHANGELOG.md`, `INDEX.md` y `docs/user/`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
+| doc-teams | sonnet | Editar las rutas de `rutas_doc_teams`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
 
-Además, **ningún rol** puede editar `CLAUDE.md`, `CONTEXT.md`, `.claude/`, `docs/process/` ni `docs/product/`, ni escribir fuera del proyecto.
+Además, **ningún rol** puede editar `CLAUDE.md`, `.claude/`, `docs/process/`, `docs/project/` ni las rutas de `rutas_protegidas`, ni escribir fuera del proyecto.
 
 > El hook analiza cada orden del comando (también las que van tras saltos de línea o dentro de `bash -c`, `eval` y `$(…)`), pero previene errores de los agentes, no ataques deliberados: por ejemplo, un script de Python o Node que escriba ficheros no se detecta.
 
 ## Modificar la configuración
 
-Los scripts de `scripts/setup/` son la **fuente de verdad** de la configuración. Para que un cambio sobreviva a una reinstalación, haz el cambio en el script y relánzalo:
+Cada fichero es su propia fuente de verdad: edítalo directamente.
 
-| Quiero cambiar… | Edita | Y ejecuta |
+| Quiero cambiar… | Edita | Y después |
 |---|---|---|
-| Etiquetas o milestones | Listas `ETIQUETAS` / `MILESTONES` de `01-etiquetas.sh` | `./scripts/setup/01-etiquetas.sh` |
-| Comandos permitidos | `ALLOW_BASE`, `ALLOW_STACK` o `DENY` de `02-permisos.sh` | `./scripts/setup/02-permisos.sh` |
-| Reglas comunes del flujo | Bloque `CONTENIDO_FLUJO` de `03-flujo-trabajo.sh` | `./scripts/setup/03-flujo-trabajo.sh --force` |
-| Prompt, modelo o herramientas de un rol | Bloque `AGENTE_<ROL>` de `04-agentes.sh` | `./scripts/setup/04-agentes.sh --force <rol>` |
-| Reglas del hook | Bloque `GUARD_PY` de `04-agentes.sh` | `./scripts/setup/04-agentes.sh --force` |
+| Reglas del proyecto (stack, dominio, comprobaciones, documentación…) | `docs/project/PERFIL.md` | Nada: se aplica en la siguiente sesión. |
+| Rutas protegidas o rutas de doc-teams | `docs/project/proyecto.json` | Nada: el hook lo lee en cada llamada. |
+| Comandos permitidos del stack | `permisos_extra` de `docs/project/proyecto.json` | `./scripts/setup/02-permisos.sh` |
+| Permisos base o denegaciones | `ALLOW_BASE`, `ALLOW_UTILIDADES` o `DENY` de `02-permisos.sh` | `./scripts/setup/02-permisos.sh` |
+| Etiquetas | Lista `ETIQUETAS` de `01-etiquetas.sh` | `./scripts/setup/01-etiquetas.sh` |
+| Reglas comunes del flujo | `docs/process/FLUJO_DE_TRABAJO.md` | Copiar el kit a los demás proyectos. |
+| Prompt, modelo o herramientas de un rol | `.claude/agents/<rol>.md` | Copiar el kit a los demás proyectos. |
+| Reglas del hook | `.claude/hooks/guard.py` | Copiar el kit a los demás proyectos. |
 
-Si editas directamente `.claude/agents/*.md` o `docs/process/FLUJO_DE_TRABAJO.md`, el cambio funciona, pero el script dejará de coincidir: al relanzarlo te avisará de que hay cambios propios y no los tocará. Con `--force` los sobrescribirá (guardando una copia `.bak`).
+Si cambias el kit, mantenlo genérico: lo que sea propio del proyecto va en `PERFIL.md`. Comprueba con `./scripts/setup/03-kit.sh --comprobar` y lleva el cambio a los demás proyectos con `03-kit.sh --destino <ruta> --force`.
 
-Tras cambiar agentes o el hook, abre una sesión nueva de Claude Code.
+Tras cambiar agentes, el hook o `CLAUDE.md`, abre una sesión nueva de Claude Code.
 
 ## Solución de problemas
 
@@ -214,42 +269,47 @@ Tras cambiar agentes o el hook, abre una sesión nueva de Claude Code.
 |---|---|
 | `@orquestador` no aparece en el autocompletado | La sesión se abrió antes de crear `.claude/agents/`. Sal y vuelve a entrar. |
 | `/list-agents` no muestra los agentes | Es normal: muestra agentes **en ejecución**, no los definidos. Usa `./scripts/rol.sh --list`. |
-| `claude agents` abre un panel de sesiones | En las versiones recientes es el gestor de sesiones en segundo plano, no un listado de agentes. |
 | `ERROR: gh no autenticado` | Falta `GITHUB_PAT` en `.env` o el token ha caducado. |
 | `Ya hay otra ejecución de rol.sh en curso` | Otra ejecución tiene el bloqueo. Espera a que termine; si no hay ninguna, borra `logs/.rol.lock`. |
-| Un agente se queda pidiendo permiso para un comando | El comando no está en `.claude/settings.json`. Añádelo con `02-permisos.sh` si es legítimo. |
-| `Bloqueado por guard (<rol>): …` | El hook ha impedido una acción prohibida. Normalmente el agente corrige solo; si se repite, revisa si la regla del hook es demasiado estricta. |
+| Un agente se queda pidiendo permiso para un comando | El comando no está en `.claude/settings.json`. Si es legítimo, añádelo a `permisos_extra` y relanza `02-permisos.sh`. |
+| `Bloqueado por guard (<rol>): …` | El hook ha impedido una acción prohibida. Normalmente el agente corrige solo; si se repite, revisa si la regla del hook o `proyecto.json` es demasiado estricta. |
+| `product-manager` no crea issues para una funcionalidad nueva | Falta la línea `**Requisitos:**` en la entrega, los IDs no existen en el documento de requisitos o la entrega anterior no está aceptada. Revisa la issue `Decisión de producto: planificación del roadmap`. |
 | El orquestador para con «la transición no se produjo» | Revisa la issue y el resumen del subagente. Corrige la situación (etiqueta, PR) y relanza. |
 | Hay más de una issue en curso | El flujo se ha desviado. Deja una sola con etiqueta `estado:*` de trabajo y relanza. |
-| Quiero ver qué ha hecho un agente concreto | Ejecución desatendida: `logs/`. Interactiva: el historial de la sesión. Siempre: los comentarios `Rol: …` en GitHub. |
+| `03-kit.sh --comprobar` falla | Alguien ha escrito algo del proyecto en el kit. Muévelo a `docs/project/PERFIL.md`. |
 
 ## Ficheros del sistema
 
 ```
+CLAUDE.md                  punto de entrada del kit; importa el perfil y el flujo
 .claude/
-├── settings.json          permisos (02-permisos.sh)
-├── agents/                definición de cada rol (04-agentes.sh)
+├── settings.json          permisos (generado por 02-permisos.sh)
+├── agents/                definición genérica de cada rol
 │   ├── orquestador.md
 │   ├── product-manager.md
 │   ├── developer-teams.md
 │   ├── qa-teams.md
 │   └── doc-teams.md
 └── hooks/
-    ├── guard.sh           punto de entrada del hook (04-agentes.sh)
+    ├── guard.sh           punto de entrada del hook
     └── guard.py           reglas de protección por rol
 docs/
 ├── process/
-│   └── FLUJO_DE_TRABAJO.md   reglas comunes (03-flujo-trabajo.sh)
+│   └── FLUJO_DE_TRABAJO.md   reglas comunes (kit)
+├── project/
+│   ├── PERFIL.md             reglas del proyecto para los agentes
+│   └── proyecto.json         rutas y permisos del proyecto
+├── product/                  fuente de verdad del producto
 └── technical/
     └── ARQUITECTURA.md        decisiones técnicas (lo crea developer-teams)
 scripts/
 ├── README.md              este documento
 ├── rol.sh                 lanzador
-└── setup/                 instalación, en orden
-    ├── 01-etiquetas.sh
-    ├── 02-permisos.sh
-    ├── 03-flujo-trabajo.sh
-    └── 04-agentes.sh
+└── setup/
+    ├── 01-etiquetas.sh    etiquetas del flujo en GitHub
+    ├── 02-permisos.sh     genera .claude/settings.json
+    ├── 03-kit.sh          copia el kit a otro proyecto y comprueba su portabilidad
+    └── plantillas/        PERFIL.md, proyecto.json, INDEX.md y COMMANDS.md de partida
 logs/                      salida de las ejecuciones --auto (no se sube a git)
 .env                       credenciales (no se sube a git)
 ```

@@ -1,0 +1,45 @@
+// Máquina de estados del juego. Lógica pura: no importa Three.js ni el DOM (RNF-05).
+
+export const GameState = Object.freeze({
+  MENU: 'MENU',
+  SELECCION: 'SELECCION',
+  PARRILLA: 'PARRILLA',
+  CUENTA_ATRAS: 'CUENTA_ATRAS',
+  EN_CARRERA: 'EN_CARRERA',
+  PAUSA: 'PAUSA',
+  RESULTADOS: 'RESULTADOS',
+});
+
+// Transiciones permitidas entre estados.
+export const TRANSITIONS = Object.freeze({
+  [GameState.MENU]: [GameState.SELECCION],
+  [GameState.SELECCION]: [GameState.MENU, GameState.PARRILLA],
+  [GameState.PARRILLA]: [GameState.CUENTA_ATRAS],
+  [GameState.CUENTA_ATRAS]: [GameState.EN_CARRERA],
+  [GameState.EN_CARRERA]: [GameState.PAUSA, GameState.RESULTADOS],
+  // Desde pausa: reanudar, reiniciar (PARRILLA) o abandonar (MENU).
+  [GameState.PAUSA]: [GameState.EN_CARRERA, GameState.PARRILLA, GameState.MENU],
+  // Desde resultados: repetir (PARRILLA), elegir otra carrera (SELECCION) o menú.
+  [GameState.RESULTADOS]: [GameState.PARRILLA, GameState.SELECCION, GameState.MENU],
+});
+
+export function canTransition(from, to) {
+  return (TRANSITIONS[from] ?? []).includes(to);
+}
+
+export class GameStateMachine {
+  #state = GameState.MENU;
+
+  get state() {
+    return this.#state;
+  }
+
+  /** Cambia de estado; lanza un error si la transición no está permitida. */
+  transitionTo(next) {
+    if (!canTransition(this.#state, next)) {
+      throw new Error(`Transición no permitida: ${this.#state} -> ${next}`);
+    }
+    this.#state = next;
+    return this.#state;
+  }
+}

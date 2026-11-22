@@ -9,7 +9,27 @@
 - `INDEX.md`: este índice.
 - `README.md`: descripción del juego y cómo arrancarlo. Lo mantiene `doc-teams`.
 - `CHANGELOG.md`: resumen de cada issue terminada, agrupado por entrega. Lo mantiene `doc-teams`.
-- `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*` y `logs/`).
+- `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*`, `logs/`, `node_modules/` y `dist/`).
+- `package.json` y `package-lock.json`: dependencias (`three`, `vite`) y scripts npm (`dev`, `build`, `preview`, `test`).
+- `vite.config.js`: configuración de Vite (raíz `src/`, salida `dist/`, puertos locales).
+
+## `src/` (código del juego)
+
+- `src/index.html`: página de arranque con el lienzo `#game-canvas`.
+- `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
+- `src/main.js`: punto de entrada; une la lógica con el renderizado y arranca el bucle.
+- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
+- `src/logic/gameState.js`: estados del juego y máquina de estados (sin Three.js ni DOM).
+- `src/render/sceneRenderer.js`: escena, cámara y renderizador de Three.js, con ajuste de tamaño y liberación de recursos.
+
+## `tests/` (pruebas automáticas, sin navegador)
+
+- `tests/config.test.js`: pruebas del módulo de configuración.
+- `tests/gameState.test.js`: pruebas de los estados del juego y de la separación lógica/renderizado.
+
+## `docs/technical/`
+
+- `docs/technical/ARQUITECTURA.md`: stack, estructura de carpetas, módulos, configuración, pruebas y decisiones descartadas.
 
 ## `docs/project/` (contrato del proyecto)
 

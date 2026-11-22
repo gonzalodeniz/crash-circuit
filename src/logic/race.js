@@ -5,6 +5,8 @@ import { GameState } from './gameState.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
 import { createProgress, stepProgress } from './progress.js';
 
+const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false, right: false });
+
 /**
  * Crea una carrera con sus participantes colocados en la parrilla.
  * La lista admite hasta `race.maxParticipants` (10 desde E3); en E1 solo contiene al jugador.
@@ -31,6 +33,8 @@ export function createRace(config, entries = [config.race.player]) {
       isPlayer: Boolean(entry.isPlayer),
       gridIndex: index,
       status: GameState.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)
+      finished: false, // ha completado todas las vueltas (RF-025)
+      finishTime: null, // tiempo real de llegada en s, congelado al terminar (RF-025)
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
       progress: createProgress(track, slot), // vueltas válidas, checkpoints y distancia válida (RN-01)
     };
@@ -58,7 +62,11 @@ export function createRace(config, entries = [config.race.player]) {
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
  * @param {object} config CONFIG (secciones `race` y `carPerformance`)
  * Tras mover cada coche se actualiza su progreso (vueltas y checkpoints válidos) con el desplazamiento real.
- * @returns {{started: boolean}} `started` es verdadero solo en el paso de la señal de salida
+ * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): se congelan su
+ * tiempo de llegada (`finishTime`, el cronómetro de ese paso) y su progreso, sus controles dejan de
+ * actuar y su coche rueda por inercia hasta detenerse. El reloj de la carrera no se detiene.
+ * @returns {{started: boolean, finished: string[]}} `started` es verdadero solo en el paso de la señal
+ *   de salida; `finished` lista los participantes que terminan en este paso
  */
 export function stepRace(race, inputs, dt, config) {
   const step = Math.min(Math.max(dt, 0), config.carPerformance.maxStep);
@@ -73,13 +81,26 @@ export function stepRace(race, inputs, dt, config) {
   let drivingTime = 0;
   if (started) drivingTime = race.clock.raceTime;
   else if (previous.phase === ClockPhase.RUNNING) drivingTime = step;
+  const finished = [];
   if (drivingTime > 0) {
     for (const participant of race.participants) {
       if (participant.status !== GameState.EN_CARRERA) continue;
-      const input = inputs[participant.id] ?? { accelerate: false, brake: false, left: false, right: false };
+      // Quien ya ha terminado no recibe órdenes: solo la inercia detiene su coche.
+      const input = participant.finished ? IDLE_INPUT : (inputs[participant.id] ?? IDLE_INPUT);
       Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
+      if (participant.finished) continue; // su progreso y su tiempo ya no cambian (RF-025, RF-027)
       participant.progress = stepProgress(participant.progress, race.track, participant);
+      if (participant.progress.laps >= race.totalLaps) {
+        participant.finished = true;
+        participant.finishTime = race.clock.raceTime;
+        finished.push(participant.id);
+      }
     }
   }
-  return { started };
+  return { started, finished };
+}
+
+/** Tiempo de carrera de un participante: su tiempo final si ya ha terminado, o el cronómetro en curso. */
+export function raceTimeOf(race, participant) {
+  return participant.finishTime ?? race.clock.raceTime;
 }

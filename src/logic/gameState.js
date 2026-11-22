@@ -70,4 +70,25 @@ export class GameStateMachine {
     }
     return this.transitionTo(GameState.PARRILLA);
   }
+
+  /** El jugador completa sus vueltas y se abren los resultados (EN_CARRERA -> RESULTADOS, RF-025). */
+  finishRace() {
+    return this.transitionTo(GameState.RESULTADOS);
+  }
+
+  /** Repite la carrera con la misma configuración (RESULTADOS -> PARRILLA, RF-057). */
+  repeatRace() {
+    if (this.#state !== GameState.RESULTADOS) {
+      throw new Error(`Solo se puede repetir la carrera desde ${GameState.RESULTADOS}`);
+    }
+    return this.transitionTo(GameState.PARRILLA);
+  }
+
+  /** Vuelve al menú principal desde los resultados (RESULTADOS -> MENU, RF-008). */
+  backToMenu() {
+    if (this.#state !== GameState.RESULTADOS) {
+      throw new Error(`Solo se puede volver al menú desde ${GameState.RESULTADOS}`);
+    }
+    return this.transitionTo(GameState.MENU);
+  }
 }

@@ -36,6 +36,14 @@ export const CONFIG = deepFreeze({
     targetFps: 60,
   },
 
+  // Textos de la interfaz (no son «propuesta» de producto; nombres finales pendientes de calibrar).
+  ui: {
+    menu: {
+      title: 'Crash Circuit',
+      startLabel: 'Empezar',
+    },
+  },
+
   // Parámetros de la escena de arranque (no son «propuesta» de producto).
   render: {
     backgroundColor: 0x87ceeb,

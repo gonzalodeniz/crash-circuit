@@ -23,6 +23,7 @@ src/                Código del juego
   config/           Módulo único de configuración
   logic/            Lógica del juego y de la competición (sin Three.js ni DOM)
   render/           Renderizado con Three.js
+  ui/               Interfaz DOM (menús y, más adelante, HUD)
 tests/              Pruebas automáticas (*.test.js), ejecutables sin navegador
 dist/               Resultado de `npm run build` (no se versiona)
 ```
@@ -32,11 +33,12 @@ En la raíz solo van `package.json`, `package-lock.json` y `vite.config.js`, que
 ## Módulos y responsabilidades
 
 - `src/config/config.js`: único origen de los valores configurables.
-- `src/logic/gameState.js`: estados del juego (`MENU`, `SELECCION`, `PARRILLA`, `CUENTA_ATRAS`, `EN_CARRERA`, `PAUSA`, `RESULTADOS`) y transiciones permitidas. Las transiciones actuales son una primera propuesta basada en RF-008 y RF-026 y las issues siguientes pueden ampliarlas.
+- `src/logic/gameState.js`: estados del juego (`MENU`, `SELECCION`, `PARRILLA`, `CUENTA_ATRAS`, `EN_CARRERA`, `PAUSA`, `RESULTADOS`) y transiciones permitidas. Las transiciones actuales son una primera propuesta basada en RF-008 y RF-026 y las issues siguientes pueden ampliarlas. En E1 `MENU` pasa directo a `PARRILLA` (`startRace()`), porque aún no hay selección; la transición `MENU -> SELECCION` queda definida para E2.
+- `src/ui/mainMenu.js`: menú principal en DOM (RF-001). Solo dibuja y avisa mediante una función de retorno; no importa la lógica ni Three.js. Sus textos salen de `CONFIG.ui.menu`.
 - `src/render/sceneRenderer.js`: crea el `WebGLRenderer`, la escena y la cámara, adapta el lienzo a la ventana y libera sus recursos con `dispose()` (RNF-04).
 - `src/main.js`: único punto donde se juntan lógica y renderizado; contiene el bucle `requestAnimationFrame`.
 
-Regla de dependencias (RNF-05): `logic/` no importa `three`, el DOM ni `render/`. `render/` puede leer datos de `logic/`, pero no decide nada de la competición. Las pruebas comprueban que `logic/gameState.js` no menciona Three.js ni el DOM.
+Regla de dependencias (RNF-05): `logic/` no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. Las pruebas comprueban que `logic/gameState.js` no menciona Three.js ni el DOM.
 
 ## Configuración
 

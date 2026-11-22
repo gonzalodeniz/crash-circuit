@@ -38,3 +38,33 @@ test('el módulo de lógica no depende de Three.js ni del DOM', async () => {
   const source = await readFile(new URL('../src/logic/gameState.js', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /from\s+['"]three['"]|document\.|window\./);
 });
+
+test('el estado inicial es MENU', () => {
+  assert.equal(new GameStateMachine().state, GameState.MENU);
+});
+
+test('iniciar carrera desde el menú lleva a PARRILLA', () => {
+  const machine = new GameStateMachine();
+  assert.equal(machine.startRace(), GameState.PARRILLA);
+  assert.equal(machine.state, GameState.PARRILLA);
+});
+
+test('iniciar carrera fuera del menú se rechaza y conserva el estado', () => {
+  const machine = new GameStateMachine();
+  machine.startRace();
+  assert.throws(() => machine.startRace(), /Solo se puede iniciar/);
+  assert.equal(machine.state, GameState.PARRILLA);
+});
+
+test('desde MENU solo se permite ir a SELECCION o PARRILLA', () => {
+  for (const state of Object.values(GameState)) {
+    const allowed = state === GameState.SELECCION || state === GameState.PARRILLA;
+    assert.equal(canTransition(GameState.MENU, state), allowed, `MENU -> ${state}`);
+  }
+});
+
+test('no se permiten saltos que se salten estados del flujo', () => {
+  assert.equal(canTransition(GameState.PARRILLA, GameState.EN_CARRERA), false);
+  assert.equal(canTransition(GameState.CUENTA_ATRAS, GameState.RESULTADOS), false);
+  assert.equal(canTransition(GameState.RESULTADOS, GameState.EN_CARRERA), false);
+});

@@ -12,7 +12,8 @@ export const GameState = Object.freeze({
 
 // Transiciones permitidas entre estados.
 export const TRANSITIONS = Object.freeze({
-  [GameState.MENU]: [GameState.SELECCION],
+  // En E1 no hay selección: el menú pasa directo a la parrilla. SELECCION se usará desde E2.
+  [GameState.MENU]: [GameState.SELECCION, GameState.PARRILLA],
   [GameState.SELECCION]: [GameState.MENU, GameState.PARRILLA],
   [GameState.PARRILLA]: [GameState.CUENTA_ATRAS],
   [GameState.CUENTA_ATRAS]: [GameState.EN_CARRERA],
@@ -41,5 +42,13 @@ export class GameStateMachine {
     }
     this.#state = next;
     return this.#state;
+  }
+
+  /** Inicia una carrera desde el menú principal (MENU -> PARRILLA). */
+  startRace() {
+    if (this.#state !== GameState.MENU) {
+      throw new Error(`Solo se puede iniciar una carrera desde ${GameState.MENU}`);
+    }
+    return this.transitionTo(GameState.PARRILLA);
   }
 }

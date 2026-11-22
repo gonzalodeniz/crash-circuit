@@ -11,3 +11,47 @@ body {
   width: 100vw;
   height: 100vh;
 }
+
+/* Menú principal */
+.menu {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: rgba(0, 0, 0, 0.55);
+  font-family: system-ui, sans-serif;
+  color: #fff;
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu__title {
+  margin: 0;
+  font-size: 4rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.menu__start {
+  padding: 0.8rem 3rem;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #fff;
+  background: #d62828;
+  border: 3px solid #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.menu__start:hover,
+.menu__start:focus-visible {
+  background: #f77f00;
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}

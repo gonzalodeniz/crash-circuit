@@ -11,6 +11,7 @@
 - Una entrega se considera completada cuando se puede jugar y comprobar su resultado.
 - No se fijan fechas ni duraciones hasta conocer los recursos disponibles.
 - El producto final será un juego de carreras arcade 3D para navegador de escritorio, sin persistencia de datos.
+- Cada entrega lista en su línea **Requisitos:** los identificadores que cubre (`RF`, `RN`, `RNF` y `CA`). `(parcial)` indica que la entrega cubre solo una parte y que el resto llega en una entrega posterior. Los identificadores nuevos se añaden al final del documento de requisitos y nunca se reutilizan.
 
 ## Resumen de entregas
 
@@ -27,6 +28,8 @@
 
 ## E1 — MVP: primera carrera
 
+**Requisitos:** RF-001, RF-003 (parcial), RF-008 (parcial), RF-009, RF-010, RF-011, RF-012 (parcial), RF-014 (parcial), RF-016 (parcial), RF-019 (parcial), RF-020, RF-021 (parcial), RF-022, RF-023 (parcial), RF-025, RF-044 (parcial), RF-045 (parcial), RF-056 (parcial), RF-057 (parcial), RF-060, RN-01, RNF-02, RNF-05, RNF-06, RNF-07, CA-01 (parcial), CA-02, CA-09
+
 **Objetivo:** ofrecer la versión más sencilla que ya se pueda jugar de principio a fin.
 
 **El jugador podrá:**
@@ -42,6 +45,8 @@
 
 ## E2 — Personalización de carrera
 
+**Requisitos:** RF-002, RF-003, RF-004, RF-005, RF-006, RF-007, RF-014, CA-10 (parcial)
+
 **Objetivo:** introducir todas las opciones de elección previstas para el producto.
 
 **El jugador podrá:**
@@ -53,6 +58,8 @@
 **Criterio de entrega:** cualquiera de las 64 combinaciones de vehículo, circuito y vueltas puede jugarse y finalizarse correctamente.
 
 ## E3 — Competición contra rivales
+
+**Requisitos:** RF-016, RF-017, RF-018, RF-019, RF-021, RF-023, RF-024, RF-027, RF-028, RF-029, RF-030, RF-031, RN-02, RN-03, RN-07, CA-01, CA-07
 
 **Objetivo:** convertir las carreras individuales en competiciones con diez participantes.
 
@@ -67,6 +74,8 @@
 
 ## E4 — Colisiones y obstáculos
 
+**Requisitos:** RF-013, RF-015, RF-032 (parcial), RF-033, RF-034, CA-03
+
 **Objetivo:** incorporar riesgos que cambian el resultado de la carrera.
 
 **El jugador experimentará:**
@@ -80,6 +89,8 @@
 
 ## E5 — Destrucción y reaparición
 
+**Requisitos:** RF-032, RF-035, RF-036, RF-037, RF-038, RF-039, RF-040, RF-041, RF-042, RN-04, CA-04, CA-05
+
 **Objetivo:** incorporar el elemento visual más característico del juego.
 
 **El jugador experimentará:**
@@ -92,6 +103,8 @@
 **Criterio de entrega:** los coches pueden destruirse y regresar correctamente a la carrera, incluso cuando se producen varios accidentes a la vez.
 
 ## E6 — Información de carrera, minimapa y puntuación
+
+**Requisitos:** RF-012, RF-043, RF-044, RF-045, RF-046, RF-047, RF-048, RF-049, RF-050, RF-051, RF-052, RF-053, RN-06, RNF-08 (parcial)
 
 **Objetivo:** ofrecer información completa durante la competición.
 
@@ -108,6 +121,8 @@
 
 ## E7 — Experiencia arcade completa
 
+**Requisitos:** RF-008, RF-026, RF-054, RF-055, RF-056, RF-057, RF-058, RF-059, RN-05, RNF-09, CA-06, CA-08
+
 **Objetivo:** completar las interacciones y la presentación de una carrera.
 
 **El jugador podrá:**
@@ -121,6 +136,8 @@
 **Criterio de entrega:** toda la experiencia, desde la selección inicial hasta los resultados y una nueva partida, funciona sin interrupciones.
 
 ## E8 — Producto completo (versión 1.0)
+
+**Requisitos:** RNF-01, RNF-03, RNF-04, RNF-07, RNF-08, CA-09, CA-10
 
 **Objetivo:** entregar la experiencia definitiva, fiable y coherente con la visión del producto.
 

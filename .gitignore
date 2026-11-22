@@ -1,4 +1,73 @@
+# Dependencias y salida de build
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# Secretos y variables de entorno (la plantilla sin valores sí se versiona)
 .env
 .env.*
-*.bak.*
+!.env.example
+
+# Configuración local de Claude Code (puede contener secretos o permisos personales)
+.claude/settings.local.json
+
+# Registros y copias
 logs/
+*.log
+*.bak
+*.bak.*
+*.orig
+*.rej
+
+# Logs de gestores de paquetes
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
+
+# Pruebas: cobertura e informes
+coverage/
+.nyc_output/
+test-results/
+*.lcov
+
+# Cachés de herramientas
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.temp/
+.tmp/
+*.tsbuildinfo
+node_modules/.vite/
+node_modules/.vitest/
+
+# Paquetes generados con npm pack
+*.tgz
+
+# Editores e IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.#*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.directory
+.Trash-*
+.fuse_hidden*

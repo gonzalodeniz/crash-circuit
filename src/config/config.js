@@ -63,6 +63,7 @@ export const CONFIG = deepFreeze({
     // Señal de salida que sustituye al número al terminar la cuenta atrás.
     hud: {
       goLabel: '¡YA!',
+      lapLabel: 'Vuelta', // contador «Vuelta X/Y» (RF-044)
     },
   },
 
@@ -73,6 +74,9 @@ export const CONFIG = deepFreeze({
     player: { id: 'player', name: 'Jugador', isPlayer: true },
     // Dimensiones del coche en metros (el rendimiento es idéntico para todos los modelos, RN-07).
     car: { length: 4.4, width: 2 },
+    // Vueltas de la carrera. E1 no permite elegir (RF-014 llega en E2): 1 vuelta por defecto.
+    // La lógica funciona con cualquier número de vueltas (1/3/5/10 en E2).
+    laps: 1,
     // Cuenta atrás de salida «3, 2, 1» (RF-020). Duraciones iniciales, pendientes de calibrar jugando.
     countdown: {
       steps: 3, // números de la cuenta (3, 2, 1)
@@ -88,6 +92,10 @@ export const CONFIG = deepFreeze({
     name: 'Circuito provisional',
     width: 16,
     samplesPerSegment: 16,
+    // Checkpoints invisibles intermedios (RF-022), repartidos a igual distancia a lo largo de la
+    // vuelta; la meta es el punto de inicio. Cada uno es una puerta que cruza toda la calzada.
+    checkpointCount: 8,
+    checkpointMargin: 6, // metros que la puerta sobresale a cada lado de la calzada
     controlPoints: [
       [0, -100], [60, -100], [130, -80], [170, -20], [150, 50], [90, 80], [40, 50],
       [0, 70], [-60, 100], [-130, 70], [-150, 0], [-120, -60], [-60, -100],

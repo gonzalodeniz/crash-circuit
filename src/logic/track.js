@@ -41,8 +41,9 @@ function sampleClosedCatmullRom(controlPoints, samplesPerSegment) {
  * y es uno más. La meta está en el punto 0 y su rumbo es el del primer tramo.
  */
 export function buildTrack(definition) {
-  const { name, width, controlPoints, samplesPerSegment } = definition;
+  const { name, width, controlPoints, samplesPerSegment, checkpointCount, checkpointMargin } = definition;
   if (controlPoints.length < 3) throw new Error('Un circuito cerrado necesita al menos 3 puntos de control');
+  if (!(checkpointCount >= 1)) throw new Error('Un circuito necesita al menos 1 checkpoint (RF-022)');
   const points = sampleClosedCatmullRom(controlPoints, samplesPerSegment);
   const count = points.length;
 
@@ -59,7 +60,39 @@ export function buildTrack(definition) {
   }
 
   const finish = { x: points[0].x, z: points[0].z, heading: headings[0] };
-  return Object.freeze({ name, width, points, starts, headings, length, finish });
+  const track = { name, width, points, starts, headings, length, finish };
+
+  // Puertas de cruce: la meta (distancia 0) y los checkpoints invisibles, en el orden de la carrera.
+  // Todas cruzan la calzada en perpendicular a la línea central y sobresalen `checkpointMargin`.
+  const halfWidth = width / 2 + checkpointMargin;
+  track.finish = { ...finish, distance: 0, halfWidth };
+  track.checkpoints = Array.from({ length: checkpointCount }, (_, i) => {
+    const distance = (length * (i + 1)) / (checkpointCount + 1);
+    return { index: i, distance, ...pointAtDistance(track, distance), halfWidth };
+  });
+  track.checkpoints.forEach(Object.freeze);
+  Object.freeze(track.checkpoints);
+  Object.freeze(track.finish);
+  return Object.freeze(track);
+}
+
+/**
+ * Indica si el desplazamiento de `from` a `to` cruza la puerta en el sentido de la carrera
+ * (de detrás a delante de su plano) dentro de su anchura. Cruzar hacia atrás no cuenta.
+ * @param {{x: number, z: number, heading: number, halfWidth: number}} gate meta o checkpoint
+ * @param {{x: number, z: number}} from posición anterior
+ * @param {{x: number, z: number}} to posición nueva
+ */
+export function crossesGateForward(gate, from, to) {
+  const forward = forwardOf(gate.heading);
+  const before = (from.x - gate.x) * forward.x + (from.z - gate.z) * forward.z;
+  const after = (to.x - gate.x) * forward.x + (to.z - gate.z) * forward.z;
+  if (!(before < 0 && after >= 0)) return false;
+  const t = before / (before - after);
+  const right = rightOf(gate.heading);
+  const crossX = from.x + (to.x - from.x) * t - gate.x;
+  const crossZ = from.z + (to.z - from.z) * t - gate.z;
+  return Math.abs(crossX * right.x + crossZ * right.z) <= gate.halfWidth;
 }
 
 /** Normaliza una distancia al intervalo [0, length) del circuito cerrado. */

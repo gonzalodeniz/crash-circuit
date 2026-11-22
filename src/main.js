@@ -4,6 +4,7 @@ import { GameState, GameStateMachine } from './logic/gameState.js';
 import { createRace, stepRace } from './logic/race.js';
 import { computeChaseCamera } from './logic/chaseCamera.js';
 import { inputFromKeys } from './logic/driving.js';
+import { lapCounterText } from './logic/progress.js';
 import { GO_SIGNAL, countdownSignal, formatRaceTime } from './logic/raceClock.js';
 import { KeyboardInput } from './ui/keyboardInput.js';
 import { MainMenu } from './ui/mainMenu.js';
@@ -54,6 +55,7 @@ function frame(time) {
     hud.update(
       signal === GO_SIGNAL ? CONFIG.ui.hud.goLabel : (signal ?? ''),
       formatRaceTime(race.clock.raceTime),
+      lapCounterText(CONFIG.ui.hud.lapLabel, race.player.progress, race.totalLaps),
     );
     for (const participant of race.participants) sceneRenderer.updateCar(participant);
     sceneRenderer.setCamera(computeChaseCamera(race.player, CONFIG.render.chaseCamera));

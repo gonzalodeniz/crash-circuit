@@ -20,13 +20,14 @@
 - `src/main.js`: punto de entrada; une la lógica con el renderizado y arranca el bucle.
 - `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
 - `src/logic/gameState.js`: estados del juego y máquina de estados (sin Three.js ni DOM).
-- `src/logic/track.js`: trazado del circuito como dato (línea central cerrada, anchura, meta, parrilla) y funciones geométricas (sin Three.js ni DOM).
+- `src/logic/track.js`: trazado del circuito como dato (línea central cerrada, anchura, meta, checkpoints, parrilla) y funciones geométricas (sin Three.js ni DOM).
 - `src/logic/race.js`: crea la carrera con su lista de participantes colocados en la parrilla y `stepRace`, que avanza reloj y coches (sin Three.js ni DOM).
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
+- `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
 - `src/logic/driving.js`: modelo de conducción arcade (`createCarState`, `stepCar`, `inputFromKeys`); recibe entradas y un paso de tiempo (sin Three.js ni DOM).
 - `src/ui/keyboardInput.js`: captura de las flechas (DOM); evita las acciones del navegador mientras dura la carrera.
-- `src/ui/raceHud.js`: HUD de la carrera (DOM); muestra la señal de la cuenta atrás y el cronómetro.
+- `src/ui/raceHud.js`: HUD de la carrera (DOM); muestra la señal de la cuenta atrás, el cronómetro y la vuelta actual.
 - `src/ui/mainMenu.js`: menú principal (DOM); muestra el título y la opción «Empezar» y avisa con una función de retorno.
 - `src/render/sceneRenderer.js`: escena, cámara y renderizador de Three.js; dibuja el circuito, la meta y los coches de la carrera y libera sus recursos.
 
@@ -37,6 +38,7 @@
 - `tests/race.test.js`: pruebas de la lista de participantes, la separación lógica/renderizado y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
+- `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace`.
 - `tests/gameState.test.js`: pruebas de los estados del juego y de la separación lógica/renderizado.
 
 ## `docs/user/`

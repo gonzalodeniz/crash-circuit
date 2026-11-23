@@ -7,6 +7,8 @@
   que van dentro de `bash -c`, `eval`, `$(…)` y `…`. Los cuerpos de heredocs y
   los comentarios se ignoran, para no bloquear por palabras de una issue o PR.
 - developer-teams: no hace commit ni push en main ni fusiona PR sin estado:validado.
+- Todos los roles: `gh pr checkout` y `gh pr merge` se bloquean si la PR viene de un fork
+  (isCrossRepository) o si no se puede comprobar su origen.
 
 Es parte del kit de agentes y no contiene nada del proyecto: las rutas protegidas
 propias y las que puede editar doc-teams se leen de docs/project/proyecto.json.
@@ -561,8 +563,12 @@ def comprobar_gh(args):
 
     if ROL == "orquestador" and grupo == "issue" and accion == "edit":
         comprobar_edicion_orquestador(resto)
-    if ROL == "developer-teams" and grupo == "pr" and accion == "merge":
-        comprobar_fusion(resto)
+    if grupo == "pr" and accion == "checkout":
+        comprobar_pr_de_fork("checkout", resto, GH_CHECKOUT_CON_VALOR)
+    if grupo == "pr" and accion == "merge":
+        comprobar_pr_de_fork("merge", resto, GH_MERGE_CON_VALOR)
+        if ROL == "developer-teams":
+            comprobar_fusion(resto)
 
 
 GH_API_CON_VALOR = {"-X", "--method", "-f", "-F", "--field", "--raw-field", "--input", "-H", "--header",
@@ -624,14 +630,15 @@ def comprobar_edicion_orquestador(args):
 
 GH_MERGE_CON_VALOR = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "-A", "--author-email",
                       "--match-head-commit", "-R", "--repo"}
+GH_CHECKOUT_CON_VALOR = {"-b", "--branch", "-R", "--repo"}
 
 
-def comprobar_fusion(args):
-    """Solo se fusiona una PR cuyas issues tienen estado:validado."""
+def objetivo_pr(args, con_valor):
+    """Devuelve (PR indicada o rama actual, [--repo X]); (None, repo) si no se puede determinar."""
     objetivo, repo, i = None, [], 0
     while i < len(args):
         a = args[i]
-        if a in GH_MERGE_CON_VALOR:
+        if a in con_valor:
             if a in ("-R", "--repo") and i + 1 < len(args):
                 repo = ["--repo", args[i + 1]]
             i += 2
@@ -642,10 +649,30 @@ def comprobar_fusion(args):
             objetivo = a
         i += 1
     if objetivo is None:
-        # Sin argumento, gh fusiona la PR de la rama actual (contando los cambios de rama previos)
+        # Sin argumento, gh actúa sobre la PR de la rama actual (contando los cambios de rama previos)
         objetivo = rama_actual()
-        if objetivo is None:
-            bloquear("no se puede determinar la PR: indica su número explícitamente.")
+    return objetivo, repo
+
+
+def comprobar_pr_de_fork(accion, args, con_valor):
+    """Nunca se descarga ni se fusiona una PR abierta desde un fork (código ajeno)."""
+    objetivo, repo = objetivo_pr(args, con_valor)
+    if objetivo is None:
+        bloquear(f"no se puede determinar la PR de 'gh pr {accion}': indica su número explícitamente.")
+    cruzada = run("gh", "pr", "view", objetivo, *repo, "--json", "isCrossRepository",
+                  "--jq", ".isCrossRepository")
+    if cruzada is None:
+        bloquear(f"no se pudo verificar el origen de la PR con gh; no se ejecuta 'gh pr {accion}' sin comprobarlo.")
+    if cruzada != "false":
+        bloquear(f"la PR viene de un fork (isCrossRepository): no se hace 'gh pr {accion}' sobre código ajeno. "
+                 "Si la issue tiene otra PR de este repositorio, usa esa; si no, escala con requiere-decision.")
+
+
+def comprobar_fusion(args):
+    """Solo se fusiona una PR cuyas issues tienen estado:validado."""
+    objetivo, repo = objetivo_pr(args, GH_MERGE_CON_VALOR)
+    if objetivo is None:
+        bloquear("no se puede determinar la PR: indica su número explícitamente.")
 
     salida = run("gh", "pr", "view", objetivo, *repo, "--json", "closingIssuesReferences",
                  "--jq", ".closingIssuesReferences[].number")

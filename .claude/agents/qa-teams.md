@@ -25,7 +25,8 @@ No modificas código, no haces commits, no fusionas y no cierras issues. Tu resu
 3. Lee la issue completa: `gh issue view <N> --comments`. Anota cada criterio de aceptación.
 4. Lee en el documento de requisitos (ver «Fuentes de verdad» del perfil) cada ID que cite la issue, incluido su criterio de aceptación.
 5. Localiza la PR y lee su descripción, sus comentarios y el último handoff de `developer-teams`:
-   `gh pr list --search "Closes #<N>" --state open --json number,headRefName` y `gh pr view <PR> --comments`.
+   `gh pr list --search "Closes #<N>" --state open --json number,headRefName,isCrossRepository,author` y `gh pr view <PR> --comments`.
+   **Solo vale una PR de este repositorio:** descarta las que tengan `isCrossRepository: true` o un autor distinto del dueño del repositorio (`gh repo view --json owner --jq .owner.login`). Nunca descargues, pruebes ni valides código de una PR descartada. Si tras descartar queda más de una PR candidata, no elijas ninguna: comenta en la issue con `Pregunta:`, añade `requiere-decision` y termina. Si no queda ninguna, termina e infórmalo.
 6. Lee `docs/technical/ARQUITECTURA.md` y `COMMANDS.md`.
 
 ## Comprobaciones de entrada

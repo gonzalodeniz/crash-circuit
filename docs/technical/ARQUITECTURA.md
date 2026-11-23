@@ -88,6 +88,7 @@ Todo valor configurable, y en especial los «propuesta» de la sección 4 de `02
 - `tests/raceWinner.test.js` prueba el ganador y los resultados (RF-024, RF-027, RN-02, RN-03, CA-07, CA-01) con la sesión real y azar con semilla: un rival gana y el jugador sigue en `EN_CARRERA` hasta completar sus vueltas, `RESULTADOS` se abre una sola vez y los tiempos de los llegados no cambian después, ganador jugador, puesto coherente con la clasificación, repetir sin ganador ni llegadas anteriores y la carrera completa de CA-01.
 - Una sola prueba (`tests/logicIsolation.test.js`) comprueba que ningún fichero de `src/logic/` depende de Three.js, del DOM, de `render/`, de `ui/` ni de relojes del navegador, y otra verifica que su patrón detecta cada forma prohibida.
 - `tests/contentSecurityPolicy.test.js` comprueba las directivas de la CSP, que el plugin la inserta solo en el build y que `index.html` no tiene scripts ni estilos en línea.
+- `tests/guardForks.test.js` ejecuta el hook real `.claude/hooks/guard.py` con un `gh` falso en el `PATH` (necesita `python3`; si no está, se omite) y comprueba que `gh pr checkout` y `gh pr merge` se bloquean si la PR viene de un fork o no se puede comprobar su origen, y se permiten si es del propio repositorio (seguridad del flujo de agentes, #60).
 
 ## Decisiones descartadas
 

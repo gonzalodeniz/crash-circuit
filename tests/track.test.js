@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
 import {
-  buildTrack, forwardOf, gridSlot, isOnRoad, nearestOnCenterline, pointAtDistance, rightOf,
+  buildTrack, forwardOf, gridSlot, isOnRoad, nearestOnCenterline, pointAtDistance, rightOf, signedDistance, wrapDistance,
 } from '../src/logic/track.js';
 
 const track = buildTrack(CONFIG.track);
@@ -59,6 +59,40 @@ test('pointAtDistance recorre la línea central y es cíclico', () => {
   assert.ok(Math.hypot(a.x - b.x, a.z - b.z) < 1e-6);
   assert.ok(Math.hypot(a.x - c.x, a.z - c.z) < 1e-6);
   assert.ok(nearestOnCenterline(track, a.x, a.z).distance < 1e-6);
+});
+
+test('wrapDistance normaliza a [0, length): negativos, mayores que length y múltiplos', () => {
+  const length = track.length;
+  assert.equal(wrapDistance(track, 0), 0);
+  assert.ok(Math.abs(wrapDistance(track, 100) - 100) < 1e-9);
+  assert.ok(Math.abs(wrapDistance(track, -100) - (length - 100)) < 1e-9);
+  assert.ok(Math.abs(wrapDistance(track, length + 100) - 100) < 1e-9);
+  assert.ok(Math.abs(wrapDistance(track, 3 * length - 100) - (length - 100)) < 1e-9);
+  assert.equal(wrapDistance(track, length), 0);
+  assert.equal(wrapDistance(track, -length), 0);
+  for (const d of [-2.5 * length, -1, 0, 1, length / 2, length - 1e-9, 7.3 * length]) {
+    const w = wrapDistance(track, d);
+    assert.ok(w >= 0 && w < length, `wrapDistance(${d}) = ${w} fuera de [0, length)`);
+  }
+});
+
+test('signedDistance da la distancia con signo en (-length/2, length/2]', () => {
+  const length = track.length;
+  const half = length / 2;
+  assert.equal(signedDistance(track, 0), 0);
+  assert.ok(Math.abs(signedDistance(track, 100) - 100) < 1e-9);
+  // Más allá de la mitad de la vuelta, la posición queda detrás de la meta (negativa).
+  assert.ok(Math.abs(signedDistance(track, length - 100) - -100) < 1e-9);
+  assert.ok(Math.abs(signedDistance(track, -100) - -100) < 1e-9);
+  // Mayores que length: se normalizan antes.
+  assert.ok(Math.abs(signedDistance(track, length + 100) - 100) < 1e-9);
+  assert.ok(Math.abs(signedDistance(track, 2 * length - 100) - -100) < 1e-9);
+  // La mitad exacta es positiva; justo por debajo de -mitad se pasa al lado positivo.
+  assert.equal(signedDistance(track, half), half);
+  assert.equal(signedDistance(track, -half), half);
+  assert.ok(signedDistance(track, half + 1) < 0);
+  assert.ok(signedDistance(track, half - 1) > 0);
+  assert.ok(signedDistance(track, -half - 1) > 0);
 });
 
 test('isOnRoad distingue calzada y exterior', () => {

@@ -9,16 +9,7 @@
 //   pendiente: recortar o retroceder no da progreso ficticio.
 // - Los coches salen por detrás de la meta: antes de cruzarla por primera vez no tienen vuelta
 //   empezada y su distancia es negativa (lo que les falta hasta la meta).
-import { crossesGateForward, nearestOnCenterline } from './track.js';
-
-/** Distancia con signo más corta entre dos posiciones a lo largo de un circuito cerrado. */
-function wrappedDelta(track, from, to) {
-  const half = track.length / 2;
-  let delta = to - from;
-  if (delta > half) delta -= track.length;
-  else if (delta < -half) delta += track.length;
-  return delta;
-}
+import { crossesGateForward, nearestOnCenterline, signedDistance, wrapDistance } from './track.js';
 
 /**
  * Progreso inicial de un participante colocado en `pose` (normalmente la parrilla).
@@ -28,7 +19,7 @@ function wrappedDelta(track, from, to) {
 export function createProgress(track, pose) {
   const { along } = nearestOnCenterline(track, pose.x, pose.z);
   // Detrás de la meta (mitad final de la vuelta) la posición es negativa.
-  const lapPosition = along > track.length / 2 ? along - track.length : along;
+  const lapPosition = signedDistance(track, along);
   return {
     started: false, // ha cruzado la meta de salida
     laps: 0, // vueltas válidas completadas
@@ -50,8 +41,8 @@ export function createProgress(track, pose) {
 export function stepProgress(state, track, pose) {
   const from = { x: state.x, z: state.z };
   const { along } = nearestOnCenterline(track, pose.x, pose.z);
-  const previousAlong = ((state.lapPosition % track.length) + track.length) % track.length;
-  let lapPosition = state.lapPosition + wrappedDelta(track, previousAlong, along);
+  const previousAlong = wrapDistance(track, state.lapPosition);
+  let lapPosition = state.lapPosition + signedDistance(track, along - previousAlong);
   let { started, laps, checkpointIndex } = state;
   const checkpointCount = track.checkpoints.length;
 

@@ -96,8 +96,18 @@ export function crossesGateForward(gate, from, to) {
 }
 
 /** Normaliza una distancia al intervalo [0, length) del circuito cerrado. */
-function wrapDistance(track, distance) {
+export function wrapDistance(track, distance) {
   return ((distance % track.length) + track.length) % track.length;
+}
+
+/**
+ * Distancia con signo equivalente en el circuito cerrado: el valor del intervalo (-length/2, length/2]
+ * (la mitad exacta es positiva). Sirve para saber si una posición está detrás de la meta (negativa)
+ * o delante (positiva), y para el desplazamiento más corto entre dos posiciones.
+ */
+export function signedDistance(track, distance) {
+  const wrapped = wrapDistance(track, distance);
+  return wrapped > track.length / 2 ? wrapped - track.length : wrapped;
 }
 
 /** Posición y rumbo de la línea central a `distance` desde la meta (el circuito es cíclico). */

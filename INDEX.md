@@ -66,7 +66,7 @@
 ## Kit de agentes (igual en todos los proyectos)
 
 - `docs/process/FLUJO_DE_TRABAJO.md`: reglas comunes de los subagentes (roles, entregas y cobertura, funcionalidades nuevas, estados, ramas, plantillas, bloqueos). Solo se modifica con autorización del usuario.
-- `.claude/agents/`: definiciones genéricas de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams).
+- `.claude/agents/`: definiciones genéricas de los subagentes (orquestador, product-manager, developer-teams, qa-teams, doc-teams) y del auditor `security-auditor`, que se lanza fuera del ciclo (manual o por cron).
 - `.claude/hooks/guard.sh` y `.claude/hooks/guard.py`: hook que bloquea, por rol, comandos y ediciones de ficheros prohibidos. Lee las rutas del proyecto en `docs/project/proyecto.json`.
 - `.claude/settings.json`: permisos de Claude Code. Lo genera `scripts/setup/02-permisos.sh`.
 - `scripts/orquestador.sh`: lanza el orquestador (interactivo o `--auto`) o un subagente concreto; carga `.env`, impide ejecuciones simultáneas y guarda logs en `logs/`.

@@ -9,6 +9,8 @@
 #   ./scripts/orquestador.sh --auto --max 3           # desatendido, máximo 3 delegaciones
 #   ./scripts/orquestador.sh qa-teams                 # sesión interactiva como qa-teams
 #   ./scripts/orquestador.sh --auto qa-teams "Valida la issue #12"
+#   ./scripts/orquestador.sh security-auditor         # auditoría manual (sin mensaje: completa)
+#   ./scripts/orquestador.sh --auto security-auditor  # auditoría desatendida (p. ej. desde cron)
 #   ./scripts/orquestador.sh --list                   # roles disponibles
 #
 # - Carga .env si existe y exporta GH_TOKEN (desde GH_TOKEN o GITHUB_PAT).
@@ -40,7 +42,7 @@ while [[ $# -gt 0 ]]; do
     --auto) AUTO=1; shift ;;
     --max)  MAX="${2:?Falta valor para --max}"; shift 2 ;;
     --list) echo "$ROLES"; exit 0 ;;
-    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
     -*) echo "Opción desconocida: $1" >&2; exit 2 ;;
     *)
       if [[ "$ROL" == "orquestador" && -z "$PROMPT" ]] && es_rol "$1"; then
@@ -72,6 +74,9 @@ gh auth status >/dev/null 2>&1 || { echo "ERROR: gh no autenticado (define GH_TO
 if [[ "$ROL" == "orquestador" ]]; then
   PROMPT="${PROMPT:-Ejecuta el ciclo de entrega.}"
   [[ -n "$MAX" ]] && PROMPT="$PROMPT Máximo de delegaciones en esta ejecución: $MAX."
+elif [[ "$ROL" == *-auditor ]]; then
+  # Los auditores van fuera del ciclo: sin mensaje, ejecutan una auditoría completa (manual o por cron)
+  PROMPT="${PROMPT:-Ejecuta una auditoría completa.}"
 elif [[ $AUTO -eq 1 && -z "$PROMPT" ]]; then
   echo "ERROR: en modo --auto, un rol distinto del orquestador necesita un mensaje (p. ej. \"Valida la issue #12\")" >&2
   exit 2

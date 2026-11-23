@@ -34,7 +34,8 @@ except Exception:
 # ejecuta en las herramientas de sus subagentes. Si la orden viene de otro rol que
 # tiene su propio guard, se le cede el control a ese guard; cualquier otro subagente
 # (general-purpose, Explore…) sigue sujeto a las reglas del rol principal.
-ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams"}
+ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams",
+                   "security-auditor"}
 AGENTE = DATOS.get("agent_type") or ""
 if AGENTE and AGENTE != ROL and AGENTE in ROLES_CON_GUARD:
     sys.exit(0)
@@ -106,6 +107,7 @@ SOLO_EN = {
     "qa-teams": [],         # no edita ficheros
     "doc-teams": RUTAS_DOC_TEAMS,
     "orquestador": [],      # no edita ficheros
+    "security-auditor": [], # no edita ficheros
 }
 
 
@@ -152,6 +154,10 @@ BLOQUEO_GIT = {
                     "el orquestador no modifica el repositorio: delega en el subagente que corresponda."),
     "doc-teams": ({"merge", "rebase", "reset", "tag", "stash", "cherry-pick", "revert"},
                   "operación git fuera del alcance de doc-teams."),
+    "security-auditor": ({"commit", "push", "pull", "merge", "rebase", "reset", "checkout", "switch", "branch",
+                          "tag", "stash", "cherry-pick", "revert", "restore", "am", "add", "rm", "mv", "apply",
+                          "clean"},
+                         "security-auditor no modifica el repositorio: audita el commit actual tal cual."),
 }
 
 # Acciones de gh prohibidas por rol: {grupo: (acciones, motivo)}.
@@ -182,6 +188,12 @@ BLOQUEO_GH = {
         "pr": ({"merge", "ready", "close", "create", "edit", "reopen"}, "doc-teams no gestiona PR."),
         "issue": ({"close", "delete", "transfer", "create", "reopen"}, "doc-teams no crea ni cierra issues."),
     },
+    "security-auditor": {
+        "pr": ({"create", "merge", "close", "edit", "ready", "reopen", "checkout", "comment", "review"},
+               "security-auditor no actúa sobre PR: sus hallazgos van en issues."),
+        "issue": ({"close", "delete", "transfer", "reopen", "edit", "develop", "lock", "unlock", "pin", "unpin"},
+                  "security-auditor solo crea issues y comenta en las suyas: no las edita, cierra ni prioriza."),
+    },
 }
 
 # Roles que no modifican ficheros desde Bash, con el motivo.
@@ -189,6 +201,7 @@ SIN_FICHEROS = {
     "product-manager": "product-manager no modifica ficheros.",
     "qa-teams": "qa-teams no modifica ficheros.",
     "orquestador": "el orquestador no modifica ficheros.",
+    "security-auditor": "security-auditor no modifica ficheros.",
     "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de " + ", ".join(RUTAS_DOC_TEAMS) + ".",
 }
 
@@ -379,6 +392,8 @@ def comprobar_orden(palabras, redirs, nivel):
         return
     if ROL in SIN_FICHEROS:
         comprobar_modificacion(prog, args)
+    if ROL in SOLO_LECTURA_PAQUETES:
+        comprobar_gestor_paquetes(prog, args)
     if prog == "git":
         comprobar_git(args)
     elif prog == "gh":
@@ -394,6 +409,26 @@ def comprobar_modificacion(prog, args):
     if prog == "perl" and any(re.match(r"-[pnlaw0]*i", a) for a in args):
         bloquear(motivo)
     if prog == "dd" and any(a.startswith("of=") for a in args):
+        bloquear(motivo)
+
+
+# --- gestores de paquetes -------------------------------------------------------
+# Roles que solo consultan dependencias: no instalan, actualizan ni ejecutan paquetes.
+SOLO_LECTURA_PAQUETES = {"security-auditor"}
+GESTORES = {"npm", "pnpm", "yarn"}
+EJECUTORES = {"npx", "pnpx", "bunx"}
+CONSULTAS_PAQUETES = {"audit", "ls", "list", "outdated", "view", "info", "show", "explain", "why", "-v",
+                      "--version", "-h", "--help", "help"}
+
+
+def comprobar_gestor_paquetes(prog, args):
+    motivo = f"{ROL} solo consulta dependencias (p. ej. 'npm audit --json'): no las instala, actualiza ni ejecuta."
+    if prog in EJECUTORES:
+        bloquear(motivo)
+    if prog not in GESTORES:
+        return
+    sub = next((a for a in args if not a.startswith("-") or a in CONSULTAS_PAQUETES), "")
+    if sub not in CONSULTAS_PAQUETES or (sub == "audit" and "fix" in args):
         bloquear(motivo)
 
 

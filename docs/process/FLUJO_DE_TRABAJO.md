@@ -11,7 +11,7 @@ Reglas comunes a todos los roles. Forman parte del kit de agentes y son iguales 
 | `developer-teams` | Implementa una issue, abre la PR, corrige tras QA y fusiona cuando está validada. | Fusionar sin `estado:validado`. Trabajar en dos issues a la vez. |
 | `qa-teams` | Valida la PR contra los criterios de aceptación y los identificadores de requisitos referenciados. | Modificar código, fusionar ni cerrar issues. |
 | `doc-teams` | Actualiza la documentación de usuario tras una fusión con impacto documental y anota cada issue terminada en `CHANGELOG.md`. | Modificar código, los documentos de producto ni `docs/technical/`. |
-| `quality-auditor`, `security-auditor` | Auditorías periódicas (cron), fuera del ciclo del orquestador. Sus hallazgos se convierten en issues `tipo:tecnica`. | Implementar correcciones. |
+| `quality-auditor`, `security-auditor` | Auditorías periódicas, lanzadas por cron o manualmente, fuera del ciclo del orquestador. Sus hallazgos se convierten en issues `tipo:tecnica` (ver «Auditorías»). | Implementar correcciones, validar, priorizar ni cerrar issues. |
 
 ## Entregas y cobertura
 
@@ -58,6 +58,16 @@ Prioridad del orquestador, de mayor a menor: `requiere-decision` → decisiones 
 Las issues abiertas sin etiqueta `estado:*` ni `requiere-decision` (por ejemplo, una aceptación de entrega ya tramitada o una issue técnica aplazada) no generan trabajo.
 
 Solo hay **una issue en desarrollo a la vez** en todo el proyecto.
+
+## Auditorías
+
+Los auditores se lanzan con `scripts/orquestador.sh <auditor>`, a mano o desde cron (con `--auto`). No entran en el ciclo del orquestador, y el bloqueo del lanzador impide que coincidan con él.
+
+- **Una issue por hallazgo**, con las etiquetas `tipo:tecnica` y `origen:<auditor>`, sin `estado:*` ni milestone. El cuerpo lleva el «Contenido mínimo de una issue» (con `**Requisitos:** ninguno`, para no alterar la cobertura) y el hallazgo con los campos literales `Severidad:`, `Descripcion:`, `Evidencia:` y `Recomendacion:`.
+- **Severidad:** solo `critica`, `alta`, `media` o `baja`.
+- **Prioridad:** la decide `product-manager` según la severidad: `critica` y `alta` entran en la entrega en curso con `estado:nuevo`; `media` y `baja`, en la entrega siguiente.
+- **Sin duplicados:** antes de crear un hallazgo, el auditor busca sus issues anteriores (abiertas y cerradas) y comenta en la existente en vez de repetirla.
+- El historial de hallazgos son esas issues: de ellas salen las métricas y la tendencia.
 
 ## Contenido mínimo de una issue
 

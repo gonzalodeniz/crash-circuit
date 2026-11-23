@@ -10,20 +10,11 @@ import { createRaceFromSetup, defaultRaceSetup } from '../src/logic/raceSetup.js
 import { positionOf } from '../src/logic/standings.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { GO_SIGNAL, countdownSignal, formatRaceTime } from '../src/logic/raceClock.js';
-import { pointAtDistance } from '../src/logic/track.js';
+import { autopilot } from './helpers/autopilot.js';
 
 const DT = 1 / 60;
 const IDLE = { accelerate: false, brake: false, left: false, right: false };
 const MAX_STEPS = 60 * 900;
-
-/** Entrada de un piloto automático sencillo que sigue la línea central. */
-function autopilot(race) {
-  const p = race.player;
-  const target = pointAtDistance(race.track, p.progress.lapPosition + 15);
-  const wanted = Math.atan2(target.x - p.x, target.z - p.z);
-  const error = Math.atan2(Math.sin(wanted - p.heading), Math.cos(wanted - p.heading));
-  return { accelerate: p.speed < 22, brake: false, left: error > 0.05, right: error < -0.05 };
-}
 
 /** Sesión con la carrera ya en la parrilla, con la selección por defecto y azar con semilla. */
 function createSession(seed = 7) {

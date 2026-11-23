@@ -37,6 +37,7 @@ por cobertura    abre PR, fusiona               fusionado
 - **Una sola issue en curso** en todo el proyecto. El trabajo avanza en serie.
 - **Las entregas siguen el roadmap**, con un milestone de GitHub por entrega. `product-manager` crea los milestones y las issues que falten comparando el roadmap con las issues existentes (**cobertura**).
 - **Tú intervienes** cuando un agente necesita una decisión y al final de cada entrega, para aceptarla tras comprobarla.
+- **Los auditores van aparte.** `security-auditor` no forma parte del ciclo: lo lanzas tú o cron, y deja cada hallazgo como una issue `tipo:tecnica` que `product-manager` prioriza por severidad (ver [Auditorías](#auditorías)).
 
 Las reglas completas están en `docs/process/FLUJO_DE_TRABAJO.md`.
 
@@ -112,7 +113,7 @@ Los milestones no se crean en la instalación: los crea `product-manager` a part
 ### Comprobar la instalación
 
 ```bash
-./scripts/orquestador.sh --list      # debe listar los cinco roles
+./scripts/orquestador.sh --list      # debe listar los seis roles
 claude                       # y en el prompt escribe @orq: debe aparecer "orquestador (agent)"
 ```
 
@@ -128,6 +129,8 @@ Todo se lanza con `scripts/orquestador.sh`:
 | `./scripts/orquestador.sh --auto --max 5` | Desatendido con un límite propio. |
 | `./scripts/orquestador.sh qa-teams` | Sesión interactiva directamente con un rol, sin orquestador. Útil para depurar. |
 | `./scripts/orquestador.sh --auto qa-teams "Valida la issue #12"` | Un rol concreto, desatendido, con una tarea. |
+| `./scripts/orquestador.sh security-auditor` | Auditoría de seguridad completa, en sesión interactiva. |
+| `./scripts/orquestador.sh --auto security-auditor` | Auditoría de seguridad desatendida, con log en `logs/`. Es la forma de lanzarla desde cron. |
 | `./scripts/orquestador.sh --list` | Roles disponibles. |
 
 Cualquier texto que no sea un rol se envía como mensaje al orquestador:
@@ -141,6 +144,23 @@ Cualquier texto que no sea un rol se envía como mensaje al orquestador:
 - Empieza en modo interactivo con `--max` bajo hasta confiar en el comportamiento de cada rol.
 - Al comenzar una entrega, lanza `./scripts/orquestador.sh --max 1`: solo creará las issues, y podrás revisarlas en GitHub antes de que empiece el desarrollo.
 - El lanzador usa un bloqueo: si ya hay una ejecución en curso, la segunda termina con código 3 sin hacer nada.
+
+### Auditorías
+
+`security-auditor` revisa el código, la configuración, los secretos, las dependencias, la validación de entradas, la exposición de datos sensibles y el hardening. Por cada hallazgo crea una issue `Seguridad · …` con las etiquetas `tipo:tecnica` y `origen:security-auditor`, y los campos `Severidad:` (`critica`, `alta`, `media` o `baja`), `Categoria:`, `Descripcion:`, `Evidencia:` y `Recomendacion:`. No corrige, no valida, no prioriza y no cierra nada.
+
+- **Prioridad:** la próxima vez que se ejecute, `product-manager` mete las `critica` y `alta` en la entrega en curso con `estado:nuevo`, y deja las `media` y `baja` para la entrega siguiente.
+- **Sin duplicados:** si un hallazgo ya tiene issue abierta, el auditor comenta en ella en vez de crear otra.
+- **Si te necesita:** un hallazgo `critica` que exige algo que solo puedes hacer tú (por ejemplo, rotar una credencial expuesta) llega con `requiere-decision`.
+- **Informe:** al terminar resume las áreas revisadas, los hallazgos, las limitaciones y la tendencia respecto a la auditoría anterior. En modo `--auto` queda en `logs/security-auditor-<fecha>.log`.
+
+Para lanzarla por cron (por ejemplo, los lunes a las 3:00), añade con `crontab -e`:
+
+```cron
+0 3 * * 1  cd /ruta/al/proyecto && PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin ./scripts/orquestador.sh --auto security-auditor
+```
+
+Ajusta `PATH` para que incluya `claude` y `gh`. Si a esa hora hay otra ejecución en curso, el lanzador termina con código 3 sin hacer nada.
 
 ### Dónde ver lo que ha pasado
 
@@ -225,6 +245,7 @@ nuevo ──► en-desarrollo ──► listo-para-qa ──► validado ──�
 | `changelog-pendiente` | Fusionada; hay que anotarla en `CHANGELOG.md` | doc-teams |
 | `requiere-decision` | Bloqueada esperando tu respuesta | tú |
 | `tipo:tecnica` | Deuda técnica o hallazgo de auditoría | product-manager la prioriza |
+| `origen:security-auditor` | Hallazgo de la auditoría de seguridad (va junto a `tipo:tecnica`) | product-manager la prioriza |
 
 Si una misma issue recibe **3 rechazos de QA**, el orquestador se detiene y te pregunta cómo seguir.
 
@@ -239,6 +260,7 @@ Las restricciones no dependen solo del prompt: el hook `.claude/hooks/guard.py` 
 | developer-teams | sonnet (effort high) | Código, ramas, PR, fusionar | Commit o push en `main`, rebase, push forzado, fusionar sin `estado:validado`, cerrar issues |
 | qa-teams | sonnet (effort high) | Descargar la PR, ejecutar pruebas, comentar | Modificar ficheros o git; fusionar; crear o cerrar issues |
 | doc-teams | sonnet | Editar las rutas de `rutas_doc_teams`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
+| security-auditor | opus (effort high) | Leer el repositorio y su historial, consultar dependencias (`npm audit`), crear issues y comentar en ellas | Modificar ficheros o git; instalar, actualizar o ejecutar paquetes; editar, cerrar o reabrir issues; actuar sobre PR |
 
 Además, **ningún rol** puede editar `CLAUDE.md`, `.claude/`, `docs/process/`, `docs/project/` ni las rutas de `rutas_protegidas`, ni escribir fuera del proyecto.
 
@@ -289,7 +311,8 @@ CLAUDE.md                  punto de entrada del kit; importa el perfil y el fluj
 │   ├── product-manager.md
 │   ├── developer-teams.md
 │   ├── qa-teams.md
-│   └── doc-teams.md
+│   ├── doc-teams.md
+│   └── security-auditor.md
 └── hooks/
     ├── guard.sh           punto de entrada del hook
     └── guard.py           reglas de protección por rol
@@ -316,4 +339,4 @@ logs/                      salida de las ejecuciones --auto (no se sube a git)
 
 ### Pendiente
 
-- **Auditorías periódicas** (`quality-auditor` y `security-auditor`) lanzadas por cron, fuera del ciclo del orquestador.
+- **Auditoría de calidad** (`quality-auditor`), lanzada por cron o manualmente, fuera del ciclo del orquestador.

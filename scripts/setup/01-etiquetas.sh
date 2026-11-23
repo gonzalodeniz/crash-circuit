@@ -43,6 +43,7 @@ ETIQUETAS=(
   "impacto-documental|BFD4F2|Requiere actualización por doc-teams"
   "changelog-pendiente|C2E0C6|Fusionada; doc-teams debe anotarla en CHANGELOG.md"
   "tipo:tecnica|5319E7|Deuda técnica o hallazgo de auditoría"
+  "origen:security-auditor|E99695|Hallazgo de la auditoría de seguridad"
   "requiere-decision|B60205|Bloqueada: un rol necesita una decisión del usuario"
 )
 
@@ -98,5 +99,5 @@ fi
 if [[ $DRY_RUN -eq 0 ]]; then
   echo
   echo "Etiquetas del flujo en ${REPO}:"
-  gh label list "${REPO_ARGS[@]}" --limit 100 | grep -E '^(estado:|impacto-documental|changelog-pendiente|tipo:)' || true
+  gh label list "${REPO_ARGS[@]}" --limit 100 | grep -E '^(estado:|impacto-documental|changelog-pendiente|tipo:|origen:)' || true
 fi

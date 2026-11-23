@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
 import {
-  buildTrack, forwardOf, gridSlot, isOnRoad, nearestOnCenterline, pointAtDistance,
+  buildTrack, forwardOf, gridSlot, isOnRoad, nearestOnCenterline, pointAtDistance, rightOf,
 } from '../src/logic/track.js';
 
 const track = buildTrack(CONFIG.track);
@@ -86,15 +86,39 @@ test('la posición de parrilla mira en el sentido de la carrera y queda antes de
   assert.ok(angleDiff(slot.heading, track.finish.heading) < 0.2);
 });
 
-test('los huecos de parrilla no se solapan', () => {
-  const slots = Array.from({ length: CONFIG.race.maxParticipants }, (_, i) => gridSlot(track, CONFIG.grid, i));
+/** Huecos de parrilla de todos los participantes, con la configuración de parrilla indicada. */
+function gridSlots(grid) {
+  return Array.from({ length: CONFIG.race.maxParticipants }, (_, i) => gridSlot(track, grid, i));
+}
+
+/**
+ * Pares de huecos cuyos coches (rectángulo de largo × ancho, orientado como el hueco) se solapan:
+ * se solapan si su separación longitudinal no supera el largo y la lateral no supera el ancho.
+ */
+function overlappingPairs(slots, car) {
+  const pairs = [];
   for (let i = 0; i < slots.length; i++) {
     for (let j = i + 1; j < slots.length; j++) {
-      const distance = Math.hypot(slots[i].x - slots[j].x, slots[i].z - slots[j].z);
-      assert.ok(distance > CONFIG.race.car.length * 0.9 || distance > CONFIG.race.car.width * 1.5,
-        `huecos ${i} y ${j} demasiado juntos`);
+      const dx = slots[j].x - slots[i].x;
+      const dz = slots[j].z - slots[i].z;
+      const forward = forwardOf(slots[i].heading);
+      const right = rightOf(slots[i].heading);
+      const longitudinal = Math.abs(dx * forward.x + dz * forward.z);
+      const lateral = Math.abs(dx * right.x + dz * right.z);
+      if (longitudinal <= car.length && lateral <= car.width) pairs.push([i, j]);
     }
   }
+  return pairs;
+}
+
+test('los huecos de parrilla no se solapan', () => {
+  const pairs = overlappingPairs(gridSlots(CONFIG.grid), CONFIG.race.car);
+  assert.deepEqual(pairs, [], `huecos solapados: ${JSON.stringify(pairs)}`);
+});
+
+test('la comprobación de solapamiento detecta filas más juntas que el largo del coche', () => {
+  const tooClose = { ...CONFIG.grid, slotSpacing: 3.2 }; // filas a 3,2 m con coches de 4,4 m
+  assert.ok(overlappingPairs(gridSlots(tooClose), CONFIG.race.car).length > 0);
 });
 
 test('un circuito con menos de 3 puntos de control no es cerrable', () => {

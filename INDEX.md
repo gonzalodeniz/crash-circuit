@@ -36,11 +36,11 @@
 ## `tests/` (pruebas automáticas, sin navegador)
 
 - `tests/config.test.js`: pruebas del módulo de configuración.
-- `tests/track.test.js`: pruebas del trazado cerrado, la meta y las posiciones de parrilla.
+- `tests/track.test.js`: pruebas del trazado cerrado, la meta y las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
-- `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace`.
+- `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace` (con progreso exactamente quieto durante la cuenta atrás).
 - `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú de la máquina de estados, y de que no hay persistencia.
 - `tests/raceSession.test.js`: pruebas del flujo de la partida con la máquina de estados real (carrera creada al entrar en parrilla, nueva al repetir, descartada al volver al menú, salida y resultados una sola vez, sin avance en pausa) y de que `main.js` no repite esa lógica.
 - `tests/contentSecurityPolicy.test.js`: pruebas de la CSP del build (directivas mínimas, solo en build, sin scripts ni estilos en línea).

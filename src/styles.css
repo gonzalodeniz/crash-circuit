@@ -161,7 +161,7 @@ body {
   outline-offset: 3px;
 }
 
-/* Selección de coche y de circuito: la escena 3D va de fondo; aquí van el título y las opciones */
+/* Selección de coche y de circuito y resumen: la escena 3D va de fondo; aquí van el título y las opciones */
 .selection {
   position: fixed;
   inset: 0;
@@ -241,6 +241,26 @@ body {
 .selection__option:focus-visible {
   outline: 3px solid #f77f00;
   outline-offset: 3px;
+}
+
+.selection__summary {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.6rem 2rem;
+  margin: 0;
+  padding: 1.2rem 2rem;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0.6rem;
+}
+
+.selection__summary dt {
+  text-align: right;
+}
+
+.selection__summary dd {
+  margin: 0;
+  font-weight: bold;
 }
 
 .selection__fact {

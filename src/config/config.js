@@ -115,10 +115,10 @@ export const CONFIG = deepFreeze({
       groupLabel: 'Modelos de coche',
     },
     // Pantalla de selección de circuito y vueltas (RF-004, RF-005, RF-006): segundo paso; al confirmar
-    // empieza la carrera.
+    // se pasa al resumen.
     trackSelection: {
       title: 'Elige tu circuito',
-      confirmLabel: 'Confirmar',
+      confirmLabel: 'Siguiente',
       backLabel: 'Volver',
       groupLabel: 'Circuitos',
       difficultyLabel: 'Dificultad',
@@ -128,6 +128,17 @@ export const CONFIG = deepFreeze({
       lapsTitle: 'Vueltas',
       lapsGroupLabel: 'Número de vueltas',
       difficultyLabels: { veryEasy: 'Muy fácil', easy: 'Fácil', medium: 'Medio', hard: 'Difícil' },
+    },
+    // Resumen de la selección (RF-007): tercer paso; al confirmar empieza la carrera. La dificultad se
+    // muestra con las etiquetas de `trackSelection.difficultyLabels`.
+    summary: {
+      title: 'Tu carrera',
+      carLabel: 'Coche',
+      trackLabel: 'Circuito',
+      difficultyLabel: 'Dificultad',
+      lapsLabel: 'Vueltas',
+      confirmLabel: '¡A correr!',
+      backLabel: 'Volver',
     },
     // Pantalla de resultados al terminar la carrera (RF-056).
     results: {

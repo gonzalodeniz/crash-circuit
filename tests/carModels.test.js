@@ -128,13 +128,13 @@ test('repetir desde los resultados conserva el modelo elegido y volver atrás de
   assert.equal(machine.repeatRace(), GameState.PARRILLA);
   assert.notEqual(session.race, first);
   assert.equal(session.race.player.carModelId, 'trueno');
-  // Tras pasar por el menú, la selección sigue en memoria pero se puede cambiar.
+  // Tras pasar por el menú, la selección vuelve al modelo por defecto y se puede cambiar (RF-007).
   machine.beginCountdown();
   machine.startGo();
   machine.finishRace();
   machine.backToMenu();
   machine.openSelection();
-  assert.equal(session.selectedCarModelId, 'trueno');
+  assert.equal(session.selectedCarModelId, CONFIG.cars.defaultModelId);
   session.selectCarModel('jade');
   machine.startRace();
   assert.equal(session.race.player.carModelId, 'jade');

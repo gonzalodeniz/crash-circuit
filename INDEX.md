@@ -72,6 +72,7 @@
 - `tests/raceSession.test.js`: pruebas del flujo de la partida con la máquina de estados real (carrera creada al entrar en parrilla, nueva al repetir, descartada al volver al menú, salida y resultados una sola vez, sin avance en pausa) y de que `main.js` no repite esa lógica.
 - `tests/contentSecurityPolicy.test.js`: pruebas de la CSP del build (directivas mínimas, solo en build, sin scripts ni estilos en línea).
 - `tests/guardForks.test.js`: prueba del hook `.claude/hooks/guard.py` con un `gh` falso: bloquea `gh pr checkout` y `gh pr merge` de una PR de fork (o de origen no comprobable) y permite las del propio repositorio.
+- `tests/guardEnv.test.js`: prueba del hook `.claude/hooks/guard.py`: bloquea cualquier orden de Bash (para todos los roles) con un fichero `.env` o `.env.*` como argumento o redirección (`head .env`, `grep -r . .env`, `< .env`…) y permite `.env.example`.
 - `tests/gameState.test.js`: pruebas de los estados del juego y de la máquina de estados.
 - `tests/logicIsolation.test.js`: prueba única de la separación lógica/renderizado (RNF-05): recorre todos los ficheros de `src/logic/` y falla si dependen de Three.js, del DOM, de `render/`, de `ui/` o de relojes del navegador.
 

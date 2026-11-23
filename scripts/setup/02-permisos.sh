@@ -51,6 +51,10 @@ ALLOW_BASE=(
 # Los comandos del stack (build/test) son propios de cada proyecto: se leen de
 # "permisos_extra" en docs/project/proyecto.json (ver más abajo).
 
+# Las reglas de .env son complementarias y limitadas: Claude Code solo las aplica a la
+# herramienta Read y al comando `cat` (no a `head`, `grep`, `sed`, `source`…). La
+# protección real es el hook guard.py, que bloquea cualquier orden de Bash cuyo argumento
+# o redirección sea un fichero .env o .env.* (salvo .env.example).
 DENY=(
   "Read(./.env)"
   "Read(./.env.*)"

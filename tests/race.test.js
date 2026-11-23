@@ -24,14 +24,6 @@ test('la lista de participantes admite hasta diez, con identificadores únicos',
   assert.throws(() => createRace(CONFIG, [{ id: 'a', name: 'A' }]), /jugador/);
 });
 
-test('el estado de la carrera no depende de Three.js ni del DOM', async () => {
-  const { readFile } = await import('node:fs/promises');
-  for (const file of ['track.js', 'race.js', 'chaseCamera.js']) {
-    const source = await readFile(new URL(`../src/logic/${file}`, import.meta.url), 'utf8');
-    assert.doesNotMatch(source, /from\s+['"]three['"]|document\.|window\./, file);
-  }
-});
-
 test('la cámara de seguimiento queda detrás del coche, elevada y mirando hacia delante', () => {
   const pose = { x: 10, z: -20, heading: 0.7 };
   const { position, target } = computeChaseCamera(pose, CONFIG.render.chaseCamera);

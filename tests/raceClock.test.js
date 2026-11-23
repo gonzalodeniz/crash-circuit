@@ -135,11 +135,3 @@ test('la máquina de estados enlaza parrilla, cuenta atrás y carrera', () => {
   assert.equal(machine.startGo(), GameState.EN_CARRERA);
   assert.throws(() => new GameStateMachine().startGo(), /no permitida/);
 });
-
-test('el reloj de carrera no depende de Three.js, del DOM ni de relojes del navegador', async () => {
-  const { readFile } = await import('node:fs/promises');
-  for (const file of ['raceClock.js', 'race.js']) {
-    const source = await readFile(new URL(`../src/logic/${file}`, import.meta.url), 'utf8');
-    assert.doesNotMatch(source, /from\s+['"]three['"]|document\.|window\.|Date\.now|performance\.now|setTimeout|setInterval/);
-  }
-});

@@ -47,7 +47,7 @@ En la raíz solo van `package.json`, `package-lock.json` y `vite.config.js`, que
 - `src/ui/keyboardInput.js`: guarda las teclas de conducción pulsadas y llama a `preventDefault` solo mientras está activa (durante la carrera), para que las flechas no desplacen la página (RF-010). Se vacía al perder el foco.
 - `src/main.js`: único punto donde se juntan lógica y renderizado; contiene el bucle `requestAnimationFrame`, que calcula el paso de tiempo, avanza la carrera con `stepRace`, actualiza el HUD y orienta la cámara con su pose. Escucha `GameStateMachine.onChange`: al entrar en `PARRILLA` crea la carrera y su escena y pasa a `CUENTA_ATRAS`; cuando `stepRace` da la señal de salida pasa a `EN_CARRERA`; cuando `stepRace` informa de que el jugador ha terminado pasa a `RESULTADOS` (desactiva las flechas, oculta el HUD y muestra la pantalla de resultados). «Repetir» vuelve a `PARRILLA`, lo que crea una carrera nueva y reconstruye la escena (que libera antes la anterior); «Menú» pasa a `MENU`, libera la escena, descarta la carrera y muestra el menú. Al volver a `MENU` o `SELECCION` la libera.
 
-Regla de dependencias (RNF-05): `logic/` (todos sus ficheros) no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. Las pruebas comprueban que `logic/gameState.js`, `track.js`, `race.js`, `raceClock.js`, `chaseCamera.js`, `driving.js` y `progress.js` no mencionan Three.js ni el DOM.
+Regla de dependencias (RNF-05): `logic/` (todos sus ficheros) no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. `tests/logicIsolation.test.js` lo comprueba para todos los `*.js` de `src/logic/` (los lee de la carpeta, así que un fichero nuevo queda cubierto sin tocar la prueba): falla ante cualquier import de `three` (con o sin `from`, también `three/addons/...`), de `../render/` o de `../ui/`, ante `document`, `window`, `requestAnimationFrame`, `Date.now`, `performance.now`, `setTimeout` y `setInterval`.
 
 ## Seguridad: Content Security Policy
 
@@ -62,7 +62,7 @@ Todo valor configurable, y en especial los «propuesta» de la sección 4 de `02
 - Comando: `npm test` (`node --test "tests/**/*.test.js"`). No usa navegador.
 - Se prueba automáticamente toda la lógica de `src/logic/` y `src/config/`: estados, progreso, vueltas, clasificación, puntuación, temporizadores y estimaciones, a medida que existan.
 - El renderizado (`src/render/`), la sensación de conducción y el HUD se comprueban jugando (ver «Verificación manual» del perfil).
-- Una prueba comprueba que la lógica no importa Three.js ni el DOM.
+- Una sola prueba (`tests/logicIsolation.test.js`) comprueba que ningún fichero de `src/logic/` depende de Three.js, del DOM, de `render/`, de `ui/` ni de relojes del navegador, y otra verifica que su patrón detecta cada forma prohibida.
 - `tests/contentSecurityPolicy.test.js` comprueba las directivas de la CSP, que el plugin la inserta solo en el build y que `index.html` no tiene scripts ni estilos en línea.
 
 ## Decisiones descartadas

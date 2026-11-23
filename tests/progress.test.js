@@ -1,6 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../src/config/config.js';
 import { buildTrack, crossesGateForward, pointAtDistance, rightOf } from '../src/logic/track.js';
 import { createProgress, currentLap, lapCounterText, stepProgress } from '../src/logic/progress.js';
@@ -243,9 +242,4 @@ test('conduciendo de verdad con stepRace, el progreso sigue al coche y completa 
   }
   assert.equal(race.player.progress.laps, 1, 'el coche completa la vuelta con los controles normales');
   assert.equal(race.player.progress.checkpointIndex, 0);
-});
-
-test('la lógica de progreso no depende de Three.js ni del DOM', async () => {
-  const source = await readFile(new URL('../src/logic/progress.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /from\s+['"]three['"]|document\.|window\./);
 });

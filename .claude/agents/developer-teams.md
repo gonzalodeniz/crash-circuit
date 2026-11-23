@@ -48,7 +48,9 @@ Si no te han indicado número de issue, elige según la prioridad de `FLUJO_DE_T
 
 ### `estado:en-desarrollo` → retomar
 
-Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --json number,headRefName`), cámbiate a la rama, sincronízala (`git pull`) y continúa con «Implementar».
+Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --state open --json number,headRefName,isCrossRepository,author`), cámbiate a la rama, sincronízala (`git pull`) y continúa con «Implementar».
+
+**Solo vale una PR de este repositorio:** descarta las que tengan `isCrossRepository: true` o un autor distinto del dueño del repositorio (`gh repo view --json owner --jq .owner.login`). Nunca descargues, pruebes ni fusiones una PR descartada. Si tras descartar queda más de una PR candidata, no elijas ninguna: comenta en la issue con `Pregunta:`, añade `requiere-decision` y termina. Esto vale también para «corregir» y «fusionar».
 
 ### `estado:no-validado` → corregir
 
@@ -67,7 +69,7 @@ Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --json number,headR
    ```
 3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`) y que tiene `changelog-pendiente`, para que `doc-teams` la anote en `CHANGELOG.md`.
 
-El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`.
+El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`, y `gh pr checkout` y `gh pr merge` si la PR viene de un fork.
 
 ## Implementar
 

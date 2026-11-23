@@ -11,7 +11,7 @@
 - `CHANGELOG.md`: resumen de cada issue terminada, agrupado por entrega. Lo mantiene `doc-teams`.
 - `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*`, `logs/`, `node_modules/` y `dist/`).
 - `package.json` y `package-lock.json`: dependencias (`three`, `vite`) y scripts npm (`dev`, `build`, `preview`, `test`).
-- `vite.config.js`: configuración de Vite (raíz `src/`, salida `dist/`, puertos locales).
+- `vite.config.js`: configuración de Vite (raíz `src/`, salida `dist/`, puertos locales) y plugin que inserta la Content Security Policy en el build.
 
 ## `src/` (código del juego)
 
@@ -41,6 +41,7 @@
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
 - `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace`.
 - `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú, y de que no hay persistencia.
+- `tests/contentSecurityPolicy.test.js`: pruebas de la CSP del build (directivas mínimas, solo en build, sin scripts ni estilos en línea).
 - `tests/gameState.test.js`: pruebas de los estados del juego y de la separación lógica/renderizado.
 
 ## `docs/user/`

@@ -10,7 +10,7 @@ Requisitos: Node >= 20 y npm (verificado con Node 22.23 y npm 12). Todos los com
 
 ## Build
 
-- `npm run build`: genera la aplicación estática en `dist/` (no se versiona). Verificado.
+- `npm run build`: genera la aplicación estática en `dist/` (no se versiona); inserta la Content Security Policy en `dist/index.html`. Comprobación: `grep -o "Content-Security-Policy[^>]*" dist/index.html`. Verificado.
 
 ## Lint
 
@@ -18,7 +18,7 @@ _Pendiente: no hay linter configurado._
 
 ## Test
 
-- `npm test`: ejecuta las pruebas automáticas de `tests/` con el ejecutor integrado de Node, sin navegador. Verificado (84 pruebas).
+- `npm test`: ejecuta las pruebas automáticas de `tests/` con el ejecutor integrado de Node, sin navegador. Verificado (88 pruebas).
 
 ## Ejecución local
 

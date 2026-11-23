@@ -97,65 +97,107 @@ export function createRace(
 }
 
 /**
+ * Avanza el reloj de la carrera y la señal de salida.
+ * Mientras dura la cuenta atrás nadie se mueve (RF-020). En el paso en que termina, todos los
+ * participantes pasan a `EN_CARRERA` a la vez (RF-021) y el cronómetro arranca desde cero; el sobrante
+ * de ese paso cuenta ya como tiempo de carrera (RF-045).
+ * @returns {{started: boolean, drivingTime: number}} `started` es verdadero solo en el paso de la señal
+ *   de salida; `drivingTime` es el tiempo de carrera transcurrido en este paso (cero en la cuenta atrás)
+ */
+function advanceClock(race, step, config) {
+  const previous = race.clock;
+  race.clock = stepRaceClock(previous, step, config.race.countdown);
+  const started = previous.phase !== race.clock.phase;
+  if (started) {
+    for (const participant of race.participants) participant.status = ParticipantStatus.EN_CARRERA;
+  }
+  let drivingTime = 0;
+  if (started) drivingTime = race.clock.raceTime;
+  else if (previous.phase === ClockPhase.RUNNING) drivingTime = step;
+  return { started, drivingTime };
+}
+
+/**
+ * Entrada que recibe un participante en este paso: ninguna si ya ha terminado (solo la inercia detiene
+ * su coche), la indicada en `inputs` o, si no hay, la de su piloto IA (RF-028) o el reposo.
+ * Los rivales usan las mismas entradas que el jugador (RF-003, RN-07).
+ */
+function participantInput(race, participant, inputs, config) {
+  if (participant.finished) return IDLE_INPUT;
+  const driver = race.drivers[participant.id];
+  return inputs[participant.id] ?? (driver ? aiInput(driver, participant, config.ai) : IDLE_INPUT);
+}
+
+/**
+ * Actualiza el progreso válido (RN-01) del participante tras moverse y lo marca como terminado al
+ * completar las vueltas (RF-025): congela su `finishTime` (el cronómetro de ese paso).
+ * @returns {boolean} verdadero si termina en este paso
+ */
+function updateProgress(race, participant) {
+  // Un coche que no se ha movido no cambia su progreso: se evita buscar su punto más cercano del
+  // trazado (el paso más caro) para los rivales parados en la parrilla.
+  if (participant.x === participant.progress.x && participant.z === participant.progress.z) return false;
+  participant.progress = stepProgress(participant.progress, race.track, participant);
+  if (participant.progress.laps < race.totalLaps) return false;
+  participant.finished = true;
+  participant.finishTime = race.clock.raceTime;
+  return true;
+}
+
+/**
+ * Mueve un participante `drivingTime` segundos y actualiza su progreso.
+ * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
+ * @returns {boolean} verdadero si termina en este paso
+ */
+function stepParticipant(race, participant, inputs, drivingTime, config) {
+  const input = participantInput(race, participant, inputs, config);
+  Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
+  if (participant.finished) return false;
+  return updateProgress(race, participant);
+}
+
+/** Avanza a los participantes que ya están en carrera. @returns {string[]} los que terminan en este paso */
+function stepParticipants(race, inputs, drivingTime, config) {
+  const finished = [];
+  if (drivingTime <= 0) return finished;
+  for (const participant of race.participants) {
+    if (participant.status !== ParticipantStatus.EN_CARRERA) continue;
+    if (stepParticipant(race, participant, inputs, drivingTime, config)) finished.push(participant.id);
+  }
+  return finished;
+}
+
+/**
+ * Registra el ganador (RF-024, RN-03) si aún no lo hay y alguien termina en este paso. Si varios llegan
+ * en el mismo paso, gana el que va por delante en la clasificación (desempate por parrilla). Después ya
+ * no cambia, ni siquiera cuando termina el jugador (RF-027).
+ */
+function recordWinner(race, finished) {
+  if (race.winner !== null || finished.length === 0) return;
+  const first = rankParticipants(race.participants.filter((participant) => finished.includes(participant.id)))[0];
+  race.winner = Object.freeze({ id: first.id, name: first.name, isPlayer: first.isPlayer, finishTime: first.finishTime });
+}
+
+/**
  * Avanza la carrera `dt` segundos de simulación; modifica `race` en el sitio.
- * Mientras dura la cuenta atrás nadie se mueve, aunque haya entradas (RF-020). En el paso en que
- * termina, todos los participantes pasan a `EN_CARRERA` a la vez (RF-021) y el cronómetro arranca
- * desde cero; el sobrante de ese paso cuenta ya como tiempo de carrera (RF-045).
+ * Encadena: reloj y salida, paso de cada participante (movimiento, progreso y llegada), ganador y
+ * clasificación en vivo (`race.standings`, véase `standings.js`).
  * @param {ReturnType<typeof createRace>} race
  * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante;
  *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
  * @param {object} config CONFIG (secciones `race`, `ai` y `carPerformance`)
- * Tras mover cada coche se actualiza su progreso (vueltas y checkpoints válidos) con el desplazamiento real.
- * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): se congelan su
- * tiempo de llegada (`finishTime`, el cronómetro de ese paso) y su progreso, sus controles dejan de
- * actuar y su coche rueda por inercia hasta detenerse. El reloj de la carrera no se detiene.
- * El primero que termina queda registrado en `race.winner` con su instante de llegada, sin esperar al
- * jugador (RF-024, RN-03). Si varios llegan en el mismo paso, gana el que va por delante en la
- * clasificación (desempate por parrilla). Después ya no cambia, ni siquiera cuando termina el jugador (RF-027).
- * Al final de cada paso se recalcula `race.standings` (la clasificación en vivo, véase `standings.js`).
+ * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): su tiempo de llegada
+ * y su progreso quedan congelados, sus controles dejan de actuar y su coche rueda por inercia hasta
+ * detenerse. El reloj de la carrera no se detiene.
  * @returns {{started: boolean, finished: string[]}} `started` es verdadero solo en el paso de la señal
  *   de salida; `finished` lista los participantes que terminan en este paso
  */
 export function stepRace(race, inputs, dt, config) {
   const step = Math.min(Math.max(dt, 0), config.carPerformance.maxStep);
-  const previous = race.clock;
-  race.clock = stepRaceClock(previous, step, config.race.countdown);
-  const started = previous.phase !== race.clock.phase;
-
-  if (started) {
-    for (const participant of race.participants) participant.status = ParticipantStatus.EN_CARRERA;
-  }
-  // Tiempo de carrera que ha transcurrido en este paso: cero durante la cuenta atrás.
-  let drivingTime = 0;
-  if (started) drivingTime = race.clock.raceTime;
-  else if (previous.phase === ClockPhase.RUNNING) drivingTime = step;
-  const finished = [];
-  if (drivingTime > 0) {
-    for (const participant of race.participants) {
-      if (participant.status !== ParticipantStatus.EN_CARRERA) continue;
-      // Quien ya ha terminado no recibe órdenes: solo la inercia detiene su coche.
-      // Los rivales usan las mismas entradas que el jugador y el mismo `stepCar` (RF-003, RN-07).
-      const driver = race.drivers[participant.id];
-      let input = IDLE_INPUT;
-      if (!participant.finished) input = inputs[participant.id] ?? (driver ? aiInput(driver, participant, config.ai) : IDLE_INPUT);
-      Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
-      if (participant.finished) continue; // su progreso y su tiempo ya no cambian (RF-025, RF-027)
-      // Un coche que no se ha movido no cambia su progreso: se evita buscar su punto más cercano del
-      // trazado (el paso más caro) para los rivales parados en la parrilla.
-      if (participant.x === participant.progress.x && participant.z === participant.progress.z) continue;
-      participant.progress = stepProgress(participant.progress, race.track, participant);
-      if (participant.progress.laps >= race.totalLaps) {
-        participant.finished = true;
-        participant.finishTime = race.clock.raceTime;
-        finished.push(participant.id);
-      }
-    }
-  }
-  if (race.winner === null && finished.length > 0) {
-    const first = rankParticipants(race.participants.filter((participant) => finished.includes(participant.id)))[0];
-    race.winner = Object.freeze({ id: first.id, name: first.name, isPlayer: first.isPlayer, finishTime: first.finishTime });
-  }
+  const { started, drivingTime } = advanceClock(race, step, config);
+  const finished = stepParticipants(race, inputs, drivingTime, config);
+  recordWinner(race, finished);
   race.standings = standingsOf(race);
   return { started, finished };
 }

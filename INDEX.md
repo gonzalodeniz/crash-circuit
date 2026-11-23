@@ -17,11 +17,12 @@
 
 - `src/index.html`: página de arranque con el lienzo `#game-canvas`.
 - `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
-- `src/main.js`: punto de entrada; une la lógica con el renderizado y arranca el bucle.
+- `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
 - `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
 - `src/logic/gameState.js`: estados del juego y máquina de estados (sin Three.js ni DOM).
 - `src/logic/track.js`: trazado del circuito como dato (línea central cerrada, anchura, meta, checkpoints, parrilla) y funciones geométricas (sin Three.js ni DOM).
 - `src/logic/race.js`: crea la carrera con su lista de participantes colocados en la parrilla, `stepRace` (avanza reloj y coches y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
+- `src/logic/raceSession.js`: flujo de la partida (`RaceSession`): crea y descarta la carrera según el estado, avanza con `step` y aplica `beginCountdown`, `startGo` y `finishRace` (sin Three.js ni DOM).
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
@@ -40,7 +41,8 @@
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
 - `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace`.
-- `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú, y de que no hay persistencia.
+- `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú de la máquina de estados, y de que no hay persistencia.
+- `tests/raceSession.test.js`: pruebas del flujo de la partida con la máquina de estados real (carrera creada al entrar en parrilla, nueva al repetir, descartada al volver al menú, salida y resultados una sola vez, sin avance en pausa) y de que `main.js` no repite esa lógica.
 - `tests/contentSecurityPolicy.test.js`: pruebas de la CSP del build (directivas mínimas, solo en build, sin scripts ni estilos en línea).
 - `tests/gameState.test.js`: pruebas de los estados del juego y de la máquina de estados.
 - `tests/logicIsolation.test.js`: prueba única de la separación lógica/renderizado (RNF-05): recorre todos los ficheros de `src/logic/` y falla si dependen de Three.js, del DOM, de `render/`, de `ui/` o de relojes del navegador.

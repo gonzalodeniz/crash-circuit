@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
-import { createRace, stepRace } from '../src/logic/race.js';
+import { ParticipantStatus, createRace, stepRace } from '../src/logic/race.js';
 import {
   ClockPhase, GO_SIGNAL, countdownSignal, createRaceClock, formatRaceTime, stepRaceClock,
 } from '../src/logic/raceClock.js';
@@ -91,7 +91,7 @@ test('antes de la salida las flechas no producen movimiento ni progreso', () => 
   assert.equal(race.clock.raceTime, 0);
   assert.deepEqual({ x: race.player.x, z: race.player.z, heading: race.player.heading }, start);
   assert.equal(race.player.speed, 0);
-  assert.equal(race.player.status, GameState.PARRILLA);
+  assert.equal(race.player.status, ParticipantStatus.PARRILLA);
 });
 
 test('la salida cambia el estado de todos los participantes en el mismo paso', () => {
@@ -106,8 +106,8 @@ test('la salida cambia el estado de todos los participantes en el mismo paso', (
     startedSteps += stepRace(race, {}, dt, CONFIG).started ? 1 : 0;
   }
   assert.equal(startedSteps, 1);
-  assert.ok(before.every((status) => status === GameState.PARRILLA));
-  assert.ok(race.participants.every((p) => p.status === GameState.EN_CARRERA));
+  assert.ok(before.every((status) => status === ParticipantStatus.PARRILLA));
+  assert.ok(race.participants.every((p) => p.status === ParticipantStatus.EN_CARRERA));
   assert.equal(stepRace(race, {}, dt, CONFIG).started, false); // la señal se da una sola vez
 });
 

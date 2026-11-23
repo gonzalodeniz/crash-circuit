@@ -1,9 +1,17 @@
 // Estado de la carrera: trazado y participantes. Lógica pura (RNF-05).
 import { buildTrack, gridSlot } from './track.js';
 import { createCarState, stepCar } from './driving.js';
-import { GameState } from './gameState.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
 import { createProgress, stepProgress } from './progress.js';
+
+/**
+ * Estado de cada participante, distinto de los estados de la partida.
+ * `DESTRUIDO` (subestado del vehículo, RN-04) se añadirá aquí en E5.
+ */
+export const ParticipantStatus = Object.freeze({
+  PARRILLA: 'PARRILLA',
+  EN_CARRERA: 'EN_CARRERA',
+});
 
 const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false, right: false });
 
@@ -32,7 +40,7 @@ export function createRace(config, entries = [config.race.player]) {
       name: entry.name,
       isPlayer: Boolean(entry.isPlayer),
       gridIndex: index,
-      status: GameState.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)
+      status: ParticipantStatus.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)
       finished: false, // ha completado todas las vueltas (RF-025)
       finishTime: null, // tiempo real de llegada en s, congelado al terminar (RF-025)
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
@@ -75,7 +83,7 @@ export function stepRace(race, inputs, dt, config) {
   const started = previous.phase !== race.clock.phase;
 
   if (started) {
-    for (const participant of race.participants) participant.status = GameState.EN_CARRERA;
+    for (const participant of race.participants) participant.status = ParticipantStatus.EN_CARRERA;
   }
   // Tiempo de carrera que ha transcurrido en este paso: cero durante la cuenta atrás.
   let drivingTime = 0;
@@ -84,7 +92,7 @@ export function stepRace(race, inputs, dt, config) {
   const finished = [];
   if (drivingTime > 0) {
     for (const participant of race.participants) {
-      if (participant.status !== GameState.EN_CARRERA) continue;
+      if (participant.status !== ParticipantStatus.EN_CARRERA) continue;
       // Quien ya ha terminado no recibe órdenes: solo la inercia detiene su coche.
       const input = participant.finished ? IDLE_INPUT : (inputs[participant.id] ?? IDLE_INPUT);
       Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));

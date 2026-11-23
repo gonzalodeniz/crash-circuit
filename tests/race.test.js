@@ -1,9 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
-import { createRace } from '../src/logic/race.js';
+import { ParticipantStatus, createRace } from '../src/logic/race.js';
+import { GameState } from '../src/logic/gameState.js';
 import { computeChaseCamera } from '../src/logic/chaseCamera.js';
 import { forwardOf, gridSlot, isOnRoad } from '../src/logic/track.js';
+
+test('el estado de participante es propio y no se mezcla con los estados del juego', () => {
+  assert.ok(Object.isFrozen(ParticipantStatus));
+  assert.deepEqual(Object.keys(ParticipantStatus), ['PARRILLA', 'EN_CARRERA']);
+  assert.equal(createRace(CONFIG).player.status, ParticipantStatus.PARRILLA);
+  assert.equal(Object.keys(GameState).length, 7);
+  assert.ok(!('DESTRUIDO' in GameState));
+});
 
 test('en E1 la carrera tiene solo al jugador, colocado en la parrilla', () => {
   const race = createRace(CONFIG);

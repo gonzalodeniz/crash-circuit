@@ -7,6 +7,7 @@ import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
 import { aiInput, aiLevel, createAiDriver } from './aiDriver.js';
+import { standingsOf } from './standings.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -86,6 +87,7 @@ export function createRace(
     totalLaps: requireLapOption(config, laps),
     participants,
     drivers,
+    standings: standingsOf({ participants }), // clasificación en vivo (ids de primero a último); `stepRace` la actualiza
     clock: createRaceClock(), // cuenta atrás y cronómetro de carrera
     get player() {
       return participants.find((participant) => participant.isPlayer);
@@ -107,6 +109,7 @@ export function createRace(
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): se congelan su
  * tiempo de llegada (`finishTime`, el cronómetro de ese paso) y su progreso, sus controles dejan de
  * actuar y su coche rueda por inercia hasta detenerse. El reloj de la carrera no se detiene.
+ * Al final de cada paso se recalcula `race.standings` (la clasificación en vivo, véase `standings.js`).
  * @returns {{started: boolean, finished: string[]}} `started` es verdadero solo en el paso de la señal
  *   de salida; `finished` lista los participantes que terminan en este paso
  */
@@ -145,6 +148,7 @@ export function stepRace(race, inputs, dt, config) {
       }
     }
   }
+  race.standings = standingsOf(race);
   return { started, finished };
 }
 

@@ -72,7 +72,21 @@ Cada carrera tiene diez participantes: tú y nueve pilotos controlados por el ju
 - Todos reciben la señal de salida a la vez. Antes de la señal nadie se mueve ni suma progreso.
 - Si repites la carrera o empiezas otra, la parrilla se monta de nuevo con los diez coches.
 
-Por ahora los rivales se quedan parados en la parrilla: todavía no conducen. Tampoco hay choques, así que tu coche puede atravesarlos.
+Tampoco hay choques, así que tu coche puede atravesar a los rivales y ellos a ti.
+
+### Cómo conducen los rivales
+
+Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completar las vueltas de la carrera.
+
+- Cada circuito tiene su propia trayectoria. Los rivales frenan antes de las curvas y aceleran en las rectas.
+- No van todos en fila. Cada rival se desplaza un poco hacia un lado o hacia otro de la calzada, y cada uno lleva un ritmo algo distinto. Por eso dos carreras con la misma configuración no son idénticas.
+- Los rivales intentan no salirse de la calzada, pero no reaccionan a otros coches: no te esquivan ni te bloquean.
+- Sus vueltas cuentan con las mismas reglas que las tuyas: tienen que pasar por todos los puntos de control, en orden, antes de la meta.
+- Conducen con las mismas limitaciones que tú, y los cuatro modelos de coche rinden igual. Un rival no corre más por llevar un coche u otro.
+- Cuanto más difícil es el circuito, más exigentes son: en Abismo van más rápidos y frenan más tarde en las curvas que en Llanura. Con Ribera, Sierra y Abismo la exigencia sube por pasos.
+- Si tú terminas la carrera, los rivales que siguen en pista continúan conduciendo mientras ves los resultados. Cuando terminan su carrera, ruedan un poco y se paran.
+
+Los valores de exigencia de cada circuito son iniciales y pueden cambiar tras probar el juego.
 
 ## Controles
 
@@ -132,10 +146,10 @@ En la pantalla de resultados hay dos botones. Se activan con el ratón o con el 
 - **Repetir:** empieza una carrera nueva con la misma configuración: el mismo coche, el mismo circuito y el mismo número de vueltas. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
 - **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. La selección se borra: si vuelves a empezar sin recargar, el coche, el circuito y las vueltas parten de nuevo de sus valores por defecto (primer coche, «Ribera» y 1 vuelta).
 
-El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación. Como los rivales aún no conducen, no hay tiempos de ellos.
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación. Aunque los rivales ya conducen, sus tiempos todavía no se muestran.
 
 ## Qué falta
 
-Los rivales ya salen en la parrilla, pero todavía no conducen. Tampoco hay choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Los rivales ya salen de la parrilla y conducen solos, pero todavía no hay posiciones, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

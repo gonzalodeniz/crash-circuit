@@ -5,6 +5,7 @@ Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más 
 ## E3 — Competición contra rivales
 
 - **#51 E3 · Salir desde la parrilla junto a nueve rivales con nombre propio** (PR #55, 2026-11-23): cada carrera tiene ahora diez participantes: el jugador, que sale el último, y nueve pilotos controlados por el juego con nombre y modelo de coche fijos (los nombres son provisionales). Los diez coches se colocan en la calzada, sin solaparse, en los cuatro circuitos, y reciben la señal de salida a la vez. Los rivales todavía no conducen y se quedan parados; tampoco hay choques. «Repetir» monta la parrilla de nuevo. Requisitos: RF-016, RF-017, RF-018, RF-019, RF-021 (parcial), RF-003, RN-07. Casos de aceptación: CA-01 (parcial).
+- **#52 E3 · Rivales que recorren cada circuito con variaciones y dificultad según el trazado** (PR #56, 2026-11-23): tras la señal de salida, los nueve rivales conducen solos y completan vueltas válidas en los cuatro circuitos. Cada uno sigue la trayectoria del circuito con un desplazamiento lateral y un ritmo al azar, así que cada carrera es algo distinta. Son más exigentes cuanto más difícil es el circuito (Llanura, Ribera, Sierra, Abismo); los valores son iniciales y se calibrarán en E8. Usan las mismas entradas y el mismo rendimiento que el jugador, y los coches siguen rindiendo igual. Aún no hay posiciones ni choques: se atraviesan entre ellos y con el jugador. Requisitos: RF-028, RF-029, RF-031. Reglas de negocio: RN-07, RN-01. Casos de aceptación: CA-01 (parcial).
 
 ## E2 — Personalización de carrera
 

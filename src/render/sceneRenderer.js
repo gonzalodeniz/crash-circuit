@@ -16,7 +16,6 @@ import {
   RGBAFormat,
   Scene,
   SRGBColorSpace,
-  WebGLRenderer,
 } from 'three';
 import { rightOf } from '../logic/track.js';
 import { createCarMesh } from './carMesh.js';
@@ -36,19 +35,25 @@ export class SceneRenderer {
   #previewDisposables = [];
   #previewCar = null;
   #previewCarDisposables = [];
-  #onResize = () => this.resize();
+  #viewport;
+  #removeResizeListener;
 
   /**
-   * @param {HTMLCanvasElement} canvas
+   * El renderizador y la ventana llegan por parámetro (los crea `main.js`) para que la escena se pueda
+   * construir y probar en Node, con un renderizador falso, sin WebGL ni DOM.
+   * @param {object} renderer renderizador de Three.js (`WebGLRenderer`) o uno con `setPixelRatio`, `setSize`, `render` y `dispose`
+   * @param {{width: () => number, height: () => number, pixelRatio: () => number, onResize: (listener: () => void) => () => void}} viewport
+   *   tamaño y densidad de píxeles de la ventana, y registro del aviso de cambio de tamaño (devuelve la función que lo quita)
    * @param {object} renderConfig sección `render` de CONFIG
    * @param {Array<{id: string, appearance: object}>} carModels catálogo de modelos (`cars.models` de CONFIG)
    */
-  constructor(canvas, renderConfig, carModels) {
+  constructor(renderer, viewport, renderConfig, carModels) {
     this.#config = renderConfig;
     this.#carModels = carModels;
+    this.#viewport = viewport;
 
-    this.#renderer = new WebGLRenderer({ canvas, antialias: true });
-    this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, renderConfig.maxPixelRatio));
+    this.#renderer = renderer;
+    this.#renderer.setPixelRatio(Math.min(viewport.pixelRatio(), renderConfig.maxPixelRatio));
 
     this.#scene = new Scene();
     this.#scene.background = new Color(renderConfig.backgroundColor);
@@ -65,7 +70,7 @@ export class SceneRenderer {
     this.#scene.add(new AmbientLight(light.ambientColor, light.ambientIntensity));
 
     this.resize();
-    window.addEventListener('resize', this.#onResize);
+    this.#removeResizeListener = viewport.onResize(() => this.resize());
   }
 
   /** Registra un recurso de la carrera para liberarlo después. */
@@ -242,8 +247,8 @@ export class SceneRenderer {
 
   /** Adapta el lienzo y la cámara al tamaño de la ventana. */
   resize() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = this.#viewport.width();
+    const height = this.#viewport.height();
     this.#renderer.setSize(width, height, false);
     this.#camera.aspect = width / height;
     this.#camera.updateProjectionMatrix();
@@ -264,7 +269,7 @@ export class SceneRenderer {
 
   /** Libera la carrera, la vista previa y el contexto WebGL (RNF-04). */
   dispose() {
-    window.removeEventListener('resize', this.#onResize);
+    this.#removeResizeListener();
     this.disposeRace();
     this.disposePreview();
     this.#renderer.dispose();

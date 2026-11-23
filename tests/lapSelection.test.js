@@ -145,7 +145,7 @@ test('la pantalla de selección ofrece las vueltas de la configuración y main.j
   }
 });
 
-test('mantener Intro pulsada no confirma varios pasos seguidos (se ignora event.repeat)', async () => {
+test('el código de optionSelectionScreen.js ignora event.repeat al confirmar con Intro (comprueba el fuente; el comportamiento se verifica jugando)', async () => {
   const ui = await readFile(new URL('../src/ui/optionSelectionScreen.js', import.meta.url), 'utf8');
   assert.match(ui, /event\.repeat/);
   assert.match(ui, /if \(!event\.repeat\) onConfirm\(\)/);

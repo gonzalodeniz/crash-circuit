@@ -2,6 +2,10 @@
 
 Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más reciente a la más antigua). Lo mantiene `doc-teams` tras cada fusión.
 
+## E2 — Personalización de carrera
+
+- **#42 E2 · Elegir entre cuatro coches de aspecto distinto antes de correr** (PR #46, 2026-11-23): «Empezar» abre ahora la pantalla «Elige tu coche», con cuatro modelos (Rayo, Bruma, Trueno y Jade, nombres provisionales) que se distinguen por color y forma. Se elige con ratón o flechas y «Confirmar» (o Intro) empieza la carrera con ese coche; «Volver» regresa al menú y «Repetir» conserva el coche. Los cuatro se conducen exactamente igual. Requisitos: RF-002, RF-003.
+
 ## E1 — MVP: primera carrera
 
 - **#7 E1 · Base técnica: el juego arranca en el navegador como aplicación estática** (PR #14, 2026-11-22): el juego se arranca en local con `npm run dev` y muestra una escena 3D de prueba a pantalla completa que se adapta a la ventana. El proyecto queda con código en `src/`, pruebas automáticas sin navegador en `tests/` (`npm test`), un módulo único de configuración y la lógica separada del renderizado. Requisitos: RNF-02, RNF-05 (parcial), RNF-06, RNF-07 (parcial), RF-060 (parcial).

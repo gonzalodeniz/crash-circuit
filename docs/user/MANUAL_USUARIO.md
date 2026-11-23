@@ -9,7 +9,19 @@ Al abrir el juego ves el título «Crash Circuit» y el botón «Empezar». El b
 - Con el ratón: haz clic en «Empezar».
 - Con el teclado: pulsa Intro o Espacio.
 
-Al empezar, el menú desaparece y ves un circuito cerrado provisional con tu coche en la parrilla de salida, visto desde una cámara situada detrás. Enseguida empieza la cuenta atrás (ver «Salida y cronómetro»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
+Al pulsar «Empezar» se abre la pantalla para elegir coche (ver «Elegir coche»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
+
+## Elegir coche
+
+Tras pulsar «Empezar» aparece «Elige tu coche». Ves el coche elegido girando sobre una plataforma y, debajo, cuatro opciones: Rayo, Bruma, Trueno y Jade. Cada una muestra su nombre y una muestra de sus colores.
+
+- Con el ratón: haz clic en la opción que quieras.
+- Con el teclado: usa las flechas izquierda y derecha para pasar de un coche a otro. Al llegar al último, vuelves al primero.
+- La opción elegida se ve resaltada y es la que gira en la plataforma. Al principio está elegido el primero.
+- «Confirmar» (o Intro) empieza la carrera con ese coche. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»).
+- «Volver» te lleva de nuevo al menú. Si vuelves a pulsar «Empezar», sigue elegido el último coche que probaste.
+
+Los cuatro coches se distinguen por el color y la forma (cabina, franja y alerón), pero **se conducen exactamente igual**: la misma velocidad, aceleración y giro. Elegir uno u otro es solo cuestión de gusto. Los nombres y el aspecto son provisionales y pueden cambiar.
 
 ## Controles
 
@@ -35,7 +47,7 @@ No puedes conducir hasta la señal de salida. Por ahora no hay penalización por
 
 ## Salida y cronómetro
 
-Al pulsar «Empezar», el coche espera en la parrilla y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
+Al confirmar tu coche, el coche espera en la parrilla y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
 
 - Durante la cuenta atrás el coche no se mueve, aunque pulses las flechas. Si mantienes una flecha pulsada, el coche responde en cuanto se da la salida.
 - Arriba a la derecha hay un cronómetro con formato minutos:segundos.centésimas (por ejemplo, 00:12.34). Marca 00:00.00 durante la cuenta atrás y empieza a contar en la señal de salida.
@@ -66,13 +78,13 @@ Al completar la última vuelta válida, tu carrera termina:
 
 En la pantalla de resultados hay dos botones. Se activan con el ratón o con el teclado (Tab cambia de botón; Intro o Espacio lo pulsa). «Repetir» está seleccionado al abrirse.
 
-- **Repetir:** empieza una carrera nueva con la misma configuración. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
-- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior.
+- **Repetir:** empieza una carrera nueva con la misma configuración y el mismo coche. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
+- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. Si vuelves a empezar sin recargar, el último coche elegido sigue marcado.
 
-El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
 
 ## Qué falta
 
-Todavía no hay selección de coche o circuito, rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Todavía no se puede elegir circuito ni número de vueltas, y no hay rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

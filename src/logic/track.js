@@ -111,9 +111,8 @@ export function signedDistance(track, distance) {
   return wrapped > track.length / 2 ? wrapped - track.length : wrapped;
 }
 
-/** Posición y rumbo de la línea central a `distance` desde la meta (el circuito es cíclico). */
-export function pointAtDistance(track, distance) {
-  const s = wrapDistance(track, distance);
+/** Índice del tramo de la línea central que contiene la distancia `s` (ya normalizada a [0, length)). */
+function segmentIndexAt(track, s) {
   // Búsqueda binaria del tramo que contiene s.
   let low = 0;
   let high = track.points.length - 1;
@@ -122,6 +121,13 @@ export function pointAtDistance(track, distance) {
     if (track.starts[mid] <= s) low = mid;
     else high = mid - 1;
   }
+  return low;
+}
+
+/** Posición y rumbo de la línea central a `distance` desde la meta (el circuito es cíclico). */
+export function pointAtDistance(track, distance) {
+  const s = wrapDistance(track, distance);
+  const low = segmentIndexAt(track, s);
   const a = track.points[low];
   const b = track.points[(low + 1) % track.points.length];
   const segmentLength = (low + 1 < track.points.length ? track.starts[low + 1] : track.length) - track.starts[low];
@@ -129,13 +135,14 @@ export function pointAtDistance(track, distance) {
   return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, heading: track.headings[low] };
 }
 
-/** Distancia lateral mínima de un punto a la línea central y distancia recorrida del punto más cercano. */
-export function nearestOnCenterline(track, x, z) {
+// Punto más cercano de la línea central entre `count` tramos consecutivos desde `first` (cíclico).
+function nearestAmong(track, x, z, first, count) {
   let best = { distance: Infinity, along: 0 };
-  const count = track.points.length;
-  for (let i = 0; i < count; i++) {
+  const total = track.points.length;
+  for (let k = 0; k < count; k++) {
+    const i = (first + k) % total;
     const a = track.points[i];
-    const b = track.points[(i + 1) % count];
+    const b = track.points[(i + 1) % total];
     const dx = b.x - a.x;
     const dz = b.z - a.z;
     const segmentLength2 = dx * dx + dz * dz;
@@ -144,6 +151,25 @@ export function nearestOnCenterline(track, x, z) {
     if (distance < best.distance) best = { distance, along: track.starts[i] + t * Math.sqrt(segmentLength2) };
   }
   return best;
+}
+
+/**
+ * Distancia lateral mínima de un punto a la línea central y distancia recorrida del punto más cercano.
+ * Sin `hint` recorre todos los tramos. Con `hint` (`{along, span}`: posición anterior del coche en el
+ * trazado y semiancho de búsqueda, en metros) solo mira los tramos próximos, lo que mantiene barato el
+ * paso de diez coches en movimiento. Si el resultado local queda a más de la anchura de la calzada
+ * (coche muy lejos de donde estaba, p. ej. recolocado), se repite la búsqueda completa.
+ * @param {{along: number, span: number}} [hint]
+ */
+export function nearestOnCenterline(track, x, z, hint) {
+  const total = track.points.length;
+  if (hint && 2 * hint.span < track.length) {
+    const first = segmentIndexAt(track, wrapDistance(track, hint.along - hint.span));
+    const last = segmentIndexAt(track, wrapDistance(track, hint.along + hint.span));
+    const local = nearestAmong(track, x, z, first, ((last - first + total) % total) + 1);
+    if (local.distance <= track.width) return local;
+  }
+  return nearestAmong(track, x, z, 0, total);
 }
 
 /** Indica si un punto está sobre la calzada; `margin` reduce la anchura útil (p. ej. la mitad del coche). */

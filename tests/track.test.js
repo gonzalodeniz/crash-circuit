@@ -159,3 +159,26 @@ test('la comprobación de solapamiento detecta filas más juntas que el largo de
 test('un circuito con menos de 3 puntos de control no es cerrable', () => {
   assert.throws(() => buildTrack({ name: 'x', width: 10, controlPoints: [[0, 0], [1, 1]], samplesPerSegment: 4 }));
 });
+
+test('la búsqueda del punto más cercano con la posición anterior da lo mismo que la completa y recupera si el coche aparece lejos', () => {
+  for (const definition of CONFIG.tracks.circuits) {
+    const circuit = buildTrack(requireTrackDefinition(CONFIG, definition.id));
+    const span = 30;
+    for (let along = 0; along < circuit.length; along += 17) {
+      const center = pointAtDistance(circuit, along);
+      const right = rightOf(center.heading);
+      // Puntos sobre la calzada y algo fuera de ella, con la posición anterior unos metros atrás.
+      for (const lateral of [-circuit.width, -circuit.width / 4, 0, circuit.width / 3, circuit.width]) {
+        const x = center.x + right.x * lateral;
+        const z = center.z + right.z * lateral;
+        const full = nearestOnCenterline(circuit, x, z);
+        const local = nearestOnCenterline(circuit, x, z, { along: along - 5, span });
+        assert.ok(Math.abs(local.distance - full.distance) < 1e-9, `${definition.id}: distancia en ${along}`);
+        assert.ok(Math.abs(signedDistance(circuit, local.along - full.along)) < 1e-9, `${definition.id}: avance en ${along}`);
+      }
+      // Posición anterior lejana (recolocación): el resultado sigue siendo el de la búsqueda completa.
+      const far = nearestOnCenterline(circuit, center.x, center.z, { along: along + circuit.length / 2, span });
+      assert.ok(Math.abs(far.along - along) < 1e-6 || Math.abs(Math.abs(far.along - along) - circuit.length) < 1e-6);
+    }
+  }
+});

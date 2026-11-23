@@ -6,6 +6,7 @@ import { createProgress, stepProgress } from './progress.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
+import { aiInput, aiLevel, createAiDriver } from './aiDriver.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -30,12 +31,18 @@ const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false,
  * @param {Array<{id: string, name: string, isPlayer?: boolean, carModelId?: string}>} entries participantes en orden de parrilla
  * @param {string} trackId identificador del circuito del catálogo
  * @param {number} laps número de vueltas de la carrera
+ * Cada participante que no es el jugador conduce solo (RF-028): `race.drivers` guarda el piloto IA de
+ * cada uno (trayectoria y ritmo), con el nivel de exigencia de la dificultad del circuito (RF-031) y
+ * variaciones sacadas de `random` (RF-029).
+ * @param {() => number} random fuente de aleatoriedad en [0, 1) (por defecto `Math.random`); con una
+ *   fuente con semilla (`createSeededRandom`) la carrera es reproducible
  */
 export function createRace(
   config,
   entries = [config.race.player],
   trackId = config.tracks.defaultId,
   laps = config.race.defaultLaps,
+  random = Math.random,
 ) {
   if (entries.length === 0 || entries.length > config.race.maxParticipants) {
     throw new Error(`La carrera admite de 1 a ${config.race.maxParticipants} participantes`);
@@ -47,7 +54,8 @@ export function createRace(
     throw new Error('Debe haber exactamente un participante jugador');
   }
 
-  const track = buildTrack(requireTrackDefinition(config, trackId));
+  const definition = requireTrackDefinition(config, trackId);
+  const track = buildTrack(definition);
   const participants = entries.map((entry, index) => {
     const slot = gridSlot(track, config.grid, index);
     return {
@@ -64,11 +72,20 @@ export function createRace(
     };
   });
 
+  // Pilotos IA por identificador de participante, en el orden de la parrilla (el azar se consume en ese orden).
+  const drivers = {};
+  const level = participants.some((participant) => !participant.isPlayer) ? aiLevel(config.ai, definition.difficulty) : null;
+  for (const participant of participants) {
+    if (participant.isPlayer) continue;
+    drivers[participant.id] = createAiDriver(track, config.ai, level, config.carPerformance, config.race.car, random);
+  }
+
   return {
     track,
     car: config.race.car,
     totalLaps: requireLapOption(config, laps),
     participants,
+    drivers,
     clock: createRaceClock(), // cuenta atrás y cronómetro de carrera
     get player() {
       return participants.find((participant) => participant.isPlayer);
@@ -82,9 +99,10 @@ export function createRace(
  * termina, todos los participantes pasan a `EN_CARRERA` a la vez (RF-021) y el cronómetro arranca
  * desde cero; el sobrante de ese paso cuenta ya como tiempo de carrera (RF-045).
  * @param {ReturnType<typeof createRace>} race
- * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante
+ * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante;
+ *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
- * @param {object} config CONFIG (secciones `race` y `carPerformance`)
+ * @param {object} config CONFIG (secciones `race`, `ai` y `carPerformance`)
  * Tras mover cada coche se actualiza su progreso (vueltas y checkpoints válidos) con el desplazamiento real.
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): se congelan su
  * tiempo de llegada (`finishTime`, el cronómetro de ese paso) y su progreso, sus controles dejan de
@@ -110,7 +128,10 @@ export function stepRace(race, inputs, dt, config) {
     for (const participant of race.participants) {
       if (participant.status !== ParticipantStatus.EN_CARRERA) continue;
       // Quien ya ha terminado no recibe órdenes: solo la inercia detiene su coche.
-      const input = participant.finished ? IDLE_INPUT : (inputs[participant.id] ?? IDLE_INPUT);
+      // Los rivales usan las mismas entradas que el jugador y el mismo `stepCar` (RF-003, RN-07).
+      const driver = race.drivers[participant.id];
+      let input = IDLE_INPUT;
+      if (!participant.finished) input = inputs[participant.id] ?? (driver ? aiInput(driver, participant, config.ai) : IDLE_INPUT);
       Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
       if (participant.finished) continue; // su progreso y su tiempo ya no cambian (RF-025, RF-027)
       // Un coche que no se ha movido no cambia su progreso: se evita buscar su punto más cercano del

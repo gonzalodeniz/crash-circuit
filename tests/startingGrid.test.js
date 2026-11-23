@@ -174,7 +174,7 @@ test('los diez pasan a EN_CARRERA en el mismo paso y antes ninguno suma progreso
   });
 });
 
-test('en la sesión, la salida cambia a los diez a la vez, los rivales esperan en la parrilla y la carrera acaba al terminar el jugador', () => {
+test('en la sesión, la salida cambia a los diez a la vez, los rivales no se mueven antes de la señal y conducen después', () => {
   const machine = new GameStateMachine();
   const session = new RaceSession(machine, CONFIG);
   machine.openSelection();
@@ -189,13 +189,15 @@ test('en la sesión, la salida cambia a los diez a la vez, los rivales esperan e
   do {
     signal = session.step(DT, { player: GAS });
     steps++;
+    // Durante la cuenta atrás nadie se mueve, tampoco los rivales con conducción propia.
+    if (!signal.started) race.participants.forEach((p, i) => assert.deepEqual([p.x, p.z], startPoses[i], p.name));
   } while (!signal.started && steps < 60 * 10);
   assert.equal(machine.state, GameState.EN_CARRERA);
   assert.ok(race.participants.every((p) => p.status === ParticipantStatus.EN_CARRERA));
   for (let i = 0; i < 120; i++) session.step(DT, { player: GAS });
   race.participants.forEach((p, i) => {
-    if (p.isPlayer) assert.ok(p.speed > 0);
-    else assert.deepEqual([p.x, p.z], startPoses[i], `${p.name} no conduce todavía`);
+    assert.ok(p.speed > 0, `${p.name} conduce tras la salida`);
+    assert.ok(Math.hypot(p.x - startPoses[i][0], p.z - startPoses[i][1]) > 5, `${p.name} se ha desplazado`);
   });
 });
 

@@ -18,7 +18,7 @@
 - `src/index.html`: página de arranque con el lienzo `#game-canvas`.
 - `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
 - `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
-- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
+- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales).
 - `src/logic/gameState.js`: estados del juego y máquina de estados, con el flujo `MENU -> SELECCION -> PARRILLA` (sin Three.js ni DOM).
 - `src/logic/trackCatalog.js`: consulta del catálogo de circuitos de la configuración (`trackDefinitions`, `findTrackDefinition`, `requireTrackDefinition`) y datos básicos para la selección (`trackSummary`, `trackSummaries`, `countCurves`) (sin Three.js ni DOM).
 - `src/logic/carModels.js`: consulta del catálogo de modelos de coche de la configuración (`carModels`, `findCarModel`, `requireCarModel`) (sin Three.js ni DOM).
@@ -26,7 +26,9 @@
 - `src/logic/lapOptions.js`: opciones de vueltas de la carrera (`lapOptions`, `requireLapOption`): solo 1, 3, 5 o 10, tomadas de la configuración (sin Three.js ni DOM).
 - `src/logic/raceSetup.js`: configuración confirmada de la carrera (`createRaceSetup`, `defaultRaceSetup`, `createRaceFromSetup`, `raceSetupSummary`): valida coche, circuito y vueltas y es la única fuente de la que se crea la carrera (sin Three.js ni DOM).
 - `src/logic/startingGrid.js`: los diez participantes de la parrilla en orden de salida (`createGridEntries`, `aiDrivers`): el jugador en el hueco de la configuración y los nueve pilotos IA con nombre y modelo fijos (sin Three.js ni DOM).
-- `src/logic/race.js`: crea la carrera (en el circuito y con las vueltas elegidos) con su lista de participantes colocados en la parrilla, define `ParticipantStatus` (estado de cada participante, distinto de `GameState`), `stepRace` (avanza reloj y coches y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
+- `src/logic/random.js`: fuente de aleatoriedad inyectable con semilla (`createSeededRandom`) para que las carreras con rivales sean reproducibles en las pruebas (sin Three.js ni DOM).
+- `src/logic/aiDriver.js`: pilotos IA (`createRacingLine`, `createAiDriver`, `aiInput`, `aiLevel`): trayectoria predefinida de cada circuito con variaciones aleatorias acotadas, perfil de velocidades por nivel de dificultad y las cuatro entradas del jugador como única salida (sin Three.js ni DOM).
+- `src/logic/race.js`: crea la carrera (en el circuito y con las vueltas elegidos) con su lista de participantes colocados en la parrilla y el piloto IA de cada rival (`drivers`), define `ParticipantStatus` (estado de cada participante, distinto de `GameState`), `stepRace` (avanza reloj y coches, con las entradas de la IA para los rivales, y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
 - `src/logic/raceSession.js`: flujo de la partida (`RaceSession`): guarda el coche, el circuito y las vueltas elegidos, los pasos de la selección (coche, circuito y resumen; `confirmSelection`, `backSelection`) y la configuración confirmada, crea y descarta la carrera según el estado, avanza con `step` y aplica `beginCountdown`, `startGo` y `finishRace` (sin Three.js ni DOM).
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
@@ -46,13 +48,15 @@
 ## `tests/` (pruebas automáticas, sin navegador)
 
 - `tests/config.test.js`: pruebas del módulo de configuración.
-- `tests/track.test.js`: pruebas del trazado cerrado, la normalización de distancias (`wrapDistance`, `signedDistance`), la meta y las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche).
+- `tests/track.test.js`: pruebas del trazado cerrado, la normalización de distancias (`wrapDistance`, `signedDistance`), la meta las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche) y la búsqueda del punto más cercano con pista.
 - `tests/carModels.test.js`: pruebas del catálogo (cuatro modelos únicos, sin rendimiento propio), de que la carrera guarda el modelo, de la misma trayectoria con los cuatro modelos (RF-003) y de la elección en la sesión (repetir la conserva).
 - `tests/trackCatalog.test.js`: pruebas de los cuatro circuitos (trazado cerrado, parrilla, checkpoints, una vuelta válida, checkpoint omitido, longitudes, curvas y dificultades distintas).
 - `tests/trackSelection.test.js`: pruebas de los pasos de la selección (coche y circuito), de que la carrera usa el circuito elegido y de que los 16 pares coche-circuito llegan a los resultados.
 - `tests/lapSelection.test.js`: pruebas de las opciones de vueltas (solo 1/3/5/10), de la elección en la sesión (repetir la conserva) y de que con cada valor la carrera termina justo en la última vuelta, con el contador del HUD sin pasar del total y el tiempo congelado.
 - `tests/raceSetup.test.js`: pruebas de la configuración confirmada (incompleta o fuera del catálogo no se confirma, la carrera usa esos valores, resumen, volver atrás, repetir, menú) y de la matriz de las 64 combinaciones hasta `RESULTADOS` (CA-10 parcial).
 - `tests/startingGrid.test.js`: pruebas de la parrilla de diez: participantes únicos, nombres fijos de los rivales, modelos del catálogo, mismo rendimiento, hueco del jugador desde la configuración, huellas de los coches en los cuatro circuitos, salida simultánea y parrilla nueva al repetir.
+- `tests/aiDriver.test.js`: pruebas de los rivales: cuatro niveles de IA ordenados, vuelta válida de los nueve en los cuatro circuitos, salida de calzada acotada, reproducibilidad con semilla, mismas entradas y rendimiento que el jugador, progreso con la misma lógica y niveles más rápidos con la dificultad.
+- `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.
 - `tests/carMesh.test.js`: pruebas de la malla de cada modelo (aspecto distinto, mismas dimensiones, recursos liberados).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.

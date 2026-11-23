@@ -52,6 +52,7 @@ KIT=(
   ".claude/agents/qa-teams.md"
   ".claude/agents/doc-teams.md"
   ".claude/agents/security-auditor.md"
+  ".claude/agents/quality-auditor.md"
   ".claude/hooks/guard.sh"
   ".claude/hooks/guard.py"
   "docs/process/FLUJO_DE_TRABAJO.md"

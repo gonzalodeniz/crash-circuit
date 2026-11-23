@@ -34,8 +34,9 @@ except Exception:
 # ejecuta en las herramientas de sus subagentes. Si la orden viene de otro rol que
 # tiene su propio guard, se le cede el control a ese guard; cualquier otro subagente
 # (general-purpose, Explore…) sigue sujeto a las reglas del rol principal.
-ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams",
-                   "security-auditor"}
+# Auditores: se lanzan fuera del ciclo y comparten las mismas reglas de solo lectura.
+AUDITORES = ("security-auditor", "quality-auditor")
+ROLES_CON_GUARD = {"orquestador", "product-manager", "developer-teams", "qa-teams", "doc-teams", *AUDITORES}
 AGENTE = DATOS.get("agent_type") or ""
 if AGENTE and AGENTE != ROL and AGENTE in ROLES_CON_GUARD:
     sys.exit(0)
@@ -107,7 +108,7 @@ SOLO_EN = {
     "qa-teams": [],         # no edita ficheros
     "doc-teams": RUTAS_DOC_TEAMS,
     "orquestador": [],      # no edita ficheros
-    "security-auditor": [], # no edita ficheros
+    **{a: [] for a in AUDITORES},  # no editan ficheros
 }
 
 
@@ -154,10 +155,10 @@ BLOQUEO_GIT = {
                     "el orquestador no modifica el repositorio: delega en el subagente que corresponda."),
     "doc-teams": ({"merge", "rebase", "reset", "tag", "stash", "cherry-pick", "revert"},
                   "operación git fuera del alcance de doc-teams."),
-    "security-auditor": ({"commit", "push", "pull", "merge", "rebase", "reset", "checkout", "switch", "branch",
-                          "tag", "stash", "cherry-pick", "revert", "restore", "am", "add", "rm", "mv", "apply",
-                          "clean"},
-                         "security-auditor no modifica el repositorio: audita el commit actual tal cual."),
+    **{a: ({"commit", "push", "pull", "merge", "rebase", "reset", "checkout", "switch", "branch", "tag", "stash",
+             "cherry-pick", "revert", "restore", "am", "add", "rm", "mv", "apply", "clean"},
+            f"{a} no modifica el repositorio: audita el commit actual tal cual.")
+       for a in AUDITORES},
 }
 
 # Acciones de gh prohibidas por rol: {grupo: (acciones, motivo)}.
@@ -188,12 +189,12 @@ BLOQUEO_GH = {
         "pr": ({"merge", "ready", "close", "create", "edit", "reopen"}, "doc-teams no gestiona PR."),
         "issue": ({"close", "delete", "transfer", "create", "reopen"}, "doc-teams no crea ni cierra issues."),
     },
-    "security-auditor": {
+    **{a: {
         "pr": ({"create", "merge", "close", "edit", "ready", "reopen", "checkout", "comment", "review"},
-               "security-auditor no actúa sobre PR: sus hallazgos van en issues."),
+               f"{a} no actúa sobre PR: sus hallazgos van en issues."),
         "issue": ({"close", "delete", "transfer", "reopen", "edit", "develop", "lock", "unlock", "pin", "unpin"},
-                  "security-auditor solo crea issues y comenta en las suyas: no las edita, cierra ni prioriza."),
-    },
+                  f"{a} solo crea issues y comenta en las suyas: no las edita, cierra ni prioriza."),
+    } for a in AUDITORES},
 }
 
 # Roles que no modifican ficheros desde Bash, con el motivo.
@@ -201,7 +202,7 @@ SIN_FICHEROS = {
     "product-manager": "product-manager no modifica ficheros.",
     "qa-teams": "qa-teams no modifica ficheros.",
     "orquestador": "el orquestador no modifica ficheros.",
-    "security-auditor": "security-auditor no modifica ficheros.",
+    **{a: f"{a} no modifica ficheros." for a in AUDITORES},
     "doc-teams": "doc-teams modifica ficheros solo con Edit/Write, dentro de " + ", ".join(RUTAS_DOC_TEAMS) + ".",
 }
 
@@ -414,7 +415,8 @@ def comprobar_modificacion(prog, args):
 
 # --- gestores de paquetes -------------------------------------------------------
 # Roles que solo consultan dependencias: no instalan, actualizan ni ejecutan paquetes.
-SOLO_LECTURA_PAQUETES = {"security-auditor"}
+# Valor: subcomandos permitidos además de las consultas (quality-auditor ejecuta las pruebas).
+SOLO_LECTURA_PAQUETES = {"security-auditor": set(), "quality-auditor": {"test"}}
 GESTORES = {"npm", "pnpm", "yarn"}
 EJECUTORES = {"npx", "pnpx", "bunx"}
 CONSULTAS_PAQUETES = {"audit", "ls", "list", "outdated", "view", "info", "show", "explain", "why", "-v",
@@ -422,13 +424,16 @@ CONSULTAS_PAQUETES = {"audit", "ls", "list", "outdated", "view", "info", "show",
 
 
 def comprobar_gestor_paquetes(prog, args):
-    motivo = f"{ROL} solo consulta dependencias (p. ej. 'npm audit --json'): no las instala, actualiza ni ejecuta."
+    permitidos = CONSULTAS_PAQUETES | SOLO_LECTURA_PAQUETES[ROL]
+    motivo = (f"{ROL} solo consulta dependencias (p. ej. 'npm audit --json', 'npm ls'"
+              + "".join(f", 'npm {s}'" for s in sorted(SOLO_LECTURA_PAQUETES[ROL]))
+              + "): no instala, actualiza, construye ni ejecuta paquetes.")
     if prog in EJECUTORES:
         bloquear(motivo)
     if prog not in GESTORES:
         return
-    sub = next((a for a in args if not a.startswith("-") or a in CONSULTAS_PAQUETES), "")
-    if sub not in CONSULTAS_PAQUETES or (sub == "audit" and "fix" in args):
+    sub = next((a for a in args if not a.startswith("-") or a in permitidos), "")
+    if sub not in permitidos or (sub == "audit" and "fix" in args):
         bloquear(motivo)
 
 

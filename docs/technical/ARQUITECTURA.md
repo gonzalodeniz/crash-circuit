@@ -23,7 +23,7 @@ src/                Código del juego
   config/           Módulo único de configuración
   logic/            Lógica del juego y de la competición (sin Three.js ni DOM)
   render/           Renderizado con Three.js
-  ui/               Interfaz DOM y entrada de teclado (menús y, más adelante, HUD)
+  ui/               Interfaz DOM y entrada de teclado (menú, HUD, resultados)
 tests/              Pruebas automáticas (*.test.js), ejecutables sin navegador
 dist/               Resultado de `npm run build` (no se versiona)
 ```

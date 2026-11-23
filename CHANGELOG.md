@@ -2,6 +2,10 @@
 
 Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más reciente a la más antigua). Lo mantiene `doc-teams` tras cada fusión.
 
+## E3 — Competición contra rivales
+
+- **#51 E3 · Salir desde la parrilla junto a nueve rivales con nombre propio** (PR #55, 2026-11-23): cada carrera tiene ahora diez participantes: el jugador, que sale el último, y nueve pilotos controlados por el juego con nombre y modelo de coche fijos (los nombres son provisionales). Los diez coches se colocan en la calzada, sin solaparse, en los cuatro circuitos, y reciben la señal de salida a la vez. Los rivales todavía no conducen y se quedan parados; tampoco hay choques. «Repetir» monta la parrilla de nuevo. Requisitos: RF-016, RF-017, RF-018, RF-019, RF-021 (parcial), RF-003, RN-07. Casos de aceptación: CA-01 (parcial).
+
 ## E2 — Personalización de carrera
 
 - **#42 E2 · Elegir entre cuatro coches de aspecto distinto antes de correr** (PR #46, 2026-11-23): «Empezar» abre ahora la pantalla «Elige tu coche», con cuatro modelos (Rayo, Bruma, Trueno y Jade, nombres provisionales) que se distinguen por color y forma. Se elige con ratón o flechas y «Confirmar» (o Intro) empieza la carrera con ese coche; «Volver» regresa al menú y «Repetir» conserva el coche. Los cuatro se conducen exactamente igual. Requisitos: RF-002, RF-003.

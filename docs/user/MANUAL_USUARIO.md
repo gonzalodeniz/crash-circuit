@@ -55,12 +55,24 @@ La vuelta preseleccionada puede cambiar tras probar el juego.
 
 Tras pulsar «Siguiente» en la pantalla del circuito aparece «Tu carrera», un resumen con lo que has elegido: el coche, el circuito, su dificultad y las vueltas.
 
-- «¡A correr!» (o Intro) empieza la carrera con exactamente esa configuración. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»). Está seleccionado al abrirse el resumen.
+- «¡A correr!» (o Intro) empieza la carrera con exactamente esa configuración. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, junto a los coches de tus nueve rivales (ver «Parrilla y rivales»), y enseguida la cuenta atrás (ver «Salida y cronómetro»). Está seleccionado al abrirse el resumen.
 - «Volver» retrocede un paso: del resumen al circuito y las vueltas, y de ahí al coche. Cada paso conserva lo que habías elegido, así que puedes cambiar el coche, el circuito o las vueltas y avanzar de nuevo.
 - Con el ratón, haz clic en los botones. Con el teclado, Tab cambia de botón e Intro o Espacio lo pulsa.
 - Mantener Intro pulsada no se salta pasos.
 
 Puedes jugar cualquiera de las 64 combinaciones de 4 coches, 4 circuitos y 4 duraciones (1, 3, 5 o 10 vueltas).
+
+## Parrilla y rivales
+
+Cada carrera tiene diez participantes: tú y nueve pilotos controlados por el juego. Los diez coches esperan en la parrilla, detrás de la línea de meta y mirando hacia la carrera, sin tocarse y dentro de la calzada.
+
+- Tú sales el último de la parrilla, así que tienes nueve coches por delante. Este puesto es un valor inicial y puede cambiar.
+- Los nueve rivales son siempre los mismos, con el mismo nombre, en las 64 combinaciones. Sus nombres son provisionales y pueden cambiar. Por ahora no se muestran en pantalla.
+- Los rivales conducen coches de los mismos cuatro modelos que puedes elegir tú. Se ven distintos, pero rinden igual que el tuyo.
+- Todos reciben la señal de salida a la vez. Antes de la señal nadie se mueve ni suma progreso.
+- Si repites la carrera o empiezas otra, la parrilla se monta de nuevo con los diez coches.
+
+Por ahora los rivales se quedan parados en la parrilla: todavía no conducen. Tampoco hay choques, así que tu coche puede atravesarlos.
 
 ## Controles
 
@@ -86,9 +98,9 @@ No puedes conducir hasta la señal de salida. Por ahora no hay penalización por
 
 ## Salida y cronómetro
 
-Al pulsar «¡A correr!», el coche espera en la parrilla y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
+Al pulsar «¡A correr!», tu coche espera en la parrilla con los de los rivales y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
 
-- Durante la cuenta atrás el coche no se mueve, aunque pulses las flechas. Si mantienes una flecha pulsada, el coche responde en cuanto se da la salida.
+- Durante la cuenta atrás ningún coche se mueve, aunque pulses las flechas. Si mantienes una flecha pulsada, el coche responde en cuanto se da la salida.
 - Arriba a la derecha hay un cronómetro con formato minutos:segundos.centésimas (por ejemplo, 00:12.34). Marca 00:00.00 durante la cuenta atrás y empieza a contar en la señal de salida.
 - El cronómetro sigue el tiempo del juego. Si el navegador va a trompicones, puede ir algo por detrás del reloj real.
 
@@ -120,10 +132,10 @@ En la pantalla de resultados hay dos botones. Se activan con el ratón o con el 
 - **Repetir:** empieza una carrera nueva con la misma configuración: el mismo coche, el mismo circuito y el mismo número de vueltas. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
 - **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. La selección se borra: si vuelves a empezar sin recargar, el coche, el circuito y las vueltas parten de nuevo de sus valores por defecto (primer coche, «Ribera» y 1 vuelta).
 
-El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación. Como los rivales aún no conducen, no hay tiempos de ellos.
 
 ## Qué falta
 
-Todavía no hay rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Los rivales ya salen en la parrilla, pero todavía no conducen. Tampoco hay choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

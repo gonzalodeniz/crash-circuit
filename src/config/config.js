@@ -141,11 +141,18 @@ export const CONFIG = deepFreeze({
       backLabel: 'Volver',
     },
     // Pantalla de resultados al terminar la carrera (RF-056).
+    // En E3 solo aparecen quienes llegaron antes que el jugador, con su tiempo real; los que siguen en
+    // pista y sus estimaciones llegan con E7 (RF-054, RN-05). `{position}`, `{total}` se sustituyen.
     results: {
       title: 'Carrera terminada',
       timeLabel: 'Tu tiempo',
       repeatLabel: 'Repetir',
       menuLabel: 'Menú',
+      playerWinsMessage: '¡Has ganado la carrera!', // aviso destacado si gana el jugador (RF-024)
+      winnerLabel: 'Ganador',
+      positionLabel: 'Tu puesto',
+      positionFormat: '{position} de {total}',
+      arrivalsTitle: 'Llegaron antes que tú',
     },
     // Señal de salida que sustituye al número al terminar la cuenta atrás.
     hud: {

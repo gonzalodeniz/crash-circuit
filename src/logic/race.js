@@ -7,7 +7,7 @@ import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
 import { aiInput, aiLevel, createAiDriver } from './aiDriver.js';
-import { standingsOf } from './standings.js';
+import { rankParticipants, standingsOf } from './standings.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -88,6 +88,7 @@ export function createRace(
     participants,
     drivers,
     standings: standingsOf({ participants }), // clasificación en vivo (ids de primero a último); `stepRace` la actualiza
+    winner: null, // ganador (RF-024): el primero en completar las vueltas; se fija una vez y no cambia
     clock: createRaceClock(), // cuenta atrás y cronómetro de carrera
     get player() {
       return participants.find((participant) => participant.isPlayer);
@@ -109,6 +110,9 @@ export function createRace(
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): se congelan su
  * tiempo de llegada (`finishTime`, el cronómetro de ese paso) y su progreso, sus controles dejan de
  * actuar y su coche rueda por inercia hasta detenerse. El reloj de la carrera no se detiene.
+ * El primero que termina queda registrado en `race.winner` con su instante de llegada, sin esperar al
+ * jugador (RF-024, RN-03). Si varios llegan en el mismo paso, gana el que va por delante en la
+ * clasificación (desempate por parrilla). Después ya no cambia, ni siquiera cuando termina el jugador (RF-027).
  * Al final de cada paso se recalcula `race.standings` (la clasificación en vivo, véase `standings.js`).
  * @returns {{started: boolean, finished: string[]}} `started` es verdadero solo en el paso de la señal
  *   de salida; `finished` lista los participantes que terminan en este paso
@@ -147,6 +151,10 @@ export function stepRace(race, inputs, dt, config) {
         finished.push(participant.id);
       }
     }
+  }
+  if (race.winner === null && finished.length > 0) {
+    const first = rankParticipants(race.participants.filter((participant) => finished.includes(participant.id)))[0];
+    race.winner = Object.freeze({ id: first.id, name: first.name, isPlayer: first.isPlayer, finishTime: first.finishTime });
   }
   race.standings = standingsOf(race);
   return { started, finished };

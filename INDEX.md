@@ -36,7 +36,7 @@
 ## `tests/` (pruebas automáticas, sin navegador)
 
 - `tests/config.test.js`: pruebas del módulo de configuración.
-- `tests/track.test.js`: pruebas del trazado cerrado, la meta y las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche).
+- `tests/track.test.js`: pruebas del trazado cerrado, la normalización de distancias (`wrapDistance`, `signedDistance`), la meta y las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.

@@ -7,7 +7,8 @@ import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
-import { gridSlot, pointAtDistance } from '../src/logic/track.js';
+import { gridSlot } from '../src/logic/track.js';
+import { autopilot, CORNERING_AUTOPILOT } from './helpers/autopilot.js';
 
 // Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
 const SEED = 65;
@@ -18,16 +19,6 @@ function createSession() {
   const machine = new GameStateMachine();
   const session = new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) });
   return { machine, session };
-}
-
-/** Piloto automático que sigue la línea central y frena en las curvas cerradas. */
-function autopilot(race) {
-  const p = race.player;
-  const target = pointAtDistance(race.track, p.progress.lapPosition + 12);
-  const wanted = Math.atan2(target.x - p.x, target.z - p.z);
-  const error = Math.atan2(Math.sin(wanted - p.heading), Math.cos(wanted - p.heading));
-  const maxSpeed = Math.abs(error) > 0.25 ? 10 : 18;
-  return { accelerate: p.speed < maxSpeed, brake: p.speed > maxSpeed + 4, left: error > 0.05, right: error < -0.05 };
 }
 
 test('la selección empieza por el coche, sigue por el circuito, termina en el resumen y al confirmarlo empieza la carrera', () => {
@@ -141,7 +132,7 @@ test('cualquier coche en cualquier circuito lleva a una carrera jugable hasta lo
       session.confirmSelection();
       let steps = 0;
       while (machine.state !== GameState.RESULTADOS && steps++ < MAX_STEPS) {
-        session.step(DT, { player: autopilot(session.race) });
+        session.step(DT, { player: autopilot(session.race, session.race.player, CORNERING_AUTOPILOT) });
       }
       const { player } = session.race;
       assert.equal(machine.state, GameState.RESULTADOS, `${model.id} en ${definition.id} no termina`);

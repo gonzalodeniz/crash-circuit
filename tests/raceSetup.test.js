@@ -9,24 +9,14 @@ import { createSeededRandom } from '../src/logic/random.js';
 import { raceTimeOf } from '../src/logic/race.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { createRaceFromSetup, createRaceSetup, defaultRaceSetup, raceSetupSummary } from '../src/logic/raceSetup.js';
-import { pointAtDistance } from '../src/logic/track.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
+import { autopilot, CORNERING_AUTOPILOT } from './helpers/autopilot.js';
 
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 1800;
 // Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
 const SEED = 65;
 const VALID = { carModelId: 'bruma', trackId: 'sierra', laps: 3 };
-
-/** Piloto automático que sigue la línea central y frena en las curvas cerradas. */
-function autopilot(race) {
-  const p = race.player;
-  const target = pointAtDistance(race.track, p.progress.lapPosition + 12);
-  const wanted = Math.atan2(target.x - p.x, target.z - p.z);
-  const error = Math.atan2(Math.sin(wanted - p.heading), Math.cos(wanted - p.heading));
-  const maxSpeed = Math.abs(error) > 0.25 ? 10 : 18;
-  return { accelerate: p.speed < maxSpeed, brake: p.speed > maxSpeed + 4, left: error > 0.05, right: error < -0.05 };
-}
 
 function createSession(seed = SEED) {
   const machine = new GameStateMachine();
@@ -220,7 +210,7 @@ for (const [modelIndex, model] of MODELS.entries()) {
         let steps = 0;
         while (machine.state !== GameState.RESULTADOS && steps++ < MAX_STEPS) {
           const before = race.player.progress.laps;
-          session.step(DT, { player: autopilot(race) });
+          session.step(DT, { player: autopilot(race, race.player, CORNERING_AUTOPILOT) });
           if (race.player.progress.laps !== before) lapsReached.push(race.player.progress.laps);
         }
         assert.equal(machine.state, GameState.RESULTADOS, `${label} no termina`);

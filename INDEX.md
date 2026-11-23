@@ -49,6 +49,7 @@
 
 ## `tests/` (pruebas automáticas, sin navegador)
 
+- `tests/helpers/autopilot.js`: piloto automático compartido de las pruebas (`autopilot`, `CORNERING_AUTOPILOT`): sigue la línea central con dos variantes, sin freno o con frenada en curva. No es una prueba (no termina en `.test.js`).
 - `tests/config.test.js`: pruebas del módulo de configuración.
 - `tests/track.test.js`: pruebas del trazado cerrado, la normalización de distancias (`wrapDistance`, `signedDistance`), la meta las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche) y la búsqueda del punto más cercano con pista.
 - `tests/carModels.test.js`: pruebas del catálogo (cuatro modelos únicos, sin rendimiento propio), de que la carrera guarda el modelo, de la misma trayectoria con los cuatro modelos (RF-003) y de la elección en la sesión (repetir la conserva).

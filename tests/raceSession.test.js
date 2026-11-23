@@ -6,20 +6,11 @@ import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession } from '../src/logic/raceSession.js';
 import { ParticipantStatus } from '../src/logic/race.js';
-import { pointAtDistance } from '../src/logic/track.js';
+import { autopilot } from './helpers/autopilot.js';
 
 const DT = 1 / 60;
 const IDLE = { accelerate: false, brake: false, left: false, right: false };
 const MAX_STEPS = 60 * 600;
-
-/** Entrada de un piloto automático sencillo que sigue la línea central. */
-function autopilot(race) {
-  const p = race.player;
-  const target = pointAtDistance(race.track, p.progress.lapPosition + 15);
-  const wanted = Math.atan2(target.x - p.x, target.z - p.z);
-  const error = Math.atan2(Math.sin(wanted - p.heading), Math.cos(wanted - p.heading));
-  return { accelerate: p.speed < 22, brake: false, left: error > 0.05, right: error < -0.05 };
-}
 
 // Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
 const SEED = 65;

@@ -6,6 +6,7 @@ import { createRace, stepRace } from '../src/logic/race.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { pointAtDistance } from '../src/logic/track.js';
+import { autopilot } from './helpers/autopilot.js';
 
 const DT = 1 / 60;
 const IDLE = { accelerate: false, brake: false, left: false, right: false };
@@ -14,14 +15,6 @@ const MAX_STEPS = 60 * 600;
 /** Participante sintético con los campos que usa la clasificación. */
 function fake(id, gridIndex, { progress = 0, finished = false, finishTime = null } = {}) {
   return { id, gridIndex, finished, finishTime, progress: { progress } };
-}
-
-/** Entradas de un piloto automático sencillo que sigue la línea central. */
-function autopilot(race, participant) {
-  const target = pointAtDistance(race.track, participant.progress.lapPosition + 15);
-  const wanted = Math.atan2(target.x - participant.x, target.z - participant.z);
-  const error = Math.atan2(Math.sin(wanted - participant.heading), Math.cos(wanted - participant.heading));
-  return { accelerate: participant.speed < 22, brake: false, left: error > 0.05, right: error < -0.05 };
 }
 
 /** Carrera de dos participantes: `ahead` en el hueco 0 y `behind` en el 1 (uno de ellos es el jugador). */

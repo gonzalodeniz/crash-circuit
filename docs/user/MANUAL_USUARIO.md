@@ -9,7 +9,7 @@ Al abrir el juego ves el título «Crash Circuit» y el botón «Empezar». El b
 - Con el ratón: haz clic en «Empezar».
 - Con el teclado: pulsa Intro o Espacio.
 
-Al pulsar «Empezar» se abre la pantalla para elegir coche (ver «Elegir coche») y después la de circuito (ver «Elegir circuito y vueltas»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
+Al pulsar «Empezar» se abre la pantalla para elegir coche (ver «Elegir coche») después la de circuito (ver «Elegir circuito y vueltas») y por último un resumen (ver «Resumen y salida»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
 
 ## Elegir coche
 
@@ -19,7 +19,7 @@ Tras pulsar «Empezar» aparece «Elige tu coche». Ves el coche elegido girando
 - Con el teclado: usa las flechas izquierda y derecha para pasar de un coche a otro. Al llegar al último, vuelves al primero.
 - La opción elegida se ve resaltada y es la que gira en la plataforma. Al principio está elegido el primero.
 - «Siguiente» (o Intro) guarda el coche y pasa a elegir circuito (ver «Elegir circuito y vueltas»).
-- «Volver» te lleva de nuevo al menú. Si vuelves a pulsar «Empezar», sigue elegido el último coche que probaste.
+- «Volver» te lleva de nuevo al menú. Al volver al menú, la elección se borra: si vuelves a pulsar «Empezar», parte otra vez del coche por defecto (el primero).
 
 Los cuatro coches se distinguen por el color y la forma (cabina, franja y alerón), pero **se conducen exactamente igual**: la misma velocidad, aceleración y giro. Elegir uno u otro es solo cuestión de gusto. Los nombres y el aspecto son provisionales y pueden cambiar.
 
@@ -37,7 +37,7 @@ Tras elegir coche y pulsar «Siguiente» aparece «Elige tu circuito», con cuat
 - Con el ratón: haz clic en el circuito que quieras.
 - Con el teclado: usa las flechas izquierda y derecha para pasar de uno a otro.
 - La opción elegida se ve resaltada. Al principio está elegido «Ribera».
-- «Confirmar» (o Intro) empieza la carrera con el circuito y las vueltas elegidos. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»).
+- «Siguiente» (o Intro) pasa al resumen con el circuito y las vueltas elegidos (ver «Resumen y salida»). Todavía no empieza la carrera.
 - «Volver» te lleva de nuevo a elegir coche.
 
 La dificultad viene solo del circuito: cuanto más difícil, más estrecha es la calzada, más largo es el trazado y más curvas tiene. El coche no influye. Los nombres son provisionales y pueden cambiar. Las vueltas válidas funcionan igual en los cuatro (ver «Vueltas»).
@@ -50,6 +50,17 @@ En la misma pantalla, bajo los circuitos, aparece «Vueltas» con cuatro opcione
 - No hay otros valores: solo se puede correr 1, 3, 5 o 10 vueltas.
 
 La vuelta preseleccionada puede cambiar tras probar el juego.
+
+## Resumen y salida
+
+Tras pulsar «Siguiente» en la pantalla del circuito aparece «Tu carrera», un resumen con lo que has elegido: el coche, el circuito, su dificultad y las vueltas.
+
+- «¡A correr!» (o Intro) empieza la carrera con exactamente esa configuración. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»). Está seleccionado al abrirse el resumen.
+- «Volver» retrocede un paso: del resumen al circuito y las vueltas, y de ahí al coche. Cada paso conserva lo que habías elegido, así que puedes cambiar el coche, el circuito o las vueltas y avanzar de nuevo.
+- Con el ratón, haz clic en los botones. Con el teclado, Tab cambia de botón e Intro o Espacio lo pulsa.
+- Mantener Intro pulsada no se salta pasos.
+
+Puedes jugar cualquiera de las 64 combinaciones de 4 coches, 4 circuitos y 4 duraciones (1, 3, 5 o 10 vueltas).
 
 ## Controles
 
@@ -75,7 +86,7 @@ No puedes conducir hasta la señal de salida. Por ahora no hay penalización por
 
 ## Salida y cronómetro
 
-Al confirmar tu circuito, el coche espera en la parrilla y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
+Al pulsar «¡A correr!», el coche espera en la parrilla y aparece en pantalla una cuenta atrás: 3, 2, 1. Cada número dura un segundo. Después se muestra «¡YA!» durante un segundo y ya puedes conducir.
 
 - Durante la cuenta atrás el coche no se mueve, aunque pulses las flechas. Si mantienes una flecha pulsada, el coche responde en cuanto se da la salida.
 - Arriba a la derecha hay un cronómetro con formato minutos:segundos.centésimas (por ejemplo, 00:12.34). Marca 00:00.00 durante la cuenta atrás y empieza a contar en la señal de salida.
@@ -107,12 +118,12 @@ Al completar la última vuelta válida, tu carrera termina:
 En la pantalla de resultados hay dos botones. Se activan con el ratón o con el teclado (Tab cambia de botón; Intro o Espacio lo pulsa). «Repetir» está seleccionado al abrirse.
 
 - **Repetir:** empieza una carrera nueva con la misma configuración: el mismo coche, el mismo circuito y el mismo número de vueltas. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
-- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. Si vuelves a empezar sin recargar, el último coche, circuito y número de vueltas elegidos siguen marcados.
+- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. La selección se borra: si vuelves a empezar sin recargar, el coche, el circuito y las vueltas parten de nuevo de sus valores por defecto (primer coche, «Ribera» y 1 vuelta).
 
 El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
 
 ## Qué falta
 
-Todavía no hay resumen de la configuración antes de empezar, ni rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Todavía no hay rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

@@ -62,6 +62,7 @@ test('cada número de vueltas elegido es el total de la carrera y se conserva al
     session.selectLaps(laps);
     session.confirmSelection();
     session.confirmSelection();
+    session.confirmSelection();
     assert.equal(session.race.totalLaps, laps);
     const first = session.race;
     machine.beginCountdown();

@@ -27,7 +27,7 @@ function autopilot(race) {
   return { accelerate: p.speed < maxSpeed, brake: p.speed > maxSpeed + 4, left: error > 0.05, right: error < -0.05 };
 }
 
-test('la selección empieza por el coche, sigue por el circuito y al confirmar este empieza la carrera', () => {
+test('la selección empieza por el coche, sigue por el circuito, termina en el resumen y al confirmarlo empieza la carrera', () => {
   const { machine, session } = createSession();
   assert.equal(session.selectedTrackId, CONFIG.tracks.defaultId);
   machine.openSelection();
@@ -38,14 +38,23 @@ test('la selección empieza por el coche, sigue por el circuito y al confirmar e
   session.selectTrack('abismo');
   assert.equal(session.selectedTrackId, 'abismo');
   session.confirmSelection();
+  assert.equal(machine.state, GameState.SELECCION);
+  assert.equal(session.selectionStep, SelectionStep.SUMMARY);
+  assert.equal(session.race, null);
+  session.confirmSelection();
   assert.equal(machine.state, GameState.PARRILLA);
   assert.equal(session.race.track.id, 'abismo');
 });
 
-test('volver atrás en el circuito lleva al coche y desde el coche al menú, sin crear carrera', () => {
+test('volver atrás lleva del resumen al circuito, de este al coche y del coche al menú, sin crear carrera', () => {
   const { machine, session } = createSession();
   machine.openSelection();
   session.confirmSelection();
+  session.confirmSelection();
+  assert.equal(session.selectionStep, SelectionStep.SUMMARY);
+  session.backSelection();
+  assert.equal(session.selectionStep, SelectionStep.TRACK);
+  assert.equal(session.race, null);
   session.backSelection();
   assert.equal(machine.state, GameState.SELECCION);
   assert.equal(session.selectionStep, SelectionStep.CAR);
@@ -77,6 +86,7 @@ test('cada circuito elegido es el de la carrera, se conserva al repetir y se pue
     session.confirmSelection();
     session.selectTrack(definition.id);
     session.confirmSelection();
+    session.confirmSelection();
     assert.equal(session.race.track.id, definition.id);
     const first = session.race;
     machine.beginCountdown();
@@ -85,13 +95,13 @@ test('cada circuito elegido es el de la carrera, se conserva al repetir y se pue
     machine.repeatRace();
     assert.notEqual(session.race, first);
     assert.equal(session.race.track.id, definition.id);
-    // Tras el menú, la elección sigue en memoria pero se puede cambiar.
+    // Tras el menú, la selección vuelve al circuito por defecto (RF-007).
     machine.beginCountdown();
     machine.startGo();
     machine.finishRace();
     machine.backToMenu();
     machine.openSelection();
-    assert.equal(session.selectedTrackId, definition.id);
+    assert.equal(session.selectedTrackId, CONFIG.tracks.defaultId);
     assert.equal(session.selectionStep, SelectionStep.CAR);
   }
 });
@@ -121,6 +131,7 @@ test('cualquier coche en cualquier circuito lleva a una carrera jugable hasta lo
       session.selectCarModel(model.id);
       session.confirmSelection();
       session.selectTrack(definition.id);
+      session.confirmSelection();
       session.confirmSelection();
       let steps = 0;
       while (machine.state !== GameState.RESULTADOS && steps++ < MAX_STEPS) {

@@ -1,19 +1,20 @@
 // Sesión de carrera: orquesta el flujo de la partida sobre la máquina de estados. Lógica pura (RNF-05).
-// Guarda el coche, el circuito y las vueltas elegidos y los pasos de la selección. Decide cuándo se crea y se
-// descarta la carrera, cuándo empieza la cuenta atrás, cuándo se da la salida y cuándo se abren los
+// Guarda el coche, el circuito y las vueltas elegidos, los pasos de la selección y la configuración
+// confirmada de la que sale la carrera. Decide cuándo se crea y se descarta la carrera, cuándo empieza la cuenta atrás, cuándo se da la salida y cuándo se abren los
 // resultados. Quien la use (main.js) solo traduce eventos y dibuja.
 import { GameState } from './gameState.js';
-import { createRace, stepRace } from './race.js';
+import { stepRace } from './race.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
+import { createRaceFromSetup, createRaceSetup, defaultRaceSetup } from './raceSetup.js';
 
 // Estados en los que la simulación avanza. En PAUSA (E7) y fuera de la carrera no avanza nada.
 // RESULTADOS sigue avanzando: el coche del jugador rueda por inercia tras terminar (RN-03, RF-025).
 const SIMULATED_STATES = new Set([GameState.CUENTA_ATRAS, GameState.EN_CARRERA, GameState.RESULTADOS]);
 
-/** Pasos de la selección, en orden: primero el coche y después el circuito (RF-002, RF-004). */
-export const SelectionStep = Object.freeze({ CAR: 'CAR', TRACK: 'TRACK' });
+/** Pasos de la selección, en orden: el coche, el circuito con las vueltas y el resumen (RF-002, RF-004, RF-007). */
+export const SelectionStep = Object.freeze({ CAR: 'CAR', TRACK: 'TRACK', SUMMARY: 'SUMMARY' });
 
 const NO_PROGRESS = Object.freeze({ started: false, finished: Object.freeze([]), playerFinished: false });
 
@@ -24,6 +25,7 @@ export class RaceSession {
   #selectedCarModelId;
   #selectedTrackId;
   #selectedLaps;
+  #confirmedSetup = null;
   #selectionStep = SelectionStep.CAR;
   #unsubscribe;
 
@@ -36,10 +38,16 @@ export class RaceSession {
   constructor(stateMachine, config) {
     this.#stateMachine = stateMachine;
     this.#config = config;
-    this.#selectedCarModelId = config.cars.defaultModelId;
-    this.#selectedTrackId = config.tracks.defaultId;
-    this.#selectedLaps = config.race.defaultLaps;
-    this.#unsubscribe = stateMachine.onChange((from, to) => this.#handleChange(to));
+    this.#resetChoices();
+    this.#unsubscribe = stateMachine.onChange((from, to) => this.#handleChange(from, to));
+  }
+
+  // Vuelve a las opciones preseleccionadas de CONFIG.
+  #resetChoices() {
+    const defaults = defaultRaceSetup(this.#config);
+    this.#selectedCarModelId = defaults.carModelId;
+    this.#selectedTrackId = defaults.trackId;
+    this.#selectedLaps = defaults.laps;
   }
 
   /** Carrera en curso, o `null` si no hay ninguna (menú o selección). */
@@ -78,6 +86,26 @@ export class RaceSession {
     this.#selectedLaps = requireLapOption(this.#config, laps);
   }
 
+  /**
+   * Configuración que se confirmaría ahora (coche, circuito y vueltas elegidos), para el resumen de la
+   * selección (RF-007). Lanza un error si falta algún valor o no está en el catálogo.
+   */
+  get pendingSetup() {
+    return createRaceSetup(this.#config, {
+      carModelId: this.#selectedCarModelId,
+      trackId: this.#selectedTrackId,
+      laps: this.#selectedLaps,
+    });
+  }
+
+  /**
+   * Configuración confirmada de la carrera en curso, de la que sale la carrera; `null` fuera de ella.
+   * Repetir la carrera la reutiliza (RF-057) y volver al menú o a la selección la descarta.
+   */
+  get confirmedSetup() {
+    return this.#confirmedSetup;
+  }
+
   /** Paso en curso de la selección (`SelectionStep`); solo tiene sentido en `SELECCION`. */
   get selectionStep() {
     return this.#selectionStep;
@@ -92,14 +120,15 @@ export class RaceSession {
   }
 
   /**
-   * Confirma el paso en curso de la selección: del coche se pasa al circuito y, al confirmar el
-   * circuito, empieza la carrera (`SELECCION -> PARRILLA`).
+   * Confirma el paso en curso de la selección: del coche se pasa al circuito con sus vueltas, de ahí al
+   * resumen y, al confirmar el resumen, empieza la carrera (`SELECCION -> PARRILLA`, RF-007).
    */
   confirmSelection() {
     if (this.#stateMachine.state !== GameState.SELECCION) {
       throw new Error(`Solo se puede confirmar la selección en ${GameState.SELECCION}`);
     }
     if (this.#selectionStep === SelectionStep.CAR) this.#selectionStep = SelectionStep.TRACK;
+    else if (this.#selectionStep === SelectionStep.TRACK) this.#selectionStep = SelectionStep.SUMMARY;
     else this.#stateMachine.startRace();
   }
 
@@ -108,18 +137,24 @@ export class RaceSession {
     if (this.#stateMachine.state !== GameState.SELECCION) {
       throw new Error(`Solo se puede volver atrás en ${GameState.SELECCION}`);
     }
-    if (this.#selectionStep === SelectionStep.TRACK) this.#selectionStep = SelectionStep.CAR;
+    if (this.#selectionStep === SelectionStep.SUMMARY) this.#selectionStep = SelectionStep.TRACK;
+    else if (this.#selectionStep === SelectionStep.TRACK) this.#selectionStep = SelectionStep.CAR;
     else this.#stateMachine.cancelSelection();
   }
 
-  #handleChange(to) {
+  #handleChange(from, to) {
     if (to === GameState.PARRILLA) {
-      // También al repetir desde resultados: una carrera nueva con el mismo modelo, circuito y vueltas (RF-057).
-      const player = { ...this.#config.race.player, carModelId: this.#selectedCarModelId };
-      this.#race = createRace(this.#config, [player], this.#selectedTrackId, this.#selectedLaps);
+      // Al confirmar la selección se fija la configuración; al repetir desde resultados (RF-057) se
+      // reutiliza la ya confirmada. La carrera sale siempre de ella (RF-007).
+      if (from === GameState.SELECCION) this.#confirmedSetup = this.pendingSetup;
+      this.#race = createRaceFromSetup(this.#config, this.#confirmedSetup);
     } else if (to === GameState.MENU || to === GameState.SELECCION) {
       this.#race = null;
+      this.#confirmedSetup = null;
       this.#selectionStep = SelectionStep.CAR; // la selección siempre empieza por el coche
+      // Una selección nueva desde el menú parte de las opciones por defecto; la de «otra carrera»
+      // desde los resultados conserva las últimas elegidas.
+      if (to === GameState.MENU) this.#resetChoices();
     }
   }
 

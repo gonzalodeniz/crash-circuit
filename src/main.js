@@ -5,6 +5,7 @@ import { raceTimeOf } from './logic/race.js';
 import { RaceSession, SelectionStep } from './logic/raceSession.js';
 import { trackSummaries } from './logic/trackCatalog.js';
 import { lapOptions } from './logic/lapOptions.js';
+import { raceSetupSummary } from './logic/raceSetup.js';
 import { computeChaseCamera } from './logic/chaseCamera.js';
 import { inputFromKeys } from './logic/driving.js';
 import { lapCounterText } from './logic/progress.js';
@@ -14,6 +15,7 @@ import { KeyboardInput } from './ui/keyboardInput.js';
 import { MainMenu } from './ui/mainMenu.js';
 import { RaceHud } from './ui/raceHud.js';
 import { ResultsScreen } from './ui/resultsScreen.js';
+import { SummaryScreen } from './ui/summaryScreen.js';
 import { createTrackSelectionScreen } from './ui/trackSelectionScreen.js';
 import { SceneRenderer } from './render/sceneRenderer.js';
 
@@ -29,7 +31,7 @@ const hud = new RaceHud(document.body);
 // El menú solo avisa; la máquina de estados decide (RNF-05).
 const mainMenu = new MainMenu(document.body, CONFIG.ui.menu, () => stateMachine.openSelection());
 
-// La selección tiene dos pasos, coche y circuito (RF-002, RF-004). Las pantallas solo avisan; la sesión
+// La selección tiene tres pasos: coche, circuito con vueltas y resumen (RF-002, RF-004, RF-007). Las pantallas solo avisan; la sesión
 // guarda lo elegido y decide el paso siguiente, y la máquina de estados decide los estados.
 const onConfirm = () => {
   session.confirmSelection();
@@ -61,14 +63,20 @@ const trackSelectionScreen = createTrackSelectionScreen(document.body, CONFIG.ui
   onBack,
 });
 
+const summaryScreen = new SummaryScreen(document.body, CONFIG.ui.summary, CONFIG.ui.trackSelection.difficultyLabels, {
+  onConfirm,
+  onBack,
+});
+
 // Muestra la pantalla del paso en curso de la selección (la vista previa del coche sigue de fondo).
 function showSelectionStep() {
   if (stateMachine.state !== GameState.SELECCION) return; // al confirmar el circuito o volver al menú, cambia de estado
-  const isCarStep = session.selectionStep === SelectionStep.CAR;
   trackSelectionScreen.hide();
   selectionScreen.hide();
-  if (isCarStep) selectionScreen.show(session.selectedCarModelId);
-  else trackSelectionScreen.show(session.selectedTrackId, session.selectedLaps);
+  summaryScreen.hide();
+  if (session.selectionStep === SelectionStep.CAR) selectionScreen.show(session.selectedCarModelId);
+  else if (session.selectionStep === SelectionStep.TRACK) trackSelectionScreen.show(session.selectedTrackId, session.selectedLaps);
+  else summaryScreen.show(raceSetupSummary(CONFIG, session.pendingSetup));
 }
 
 // Igual que el menú: la pantalla de resultados solo avisa y la máquina de estados decide (RF-057, RF-008).
@@ -83,6 +91,7 @@ stateMachine.onChange((from, to) => {
     // También al repetir desde resultados: la sesión ya ha creado una carrera nueva (RF-057).
     selectionScreen.hide();
     trackSelectionScreen.hide();
+    summaryScreen.hide();
     sceneRenderer.disposePreview();
     resultsScreen.hide();
     sceneRenderer.buildRace(session.race);
@@ -102,6 +111,7 @@ stateMachine.onChange((from, to) => {
     if (to === GameState.MENU) {
       selectionScreen.hide();
       trackSelectionScreen.hide();
+      summaryScreen.hide();
       sceneRenderer.disposePreview();
       mainMenu.show();
     } else {

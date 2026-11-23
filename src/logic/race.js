@@ -20,7 +20,8 @@ const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false,
 
 /**
  * Crea una carrera con sus participantes colocados en la parrilla.
- * La lista admite hasta `race.maxParticipants` (10 desde E3); en E1 solo contiene al jugador.
+ * La lista admite hasta `race.maxParticipants` (10). La carrera del juego los trae todos (véase
+ * `createGridEntries`); con menos, los huecos de parrilla se asignan por orden.
  * Cada participante guarda su modelo de coche (`carModelId`, por defecto `cars.defaultModelId`): solo
  * afecta al aspecto, nunca al rendimiento (RF-003).
  * El circuito es el indicado por `trackId` (por defecto `tracks.defaultId`); la parrilla se coloca en él.
@@ -112,6 +113,9 @@ export function stepRace(race, inputs, dt, config) {
       const input = participant.finished ? IDLE_INPUT : (inputs[participant.id] ?? IDLE_INPUT);
       Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
       if (participant.finished) continue; // su progreso y su tiempo ya no cambian (RF-025, RF-027)
+      // Un coche que no se ha movido no cambia su progreso: se evita buscar su punto más cercano del
+      // trazado (el paso más caro) para los rivales parados en la parrilla.
+      if (participant.x === participant.progress.x && participant.z === participant.progress.z) continue;
       participant.progress = stepProgress(participant.progress, race.track, participant);
       if (participant.progress.laps >= race.totalLaps) {
         participant.finished = true;

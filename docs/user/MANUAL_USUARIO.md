@@ -9,7 +9,7 @@ Al abrir el juego ves el título «Crash Circuit» y el botón «Empezar». El b
 - Con el ratón: haz clic en «Empezar».
 - Con el teclado: pulsa Intro o Espacio.
 
-Al pulsar «Empezar» se abre la pantalla para elegir coche (ver «Elegir coche») y después la de circuito (ver «Elegir circuito»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
+Al pulsar «Empezar» se abre la pantalla para elegir coche (ver «Elegir coche») y después la de circuito (ver «Elegir circuito y vueltas»). La escena se adapta si cambias el tamaño de la ventana. Cuando termines la carrera podrás volver al menú desde la pantalla de resultados (ver «Fin de carrera y resultados»).
 
 ## Elegir coche
 
@@ -18,12 +18,12 @@ Tras pulsar «Empezar» aparece «Elige tu coche». Ves el coche elegido girando
 - Con el ratón: haz clic en la opción que quieras.
 - Con el teclado: usa las flechas izquierda y derecha para pasar de un coche a otro. Al llegar al último, vuelves al primero.
 - La opción elegida se ve resaltada y es la que gira en la plataforma. Al principio está elegido el primero.
-- «Siguiente» (o Intro) guarda el coche y pasa a elegir circuito (ver «Elegir circuito»).
+- «Siguiente» (o Intro) guarda el coche y pasa a elegir circuito (ver «Elegir circuito y vueltas»).
 - «Volver» te lleva de nuevo al menú. Si vuelves a pulsar «Empezar», sigue elegido el último coche que probaste.
 
 Los cuatro coches se distinguen por el color y la forma (cabina, franja y alerón), pero **se conducen exactamente igual**: la misma velocidad, aceleración y giro. Elegir uno u otro es solo cuestión de gusto. Los nombres y el aspecto son provisionales y pueden cambiar.
 
-## Elegir circuito
+## Elegir circuito y vueltas
 
 Tras elegir coche y pulsar «Siguiente» aparece «Elige tu circuito», con cuatro opciones. Cada una muestra su nombre, su dificultad, su longitud y su número de curvas.
 
@@ -37,10 +37,19 @@ Tras elegir coche y pulsar «Siguiente» aparece «Elige tu circuito», con cuat
 - Con el ratón: haz clic en el circuito que quieras.
 - Con el teclado: usa las flechas izquierda y derecha para pasar de uno a otro.
 - La opción elegida se ve resaltada. Al principio está elegido «Ribera».
-- «Confirmar» (o Intro) empieza la carrera. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»).
+- «Confirmar» (o Intro) empieza la carrera con el circuito y las vueltas elegidos. Verás el circuito con tu coche en la parrilla, visto desde una cámara situada detrás, y enseguida la cuenta atrás (ver «Salida y cronómetro»).
 - «Volver» te lleva de nuevo a elegir coche.
 
 La dificultad viene solo del circuito: cuanto más difícil, más estrecha es la calzada, más largo es el trazado y más curvas tiene. El coche no influye. Los nombres son provisionales y pueden cambiar. Las vueltas válidas funcionan igual en los cuatro (ver «Vueltas»).
+
+En la misma pantalla, bajo los circuitos, aparece «Vueltas» con cuatro opciones: 1, 3, 5 y 10.
+
+- Con el ratón: haz clic en el número que quieras.
+- Con el teclado: Tab pasa de los circuitos a las vueltas y al revés; las flechas izquierda y derecha cambian de opción dentro del grupo en el que estés.
+- La opción elegida se ve resaltada. Al principio está elegida 1 vuelta.
+- No hay otros valores: solo se puede correr 1, 3, 5 o 10 vueltas.
+
+La vuelta preseleccionada puede cambiar tras probar el juego.
 
 ## Controles
 
@@ -76,7 +85,7 @@ La duración de la cuenta atrás es un valor inicial y puede cambiar tras probar
 
 ## Vueltas
 
-Arriba a la izquierda ves la vuelta en la que vas, por ejemplo «Vuelta 1/1». El primer número es tu vuelta actual y el segundo, el total de vueltas de la carrera. Por ahora la carrera es de una sola vuelta; más adelante podrás elegir cuántas.
+Arriba a la izquierda ves la vuelta en la que vas, por ejemplo «Vuelta 1/1». El primer número es tu vuelta actual y el segundo, el total de vueltas de la carrera. El total es el número de vueltas que elegiste (1, 3, 5 o 10). Por ejemplo, en una carrera de 3 vueltas verás «Vuelta 1/3», «Vuelta 2/3» y «Vuelta 3/3». El contador nunca pasa del total.
 
 Para que una vuelta cuente, tienes que hacerla entera:
 
@@ -85,7 +94,7 @@ Para que una vuelta cuente, tienes que hacerla entera:
 - Si recortas por fuera de la calzada y te saltas un punto de control, al cruzar la meta la vuelta no cuenta.
 - Si das marcha atrás o retrocedes por el circuito, no ganas ni pierdes vueltas. Cruzar la meta hacia atrás y volver a cruzarla hacia delante tampoco suma nada.
 - Cada punto de control es algo más ancho que la calzada. Si cortas por la hierba pegada al borde, puede seguir contando. Este margen puede cambiar tras probarlo.
-- Cuando completas la última vuelta, la carrera termina (ver «Fin de carrera y resultados»).
+- Cuando completas la última vuelta elegida, ni antes ni después, la carrera termina (ver «Fin de carrera y resultados»).
 
 ## Fin de carrera y resultados
 
@@ -97,13 +106,13 @@ Al completar la última vuelta válida, tu carrera termina:
 
 En la pantalla de resultados hay dos botones. Se activan con el ratón o con el teclado (Tab cambia de botón; Intro o Espacio lo pulsa). «Repetir» está seleccionado al abrirse.
 
-- **Repetir:** empieza una carrera nueva con la misma configuración, el mismo coche y el mismo circuito. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
-- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. Si vuelves a empezar sin recargar, el último coche y el último circuito elegidos siguen marcados.
+- **Repetir:** empieza una carrera nueva con la misma configuración: el mismo coche, el mismo circuito y el mismo número de vueltas. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
+- **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. Si vuelves a empezar sin recargar, el último coche, circuito y número de vueltas elegidos siguen marcados.
 
-El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche y circuito. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación.
 
 ## Qué falta
 
-Todavía no se puede elegir el número de vueltas, y no hay rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Todavía no hay resumen de la configuración antes de empezar, ni rivales, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

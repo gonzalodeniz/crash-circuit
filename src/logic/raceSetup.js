@@ -4,6 +4,7 @@ import { createRace } from './race.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
+import { createGridEntries } from './startingGrid.js';
 
 /**
  * Valida y congela una configuración de carrera. Lanza un error si falta alguno de los tres valores
@@ -36,12 +37,12 @@ export function defaultRaceSetup(config) {
 
 /**
  * Crea la carrera a partir de una configuración confirmada, y solo de ella. La configuración se
- * vuelve a validar, así que una incompleta o fuera del catálogo no llega a crear nada.
+ * vuelve a validar, así que una incompleta o fuera del catálogo no llega a crear nada. La carrera
+ * tiene diez participantes: el jugador y los nueve pilotos IA de la configuración (RF-016).
  */
 export function createRaceFromSetup(config, setup) {
   const { carModelId, trackId, laps } = createRaceSetup(config, setup);
-  const player = { ...config.race.player, carModelId };
-  return createRace(config, [player], trackId, laps);
+  return createRace(config, createGridEntries(config, carModelId), trackId, laps);
 }
 
 /**

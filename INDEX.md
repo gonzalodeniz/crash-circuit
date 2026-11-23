@@ -25,6 +25,7 @@
 - `src/logic/track.js`: trazado del circuito como dato (línea central cerrada, anchura, meta, checkpoints, parrilla) y funciones geométricas (sin Three.js ni DOM).
 - `src/logic/lapOptions.js`: opciones de vueltas de la carrera (`lapOptions`, `requireLapOption`): solo 1, 3, 5 o 10, tomadas de la configuración (sin Three.js ni DOM).
 - `src/logic/raceSetup.js`: configuración confirmada de la carrera (`createRaceSetup`, `defaultRaceSetup`, `createRaceFromSetup`, `raceSetupSummary`): valida coche, circuito y vueltas y es la única fuente de la que se crea la carrera (sin Three.js ni DOM).
+- `src/logic/startingGrid.js`: los diez participantes de la parrilla en orden de salida (`createGridEntries`, `aiDrivers`): el jugador en el hueco de la configuración y los nueve pilotos IA con nombre y modelo fijos (sin Three.js ni DOM).
 - `src/logic/race.js`: crea la carrera (en el circuito y con las vueltas elegidos) con su lista de participantes colocados en la parrilla, define `ParticipantStatus` (estado de cada participante, distinto de `GameState`), `stepRace` (avanza reloj y coches y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
 - `src/logic/raceSession.js`: flujo de la partida (`RaceSession`): guarda el coche, el circuito y las vueltas elegidos, los pasos de la selección (coche, circuito y resumen; `confirmSelection`, `backSelection`) y la configuración confirmada, crea y descarta la carrera según el estado, avanza con `step` y aplica `beginCountdown`, `startGo` y `finishRace` (sin Three.js ni DOM).
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
@@ -51,6 +52,7 @@
 - `tests/trackSelection.test.js`: pruebas de los pasos de la selección (coche y circuito), de que la carrera usa el circuito elegido y de que los 16 pares coche-circuito llegan a los resultados.
 - `tests/lapSelection.test.js`: pruebas de las opciones de vueltas (solo 1/3/5/10), de la elección en la sesión (repetir la conserva) y de que con cada valor la carrera termina justo en la última vuelta, con el contador del HUD sin pasar del total y el tiempo congelado.
 - `tests/raceSetup.test.js`: pruebas de la configuración confirmada (incompleta o fuera del catálogo no se confirma, la carrera usa esos valores, resumen, volver atrás, repetir, menú) y de la matriz de las 64 combinaciones hasta `RESULTADOS` (CA-10 parcial).
+- `tests/startingGrid.test.js`: pruebas de la parrilla de diez: participantes únicos, nombres fijos de los rivales, modelos del catálogo, mismo rendimiento, hueco del jugador desde la configuración, huellas de los coches en los cuatro circuitos, salida simultánea y parrilla nueva al repetir.
 - `tests/carMesh.test.js`: pruebas de la malla de cada modelo (aspecto distinto, mismas dimensiones, recursos liberados).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.

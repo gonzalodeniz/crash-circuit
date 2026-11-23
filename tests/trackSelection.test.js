@@ -6,7 +6,7 @@ import { carModels } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
-import { pointAtDistance } from '../src/logic/track.js';
+import { gridSlot, pointAtDistance } from '../src/logic/track.js';
 
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 600;
@@ -115,9 +115,12 @@ test('la parrilla de la carrera es la del circuito elegido: el coche sale de ell
     machine.startRace();
     const { player, track } = session.race;
     assert.equal(player.speed, 0);
-    // Detrás de la meta de su circuito (a menos de la parrilla completa) y dentro de la calzada.
+    // En el hueco de parrilla del jugador (de la configuración) de su circuito, detrás de la meta.
+    const slot = gridSlot(track, CONFIG.grid, CONFIG.grid.playerSlotIndex);
+    assert.deepEqual([player.x, player.z, player.heading], [slot.x, slot.z, slot.heading]);
     const distanceToFinish = Math.hypot(player.x - track.finish.x, player.z - track.finish.z);
-    assert.ok(distanceToFinish > 0 && distanceToFinish < CONFIG.grid.firstSlotDistance + 5);
+    const lastRow = Math.floor((CONFIG.race.maxParticipants - 1) / 2);
+    assert.ok(distanceToFinish > 0 && distanceToFinish < CONFIG.grid.firstSlotDistance + lastRow * CONFIG.grid.slotSpacing + 5);
     starts.add(`${track.finish.x},${track.finish.z},${track.length}`);
   }
   assert.equal(starts.size, 4);

@@ -207,6 +207,7 @@ for (const model of carModels(CONFIG)) {
         confirmSetup(ctx, { carModelId: model.id, trackId: definition.id, laps });
         const { race } = session;
         assert.equal(race.totalLaps, laps, label);
+        assert.equal(race.participants.length, 10, `${label}: diez participantes`);
         const lapsReached = [];
         let steps = 0;
         while (machine.state !== GameState.RESULTADOS && steps++ < MAX_STEPS) {
@@ -220,6 +221,8 @@ for (const model of carModels(CONFIG)) {
         assert.equal(race.player.carModelId, model.id, label);
         assert.equal(race.track.id, definition.id, label);
         assert.ok(race.player.finished && raceTimeOf(race, race.player) > 0, label);
+        assert.equal(race.participants.length, 10, `${label}: los diez siguen en la carrera`);
+        assert.equal(race.participants.filter((p) => !p.isPlayer && !p.finished).length, 9, label);
       }
     }
   });

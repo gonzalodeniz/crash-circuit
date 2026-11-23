@@ -18,7 +18,7 @@ _Pendiente: no hay linter configurado._
 
 ## Test
 
-- `npm test`: ejecuta las pruebas automáticas de `tests/` con el ejecutor integrado de Node, sin navegador. Verificado (192 pruebas, unos 15 s).
+- `npm test`: ejecuta las pruebas automáticas de `tests/` con el ejecutor integrado de Node, sin navegador. Verificado (207 pruebas, unos 16 s).
 
 ## Ejecución local
 

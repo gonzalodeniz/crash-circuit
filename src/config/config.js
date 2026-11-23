@@ -156,9 +156,23 @@ export const CONFIG = deepFreeze({
 
   // Carrera (no son «propuesta» de producto).
   race: {
-    // Contenido fijo: 10 participantes (RF-016). En E1 solo compite el jugador.
+    // Contenido fijo: 10 participantes (RF-016): el jugador y nueve pilotos IA.
     maxParticipants: 10,
     player: { id: 'player', name: 'Jugador', isPlayer: true },
+    // Los nueve pilotos IA, con identidad fija entre carreras (RF-017). Cada uno conduce un modelo del
+    // catálogo `cars.models` (RF-018); el reparto es fijo para que sea el mismo en cada carrera y con
+    // cualquier coche del jugador. Los nombres son provisionales, a la espera de los definitivos (E8).
+    aiDrivers: [
+      { id: 'ai-1', name: 'Marcos Vela', carModelId: 'bruma' },
+      { id: 'ai-2', name: 'Lucía Ferrer', carModelId: 'trueno' },
+      { id: 'ai-3', name: 'Iker Salas', carModelId: 'jade' },
+      { id: 'ai-4', name: 'Nuria Costa', carModelId: 'rayo' },
+      { id: 'ai-5', name: 'Dani Roca', carModelId: 'trueno' },
+      { id: 'ai-6', name: 'Alma Reyes', carModelId: 'bruma' },
+      { id: 'ai-7', name: 'Hugo Brandt', carModelId: 'rayo' },
+      { id: 'ai-8', name: 'Sofía Nieto', carModelId: 'jade' },
+      { id: 'ai-9', name: 'Bruno Lazo', carModelId: 'trueno' },
+    ],
     // Dimensiones del coche en metros (el rendimiento es idéntico para todos los modelos, RN-07).
     car: { length: 4.4, width: 2 },
     // Vueltas de la carrera (RF-006): exactamente estas cuatro opciones, contenido fijo. La elegida
@@ -247,6 +261,10 @@ export const CONFIG = deepFreeze({
 
   // Parrilla de salida: posiciones por detrás de la meta, en filas de dos coches (RF-019).
   grid: {
+    // Hueco del jugador en la parrilla (0 = pole, 9 = último). Propuesta: sale el último, para tener
+    // rivales que adelantar desde el principio. Los pilotos IA ocupan los demás huecos, en el orden de
+    // `race.aiDrivers`.
+    playerSlotIndex: 9,
     firstSlotDistance: 8, // metros desde la meta hasta la primera fila
     slotSpacing: 9, // metros entre filas
     lateralOffset: 3.5, // metros a cada lado de la línea central

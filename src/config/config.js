@@ -270,6 +270,40 @@ export const CONFIG = deepFreeze({
     lateralOffset: 3.5, // metros a cada lado de la línea central
   },
 
+  // Pilotos IA (RF-028, RF-029, RF-031). Conducen con las mismas entradas que el jugador (acelerar,
+  // frenar, izquierda, derecha) y el mismo `carPerformance`: aquí solo se decide con qué exigencia
+  // conducen, nunca cuánto rinde el coche (RN-07). Todos los valores son propuestas iniciales,
+  // pendientes de calibrar jugando (el equilibrio fino llega en E8).
+  ai: {
+    // Trayectoria predefinida: la línea central de cada circuito con un desplazamiento lateral
+    // aleatorio y acotado (RF-029), muestreada en puntos de ruta.
+    waypointSpacing: 6, // metros entre puntos de ruta
+    variationWavelength: 90, // metros entre dos valores aleatorios del desplazamiento lateral
+    edgeMargin: 1.5, // metros que la trayectoria deja libres entre el lado del coche y el borde de la calzada
+    curvatureReach: 2, // puntos de ruta a cada lado que se miran para estimar la curva (se toma la más cerrada)
+    // Seguimiento de la trayectoria: el punto al que apunta el piloto está a `base + perSpeed * velocidad`
+    // metros por delante.
+    lookahead: { base: 6, perSpeed: 0.35 },
+    steerDeadZone: 0.04, // rad de error de rumbo por debajo de los cuales no gira
+    speedTolerance: 1.5, // m/s por encima de la velocidad objetivo antes de frenar
+    minTargetSpeed: 9, // m/s: velocidad objetivo mínima (el coche gira bien a partir de `fullSteerSpeed`)
+    // Margen de comprobación de las pruebas: metros que el centro de un rival puede rebasar el borde de
+    // la calzada sin que se considere una salida de pista (RF-029).
+    offRoadTolerance: 1,
+    // Un nivel por dificultad del circuito (`tracks.circuits[].difficulty`), de menor a mayor exigencia:
+    // - cornerGrip: fracción del giro máximo del coche que usa en las curvas (marca la velocidad en curva).
+    // - topSpeedFraction: fracción de la velocidad máxima que se permite en las rectas.
+    // - brakeFraction: fracción de la frenada máxima que usa al llegar a una curva.
+    // - lateralVariation: amplitud máxima del desplazamiento lateral, como fracción del margen libre de la calzada.
+    // - paceSpread: cuánto puede reducir cada piloto, al azar, su ritmo de esa carrera (fracción de 0 a 1).
+    levels: {
+      veryEasy: { cornerGrip: 0.45, topSpeedFraction: 0.55, brakeFraction: 0.5, lateralVariation: 0.8, paceSpread: 0.08 },
+      easy: { cornerGrip: 0.55, topSpeedFraction: 0.68, brakeFraction: 0.6, lateralVariation: 0.75, paceSpread: 0.07 },
+      medium: { cornerGrip: 0.65, topSpeedFraction: 0.8, brakeFraction: 0.7, lateralVariation: 0.7, paceSpread: 0.06 },
+      hard: { cornerGrip: 0.75, topSpeedFraction: 0.92, brakeFraction: 0.8, lateralVariation: 0.6, paceSpread: 0.05 },
+    },
+  },
+
   // Parámetros de la escena de arranque y de la carrera (no son «propuesta» de producto).
   render: {
     backgroundColor: 0x87ceeb,

@@ -39,10 +39,11 @@ export function defaultRaceSetup(config) {
  * Crea la carrera a partir de una configuración confirmada, y solo de ella. La configuración se
  * vuelve a validar, así que una incompleta o fuera del catálogo no llega a crear nada. La carrera
  * tiene diez participantes: el jugador y los nueve pilotos IA de la configuración (RF-016).
+ * @param {() => number} [random] fuente de aleatoriedad de los pilotos IA (por defecto `Math.random`)
  */
-export function createRaceFromSetup(config, setup) {
+export function createRaceFromSetup(config, setup, random = Math.random) {
   const { carModelId, trackId, laps } = createRaceSetup(config, setup);
-  return createRace(config, createGridEntries(config, carModelId), trackId, laps);
+  return createRace(config, createGridEntries(config, carModelId), trackId, laps, random);
 }
 
 /**

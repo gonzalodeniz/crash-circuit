@@ -21,6 +21,7 @@ const NO_PROGRESS = Object.freeze({ started: false, finished: Object.freeze([]),
 export class RaceSession {
   #stateMachine;
   #config;
+  #random;
   #race = null;
   #selectedCarModelId;
   #selectedTrackId;
@@ -34,10 +35,13 @@ export class RaceSession {
    * porque los oyentes se avisan en orden de registro y la carrera se crea al entrar en `PARRILLA`.
    * @param {import('./gameState.js').GameStateMachine} stateMachine
    * @param {object} config CONFIG
+   * @param {{random?: () => number}} [options] `random`: fuente de aleatoriedad de los pilotos IA (RF-029);
+   *   por defecto `Math.random`. Las pruebas inyectan una con semilla para repetir la carrera.
    */
-  constructor(stateMachine, config) {
+  constructor(stateMachine, config, { random = Math.random } = {}) {
     this.#stateMachine = stateMachine;
     this.#config = config;
+    this.#random = random;
     this.#resetChoices();
     this.#unsubscribe = stateMachine.onChange((from, to) => this.#handleChange(from, to));
   }
@@ -147,7 +151,7 @@ export class RaceSession {
       // Al confirmar la selección se fija la configuración; al repetir desde resultados (RF-057) se
       // reutiliza la ya confirmada. La carrera sale siempre de ella (RF-007).
       if (from === GameState.SELECCION) this.#confirmedSetup = this.pendingSetup;
-      this.#race = createRaceFromSetup(this.#config, this.#confirmedSetup);
+      this.#race = createRaceFromSetup(this.#config, this.#confirmedSetup, this.#random);
     } else if (to === GameState.MENU || to === GameState.SELECCION) {
       this.#race = null;
       this.#confirmedSetup = null;

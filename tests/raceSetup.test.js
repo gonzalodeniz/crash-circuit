@@ -194,7 +194,7 @@ test('tras los resultados, elegir otra selección descarta la configuración con
   assert.deepEqual(session.pendingSetup, VALID);
 });
 
-// CA-10 (parcial): las 64 combinaciones, con el jugador solo, hasta los resultados. Cada circuito se
+// CA-10 (parcial): las 64 combinaciones, con los rivales conduciendo, hasta los resultados. Cada circuito se
 // recorre siguiendo su línea central con la lógica de progreso real; la jugabilidad con teclado
 // queda en la verificación manual.
 for (const model of carModels(CONFIG)) {
@@ -222,7 +222,12 @@ for (const model of carModels(CONFIG)) {
         assert.equal(race.track.id, definition.id, label);
         assert.ok(race.player.finished && raceTimeOf(race, race.player) > 0, label);
         assert.equal(race.participants.length, 10, `${label}: los diez siguen en la carrera`);
-        assert.equal(race.participants.filter((p) => !p.isPlayer && !p.finished).length, 9, label);
+        // Los nueve rivales conducen solos con la misma lógica de progreso: avanzan y sus vueltas no pasan del total.
+        for (const rival of race.participants.filter((p) => !p.isPlayer)) {
+          assert.ok(rival.progress.progress > 0, `${label}: ${rival.name} ha avanzado`);
+          assert.ok(rival.progress.laps <= laps, `${label}: ${rival.name} no pasa del total de vueltas`);
+          assert.equal(rival.finished, rival.progress.laps === laps, `${label}: ${rival.name} termina al completar las vueltas`);
+        }
       }
     }
   });
@@ -234,7 +239,7 @@ test('main.js no crea la carrera ni lee valores sueltos: usa la sesión y el res
   assert.match(main, /raceSetupSummary\(CONFIG, session\.pendingSetup\)/);
   const session = await readFile(new URL('../src/logic/raceSession.js', import.meta.url), 'utf8');
   assert.doesNotMatch(session, /createRace\(/, 'la sesión crea la carrera con createRaceFromSetup');
-  assert.match(session, /createRaceFromSetup\(this\.#config, this\.#confirmedSetup\)/);
+  assert.match(session, /createRaceFromSetup\(this\.#config, this\.#confirmedSetup, this\.#random\)/);
 });
 
 test('la pantalla de resumen no importa la lógica ni Three.js, y la configuración elegida no se persiste (RF-060)', async () => {

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../src/config/config.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { RaceSession } from '../src/logic/raceSession.js';
+import { ParticipantStatus } from '../src/logic/race.js';
 import { pointAtDistance } from '../src/logic/track.js';
 
 const DT = 1 / 60;
@@ -42,7 +43,7 @@ test('al empezar no hay carrera; entrar en PARRILLA la crea', () => {
   machine.startRace();
   assert.equal(machine.state, GameState.PARRILLA);
   assert.notEqual(session.race, null);
-  assert.equal(session.race.player.status, GameState.PARRILLA);
+  assert.equal(session.race.player.status, ParticipantStatus.PARRILLA);
 });
 
 test('el primer paso lleva de la parrilla a la cuenta atrás sin mover los coches (RF-020)', () => {
@@ -64,7 +65,7 @@ test('la señal de salida pasa a EN_CARRERA una sola vez (RF-021)', () => {
   }
   assert.equal(machine.state, GameState.EN_CARRERA);
   assert.equal(starts, 1);
-  assert.equal(session.race.player.status, GameState.EN_CARRERA);
+  assert.equal(session.race.player.status, ParticipantStatus.EN_CARRERA);
   for (let i = 0; i < 120; i++) assert.equal(session.step(DT, { player: IDLE }).started, false);
   assert.deepEqual(states, [GameState.PARRILLA, GameState.CUENTA_ATRAS, GameState.EN_CARRERA]);
 });
@@ -113,7 +114,7 @@ test('repetir crea una carrera nueva, igual que una recién creada, y la anterio
   assert.equal(repeated.player.finished, false);
   assert.equal(repeated.player.finishTime, null);
   assert.equal(repeated.player.progress.laps, 0);
-  assert.equal(repeated.player.status, GameState.PARRILLA);
+  assert.equal(repeated.player.status, ParticipantStatus.PARRILLA);
   assert.equal(repeated.clock.raceTime, 0);
   assert.equal(first.player.finished, true);
   // La repetición vuelve a recorrer parrilla -> cuenta atrás -> carrera -> resultados.

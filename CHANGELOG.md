@@ -5,6 +5,7 @@ Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más 
 ## E2 — Personalización de carrera
 
 - **#42 E2 · Elegir entre cuatro coches de aspecto distinto antes de correr** (PR #46, 2026-11-23): «Empezar» abre ahora la pantalla «Elige tu coche», con cuatro modelos (Rayo, Bruma, Trueno y Jade, nombres provisionales) que se distinguen por color y forma. Se elige con ratón o flechas y «Confirmar» (o Intro) empieza la carrera con ese coche; «Volver» regresa al menú y «Repetir» conserva el coche. Los cuatro se conducen exactamente igual. Requisitos: RF-002, RF-003.
+- **#43 E2 · Elegir entre cuatro circuitos de dificultad creciente** (PR #47, 2026-11-23): tras elegir coche y pulsar «Siguiente», aparece «Elige tu circuito» con cuatro circuitos (Llanura, Ribera, Sierra y Abismo, nombres provisionales). Cada uno muestra su dificultad (muy fácil, fácil, medio o difícil), su longitud y su número de curvas, y se elige con ratón o flechas. «Confirmar» (o Intro) empieza la carrera en ese circuito; «Volver» regresa al coche. «Repetir» conserva el circuito. En los cuatro circuitos las vueltas válidas funcionan igual. Requisitos: RF-004, RF-005, RF-014. Reglas de negocio: RN-01.
 
 ## E1 — MVP: primera carrera
 

@@ -15,7 +15,7 @@ Decisiones técnicas de Crash Circuit. Lo actualiza `developer-teams` en la mism
 
 ```
 package.json        Dependencias y scripts npm (exigido por npm)
-vite.config.js      Configuración de Vite (raíz del servidor = src/)
+vite.config.js      Configuración de Vite (raíz del servidor = src/) y plugin de la CSP del build
 src/                Código del juego
   index.html        Página de arranque con el <canvas>
   styles.css        Estilos (lienzo a pantalla completa)
@@ -49,6 +49,10 @@ En la raíz solo van `package.json`, `package-lock.json` y `vite.config.js`, que
 
 Regla de dependencias (RNF-05): `logic/` (todos sus ficheros) no importa `three`, el DOM ni `render/`. `render/` y `ui/` pueden leer datos de `logic/`, pero no deciden nada de la competición; `main.js` es quien traduce las acciones de la interfaz en transiciones de la máquina de estados. Las pruebas comprueban que `logic/gameState.js`, `track.js`, `race.js`, `raceClock.js`, `chaseCamera.js`, `driving.js` y `progress.js` no mencionan Three.js ni el DOM.
 
+## Seguridad: Content Security Policy
+
+`vite.config.js` define `CONTENT_SECURITY_POLICY` y un plugin en línea (`apply: 'build'`) que, al ejecutar `npm run build`, inserta en el `<head>` de `dist/index.html` una etiqueta `<meta http-equiv="Content-Security-Policy">`. La política (`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`) solo admite recursos del propio origen y hace que el navegador bloquee cualquier conexión de red, lo que refuerza RF-060, RNF-06 y RNF-07 (sin backend ni telemetría). Se aplica solo al build porque `npm run dev` necesita un WebSocket para la recarga en caliente y scripts en línea que la política bloquearía. Consecuencias para el código de `src/`: nada de scripts, estilos ni manejadores en línea en `index.html`, ni `eval`; los estilos van en `styles.css`. La etiqueta se inserta como texto para que las comillas simples queden literales. Si un cambio futuro necesita otro origen o directiva (p. ej. cargar un modelo desde una URL), se amplía la política en ese plugin y se documenta aquí. No sustituye a las cabeceras HTTP del servidor que aloje `dist/`, que quedan fuera del repositorio.
+
 ## Configuración
 
 Todo valor configurable, y en especial los «propuesta» de la sección 4 de `02_REQUISITOS_FUNCIONALES.md`, está en `src/config/config.js`, que exporta el objeto `CONFIG`, congelado en profundidad (`Object.freeze` recursivo). Para añadir un parámetro: se añade a ese objeto, agrupado por tema, con un comentario que indique si es «propuesta»; los demás módulos lo leen importando `CONFIG`. Nunca se escribe un valor «propuesta» en otro fichero. Los módulos de `render/` reciben la sección que necesitan por parámetro, de modo que se pueden probar con valores propios.
@@ -59,6 +63,7 @@ Todo valor configurable, y en especial los «propuesta» de la sección 4 de `02
 - Se prueba automáticamente toda la lógica de `src/logic/` y `src/config/`: estados, progreso, vueltas, clasificación, puntuación, temporizadores y estimaciones, a medida que existan.
 - El renderizado (`src/render/`), la sensación de conducción y el HUD se comprueban jugando (ver «Verificación manual» del perfil).
 - Una prueba comprueba que la lógica no importa Three.js ni el DOM.
+- `tests/contentSecurityPolicy.test.js` comprueba las directivas de la CSP, que el plugin la inserta solo en el build y que `index.html` no tiene scripts ni estilos en línea.
 
 ## Decisiones descartadas
 

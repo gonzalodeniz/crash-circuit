@@ -51,6 +51,10 @@
 
 - `docs/user/MANUAL_USUARIO.md`: manual del jugador (cómo jugar). Lo mantiene `doc-teams`.
 
+## `docs/presentacion/`
+
+- `docs/presentacion/agentes-crash-circuit.pptx`: presentación del sistema de agentes (qué hace cada agente, orquestador, subagentes frente a auditores, flujo completo de una issue, permisos, modelos y modos de `scripts/orquestador.sh`), para público técnico y de gestión.
+
 ## `docs/technical/`
 
 - `docs/technical/ARQUITECTURA.md`: stack, estructura de carpetas, módulos, configuración, pruebas y decisiones descartadas.

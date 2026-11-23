@@ -230,11 +230,9 @@ test('repetir o empezar otra carrera monta de nuevo la parrilla con los diez par
   assert.equal(session.race, null);
 });
 
-test('el renderizado dibuja un coche por participante y libera los de la carrera anterior (RNF-04)', async () => {
-  const renderer = await readFile(new URL('../src/render/sceneRenderer.js', import.meta.url), 'utf8');
-  assert.match(renderer, /for \(const participant of race\.participants\) this\.#addCar\(participant, race\)/);
-  assert.match(renderer, /buildRace\(race\) \{\s*this\.disposeRace\(\);/);
-  assert.match(renderer, /this\.#carMeshes\.clear\(\)/);
+// El dibujo de un coche por participante y la liberación de recursos (RNF-04) se prueban ejecutando
+// el código en tests/sceneRenderer.test.js.
+test('el código de la parrilla no usa persistencia (RF-060)', async () => {
   const grid = await readFile(new URL('../src/logic/startingGrid.js', import.meta.url), 'utf8');
   assert.doesNotMatch(grid, /localStorage|sessionStorage|indexedDB|document\.cookie|fetch\(|XMLHttpRequest/);
 });

@@ -44,7 +44,7 @@
 - `src/ui/trackSelectionScreen.js`: segundo paso de la selección (DOM); los cuatro circuitos como opciones, con su dificultad, longitud y número de curvas, y debajo las opciones de vueltas (1, 3, 5, 10).
 - `src/ui/summaryScreen.js`: tercer paso de la selección (DOM); muestra el resumen de coche, circuito, dificultad y vueltas con «Volver» y «¡A correr!».
 - `src/ui/mainMenu.js`: menú principal (DOM); muestra el título y la opción «Empezar» y avisa con una función de retorno.
-- `src/render/sceneRenderer.js`: escena, cámara y renderizador de Three.js; dibuja el circuito, la meta y los coches de la carrera, muestra la vista previa giratoria del coche en la selección y libera sus recursos.
+- `src/render/sceneRenderer.js`: escena y cámara de Three.js (recibe el renderizador y la ventana desde `main.js`, así se prueba sin WebGL); dibuja el circuito, la meta y los coches de la carrera, muestra la vista previa giratoria del coche en la selección y libera sus recursos.
 - `src/render/carMesh.js`: construye la malla de un coche a partir del aspecto de su modelo y devuelve los recursos que hay que liberar (no necesita WebGL).
 
 ## `tests/` (pruebas automáticas, sin navegador)
@@ -61,6 +61,7 @@
 - `tests/standings.test.js`: pruebas de la clasificación: orden por progreso, adelantamiento (intercambio de progreso y adelantar o ser adelantado en pista), checkpoint omitido y marcha atrás sin mejorar posición, llegados por delante y por instante de llegada, desempate estable y diez entradas únicas.
 - `tests/raceWinner.test.js`: pruebas del ganador (un rival gana y el jugador sigue hasta su meta, tiempos reales de los llegados sin cambios, ganador jugador, puesto coherente, repetir sin restos), de los textos de resultados desde la configuración y de la carrera completa de CA-01.
 - `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.
+- `tests/sceneRenderer.test.js`: pruebas de la liberación de recursos del renderizado (RNF-04) con un renderizador falso: `dispose()` de todas las geometrías, materiales y texturas de la carrera anterior y de la vista previa, y grupos fuera de la escena.
 - `tests/carMesh.test.js`: pruebas de la malla de cada modelo (aspecto distinto, mismas dimensiones, recursos liberados).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.

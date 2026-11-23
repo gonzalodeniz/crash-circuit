@@ -1,4 +1,5 @@
 // Punto de entrada: conecta la lógica del juego con el renderizado.
+import { WebGLRenderer } from 'three';
 import { CONFIG } from './config/config.js';
 import { GameState, GameStateMachine } from './logic/gameState.js';
 import { raceTimeOf } from './logic/race.js';
@@ -22,7 +23,22 @@ import { SceneRenderer } from './render/sceneRenderer.js';
 
 const canvas = document.getElementById('game-canvas');
 const stateMachine = new GameStateMachine();
-const sceneRenderer = new SceneRenderer(canvas, CONFIG.render, CONFIG.cars.models);
+// La ventana y el renderizador WebGL se crean aquí; `SceneRenderer` no toca el DOM (así se prueba sin navegador).
+const viewport = {
+  width: () => window.innerWidth,
+  height: () => window.innerHeight,
+  pixelRatio: () => window.devicePixelRatio,
+  onResize: (listener) => {
+    window.addEventListener('resize', listener);
+    return () => window.removeEventListener('resize', listener);
+  },
+};
+const sceneRenderer = new SceneRenderer(
+  new WebGLRenderer({ canvas, antialias: true }),
+  viewport,
+  CONFIG.render,
+  CONFIG.cars.models,
+);
 // Debe crearse antes que los demás oyentes: crea y descarta la carrera y encadena los estados (RNF-05).
 const session = new RaceSession(stateMachine, CONFIG);
 let lastTime = null;

@@ -12,12 +12,12 @@ import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial } from
  */
 export function createCarMesh({ length, width }, carConfig, appearance) {
   const disposables = [];
-  const track = (resource) => {
+  const disposable = (resource) => {
     disposables.push(resource);
     return resource;
   };
-  const material = (color) => track(new MeshStandardMaterial({ color }));
-  const box = (w, h, d, mat) => new Mesh(track(new BoxGeometry(w, h, d)), mat);
+  const material = (color) => disposable(new MeshStandardMaterial({ color }));
+  const box = (w, h, d, mat) => new Mesh(disposable(new BoxGeometry(w, h, d)), mat);
   const group = new Group();
 
   const bodyMaterial = material(appearance.bodyColor);
@@ -56,7 +56,7 @@ export function createCarMesh({ length, width }, carConfig, appearance) {
   }
 
   const wheelMaterial = material(carConfig.wheelColor);
-  const wheelGeometry = track(
+  const wheelGeometry = disposable(
     new CylinderGeometry(carConfig.wheelRadius, carConfig.wheelRadius, carConfig.wheelWidth, carConfig.wheelSegments),
   );
   for (const sx of [-1, 1]) {

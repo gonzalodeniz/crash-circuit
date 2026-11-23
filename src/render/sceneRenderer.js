@@ -61,7 +61,7 @@ export class SceneRenderer {
   }
 
   /** Registra un recurso de la carrera para liberarlo después. */
-  #track(resource) {
+  #disposable(resource) {
     this.#raceDisposables.push(resource);
     return resource;
   }
@@ -76,8 +76,8 @@ export class SceneRenderer {
     const { ground, road } = this.#config;
     this.#raceGroup = new Group();
 
-    const groundGeometry = this.#track(new PlaneGeometry(ground.size, ground.size));
-    const groundMaterial = this.#track(new MeshStandardMaterial({ color: ground.color }));
+    const groundGeometry = this.#disposable(new PlaneGeometry(ground.size, ground.size));
+    const groundMaterial = this.#disposable(new MeshStandardMaterial({ color: ground.color }));
     const groundMesh = new Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.position.y = -0.1;
@@ -110,12 +110,12 @@ export class SceneRenderer {
       const next = (i + 1) % count; // el último tramo cierra la cinta con el primero
       indices.push(i * 2, i * 2 + 1, next * 2, i * 2 + 1, next * 2 + 1, next * 2);
     }
-    const geometry = this.#track(new BufferGeometry());
+    const geometry = this.#disposable(new BufferGeometry());
     geometry.setAttribute('position', new BufferAttribute(positions, 3));
     // Orden de vértices tal que la cara visible mira hacia arriba (Y+).
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
-    const material = this.#track(new MeshStandardMaterial({ color }));
+    const material = this.#disposable(new MeshStandardMaterial({ color }));
     this.#raceGroup.add(new Mesh(geometry, material));
   }
 
@@ -131,14 +131,14 @@ export class SceneRenderer {
         data.set([value, value, value, 255], (row * columns + column) * 4);
       }
     }
-    const texture = this.#track(new DataTexture(data, columns, rows, RGBAFormat));
+    const texture = this.#disposable(new DataTexture(data, columns, rows, RGBAFormat));
     texture.colorSpace = SRGBColorSpace;
     texture.magFilter = NearestFilter;
     texture.minFilter = NearestFilter;
     texture.needsUpdate = true;
 
-    const geometry = this.#track(new PlaneGeometry(track.width, finishLine.depth));
-    const material = this.#track(new MeshStandardMaterial({ map: texture }));
+    const geometry = this.#disposable(new PlaneGeometry(track.width, finishLine.depth));
+    const material = this.#disposable(new MeshStandardMaterial({ map: texture }));
     const mesh = new Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
     // Con rotation.y = rumbo, el ancho del plano (eje X) queda atravesado respecto al avance.
@@ -154,21 +154,21 @@ export class SceneRenderer {
     const { length, width } = race.car;
     const group = new Group();
 
-    const bodyMaterial = this.#track(new MeshStandardMaterial({ color: car.bodyColor }));
-    const cabinMaterial = this.#track(new MeshStandardMaterial({ color: car.cabinColor }));
-    const wheelMaterial = this.#track(new MeshStandardMaterial({ color: car.wheelColor }));
+    const bodyMaterial = this.#disposable(new MeshStandardMaterial({ color: car.bodyColor }));
+    const cabinMaterial = this.#disposable(new MeshStandardMaterial({ color: car.cabinColor }));
+    const wheelMaterial = this.#disposable(new MeshStandardMaterial({ color: car.wheelColor }));
 
-    const bodyGeometry = this.#track(new BoxGeometry(width, car.height * 0.5, length));
+    const bodyGeometry = this.#disposable(new BoxGeometry(width, car.height * 0.5, length));
     const body = new Mesh(bodyGeometry, bodyMaterial);
     body.position.y = car.wheelRadius + (car.height * 0.5) / 2;
     group.add(body);
 
-    const cabinGeometry = this.#track(new BoxGeometry(width * 0.8, car.height * 0.45, length * 0.45));
+    const cabinGeometry = this.#disposable(new BoxGeometry(width * 0.8, car.height * 0.45, length * 0.45));
     const cabin = new Mesh(cabinGeometry, cabinMaterial);
     cabin.position.set(0, body.position.y + car.height * 0.45, -length * 0.08);
     group.add(cabin);
 
-    const wheelGeometry = this.#track(new CylinderGeometry(car.wheelRadius, car.wheelRadius, 0.4, 16));
+    const wheelGeometry = this.#disposable(new CylinderGeometry(car.wheelRadius, car.wheelRadius, 0.4, 16));
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
         const wheel = new Mesh(wheelGeometry, wheelMaterial);

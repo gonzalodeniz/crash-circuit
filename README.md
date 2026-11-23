@@ -27,7 +27,7 @@ El juego no guarda nada ni usa servidores: al recargar la página todo vuelve al
 
 - E1 (en curso): base técnica, menú principal, selección de coche (cuatro modelos de aspecto distinto), selección de circuito (cuatro trazados), conducción con las flechas, cuenta atrás, cronómetro, vueltas válidas y fin de carrera con resultados (repetir o volver al menú) disponibles. Consulta el [changelog](CHANGELOG.md) para ver qué se ha terminado.
 - E2 (en curso): puedes elegir entre cuatro coches, cuatro circuitos y 1, 3, 5 o 10 vueltas, ver un resumen y jugar cualquiera de las 64 combinaciones. Al volver al menú, la selección vuelve a los valores por defecto.
-- E3 (en curso): cada carrera tiene diez participantes. Sales el último de la parrilla junto a nueve pilotos con nombre propio (provisional). Tras la señal de salida los rivales conducen solos, con trayectoria propia y variaciones, y más exigentes en los circuitos difíciles. Todavía no hay posiciones ni choques: puedes atravesarlos.
+- E3 (en curso): cada carrera tiene diez participantes. Sales el último de la parrilla junto a nueve pilotos con nombre propio (provisional). Tras la señal de salida los rivales conducen solos, con trayectoria propia y variaciones, y más exigentes en los circuitos difíciles. Gana el primero en llegar, aunque sea un rival, y tú sigues hasta cruzar tu meta; los resultados muestran el ganador, tu puesto sobre diez y quién llegó antes que tú. Todavía no hay choques: puedes atravesarlos.
 
 ## Más documentación
 

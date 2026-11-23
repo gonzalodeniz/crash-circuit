@@ -135,21 +135,35 @@ Para que una vuelta cuente, tienes que hacerla entera:
 
 ## Fin de carrera y resultados
 
-Al completar la última vuelta válida, tu carrera termina:
+### Quién gana
+
+Gana el primer piloto que completa las vueltas, aunque sea un rival. Tu carrera no se detiene por ello: si un rival termina antes que tú, sigues conduciendo, con tus flechas y tu cronómetro, hasta cruzar tu propia meta.
+
+Al completar tu última vuelta válida, tu carrera termina:
 
 - Tus flechas dejan de controlar el coche. El coche sigue rodando un poco por inercia y se detiene.
 - Tu tiempo final queda fijo. Es el que marcaba el cronómetro en ese momento.
-- El cronómetro y el contador de vueltas desaparecen y aparece la pantalla de resultados, con el texto «Carrera terminada» y «Tu tiempo».
+- El cronómetro y el contador de vueltas desaparecen y aparece la pantalla de resultados, con el texto «Carrera terminada».
+
+La pantalla de resultados muestra:
+
+- **Ganador:** el nombre del primer piloto en terminar y su tiempo. Aparece siempre, también si ganas tú.
+- Si has ganado tú, un aviso destacado: «¡Has ganado la carrera!».
+- **Tu puesto:** tu posición sobre diez, por ejemplo «4 de 10».
+- **Tu tiempo.**
+- **Llegaron antes que tú:** una lista con el puesto, el nombre y el tiempo real de cada piloto que cruzó la meta antes que tú. Si has ganado, no hay lista.
+
+Los resultados se fijan en el momento en que se abren. Los rivales que cruzan la meta después de ti, mientras tu coche se detiene, no aparecen. Sus tiempos reales nunca se modifican.
 
 En la pantalla de resultados hay dos botones. Se activan con el ratón o con el teclado (Tab cambia de botón; Intro o Espacio lo pulsa). «Repetir» está seleccionado al abrirse.
 
 - **Repetir:** empieza una carrera nueva con la misma configuración: el mismo coche, el mismo circuito y el mismo número de vueltas. El coche vuelve a la parrilla, hay una nueva cuenta atrás y el cronómetro y las vueltas empiezan de cero.
 - **Menú:** vuelve al menú principal sin recargar la página. No se conserva nada de la carrera anterior. La selección se borra: si vuelves a empezar sin recargar, el coche, el circuito y las vueltas parten de nuevo de sus valores por defecto (primer coche, «Ribera» y 1 vuelta).
 
-El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo muestran tu tiempo; no hay clasificación ni puntuación. Aunque los rivales ya conducen, sus tiempos todavía no se muestran.
+El juego no guarda nada: si recargas la página, vuelves al menú y no queda ningún resultado anterior ni tu elección de coche, circuito y vueltas. Por ahora los resultados solo incluyen a quienes llegaron antes que tú; no hay clasificación completa, tiempos estimados de los demás ni puntuación. Eso llegará en entregas posteriores.
 
 ## Qué falta
 
-Los rivales ya salen de la parrilla y conducen solos, pero todavía no hay posiciones, choques, puntuación ni clasificación. Se irán añadiendo en las próximas entregas.
+Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, choques, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

@@ -4,16 +4,19 @@ import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../src/config/config.js';
 import { carModels } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
 import { gridSlot, pointAtDistance } from '../src/logic/track.js';
 
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 600;
 
 function createSession() {
   const machine = new GameStateMachine();
-  const session = new RaceSession(machine, CONFIG);
+  const session = new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) });
   return { machine, session };
 }
 

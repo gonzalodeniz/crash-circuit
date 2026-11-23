@@ -5,6 +5,7 @@ import { CONFIG } from '../src/config/config.js';
 import { carModels } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { lapOptions } from '../src/logic/lapOptions.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { raceTimeOf } from '../src/logic/race.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { createRaceFromSetup, createRaceSetup, defaultRaceSetup, raceSetupSummary } from '../src/logic/raceSetup.js';
@@ -13,6 +14,8 @@ import { trackDefinitions } from '../src/logic/trackCatalog.js';
 
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 1800;
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 const VALID = { carModelId: 'bruma', trackId: 'sierra', laps: 3 };
 
 /** Piloto automático que sigue la línea central y frena en las curvas cerradas. */
@@ -25,9 +28,9 @@ function autopilot(race) {
   return { accelerate: p.speed < maxSpeed, brake: p.speed > maxSpeed + 4, left: error > 0.05, right: error < -0.05 };
 }
 
-function createSession() {
+function createSession(seed = SEED) {
   const machine = new GameStateMachine();
-  return { machine, session: new RaceSession(machine, CONFIG) };
+  return { machine, session: new RaceSession(machine, CONFIG, { random: createSeededRandom(seed) }) };
 }
 
 /** Recorre la selección completa: coche, circuito con vueltas, resumen y confirmación. */
@@ -59,14 +62,14 @@ test('una configuración incompleta o fuera del catálogo no puede confirmarse (
     delete incomplete[missing];
     assert.throws(() => createRaceSetup(CONFIG, incomplete), new RegExp(`incompleta: falta ${missing}`));
     assert.throws(() => createRaceSetup(CONFIG, { ...VALID, [missing]: null }), /incompleta/);
-    assert.throws(() => createRaceFromSetup(CONFIG, incomplete), /incompleta/);
+    assert.throws(() => createRaceFromSetup(CONFIG, incomplete, createSeededRandom(SEED)), /incompleta/);
   }
   assert.throws(() => createRaceSetup(CONFIG, undefined), /incompleta/);
   assert.throws(() => createRaceSetup(CONFIG, { ...VALID, carModelId: 'inexistente' }), /Modelo de coche desconocido/);
   assert.throws(() => createRaceSetup(CONFIG, { ...VALID, trackId: 'inexistente' }), /Circuito desconocido/);
   for (const laps of [0, 2, 4, 11, '3', NaN]) {
     assert.throws(() => createRaceSetup(CONFIG, { ...VALID, laps }), /Número de vueltas no permitido/);
-    assert.throws(() => createRaceFromSetup(CONFIG, { ...VALID, laps }), /Número de vueltas no permitido/);
+    assert.throws(() => createRaceFromSetup(CONFIG, { ...VALID, laps }, createSeededRandom(SEED)), /Número de vueltas no permitido/);
   }
 });
 
@@ -74,7 +77,7 @@ test('la carrera creada con cada configuración confirmada tiene ese coche, ese 
   for (const model of carModels(CONFIG)) {
     for (const definition of trackDefinitions(CONFIG)) {
       for (const laps of lapOptions(CONFIG)) {
-        const race = createRaceFromSetup(CONFIG, { carModelId: model.id, trackId: definition.id, laps });
+        const race = createRaceFromSetup(CONFIG, { carModelId: model.id, trackId: definition.id, laps }, createSeededRandom(SEED));
         assert.equal(race.player.carModelId, model.id);
         assert.equal(race.track.id, definition.id);
         assert.equal(race.totalLaps, laps);
@@ -197,12 +200,17 @@ test('tras los resultados, elegir otra selección descarta la configuración con
 // CA-10 (parcial): las 64 combinaciones, con los rivales conduciendo, hasta los resultados. Cada circuito se
 // recorre siguiendo su línea central con la lógica de progreso real; la jugabilidad con teclado
 // queda en la verificación manual.
-for (const model of carModels(CONFIG)) {
+// La semilla de cada combinación es su índice (0..63), así cada caso se repite por separado.
+const MODELS = carModels(CONFIG);
+const TRACKS = trackDefinitions(CONFIG);
+const LAP_OPTIONS = lapOptions(CONFIG);
+for (const [modelIndex, model] of MODELS.entries()) {
   test(`matriz de 64 combinaciones, coche ${model.id}: cada circuito y distancia se juega hasta los resultados (CA-10 parcial)`, () => {
-    for (const definition of trackDefinitions(CONFIG)) {
-      for (const laps of lapOptions(CONFIG)) {
-        const label = `${model.id} en ${definition.id} a ${laps} vuelta(s)`;
-        const ctx = createSession();
+    for (const [trackIndex, definition] of TRACKS.entries()) {
+      for (const [lapIndex, laps] of LAP_OPTIONS.entries()) {
+        const seed = (modelIndex * TRACKS.length + trackIndex) * LAP_OPTIONS.length + lapIndex;
+        const label = `${model.id} en ${definition.id} a ${laps} vuelta(s) (semilla ${seed})`;
+        const ctx = createSession(seed);
         const { machine, session } = ctx;
         confirmSetup(ctx, { carModelId: model.id, trackId: definition.id, laps });
         const { race } = session;

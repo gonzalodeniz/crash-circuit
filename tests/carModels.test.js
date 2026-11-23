@@ -5,6 +5,7 @@ import { CONFIG } from '../src/config/config.js';
 import { carModels, findCarModel, requireCarModel } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { ParticipantStatus, createRace, stepRace } from '../src/logic/race.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession } from '../src/logic/raceSession.js';
 
 const DT = 1 / 60;
@@ -82,9 +83,11 @@ test('todos los modelos usan las mismas dimensiones y la misma parrilla', () => 
   for (const pose of poses) assert.deepEqual(pose, poses[0]);
 });
 
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 function createSession() {
   const machine = new GameStateMachine();
-  const session = new RaceSession(machine, CONFIG);
+  const session = new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) });
   return { machine, session };
 }
 

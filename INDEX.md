@@ -36,13 +36,14 @@
 
 - `tests/config.test.js`: pruebas del módulo de configuración.
 - `tests/track.test.js`: pruebas del trazado cerrado, la meta y las posiciones de parrilla.
-- `tests/race.test.js`: pruebas de la lista de participantes, la separación lógica/renderizado y la cámara de seguimiento.
+- `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
 - `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace`.
 - `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú, y de que no hay persistencia.
 - `tests/contentSecurityPolicy.test.js`: pruebas de la CSP del build (directivas mínimas, solo en build, sin scripts ni estilos en línea).
-- `tests/gameState.test.js`: pruebas de los estados del juego y de la separación lógica/renderizado.
+- `tests/gameState.test.js`: pruebas de los estados del juego y de la máquina de estados.
+- `tests/logicIsolation.test.js`: prueba única de la separación lógica/renderizado (RNF-05): recorre todos los ficheros de `src/logic/` y falla si dependen de Three.js, del DOM, de `render/`, de `ui/` o de relojes del navegador.
 
 ## `docs/user/`
 

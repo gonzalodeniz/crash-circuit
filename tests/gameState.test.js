@@ -33,12 +33,6 @@ test('rechaza transiciones no permitidas y conserva el estado', () => {
   assert.equal(canTransition(GameState.MENU, GameState.RESULTADOS), false);
 });
 
-test('el módulo de lógica no depende de Three.js ni del DOM', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../src/logic/gameState.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /from\s+['"]three['"]|document\.|window\./);
-});
-
 test('el estado inicial es MENU', () => {
   assert.equal(new GameStateMachine().state, GameState.MENU);
 });

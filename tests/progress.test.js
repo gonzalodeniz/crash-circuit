@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
+import { requireTrackDefinition } from '../src/logic/trackCatalog.js';
 import { buildTrack, crossesGateForward, pointAtDistance, rightOf } from '../src/logic/track.js';
 import { createProgress, currentLap, lapCounterText, stepProgress } from '../src/logic/progress.js';
 import { createRace, stepRace } from '../src/logic/race.js';
 import { ClockPhase } from '../src/logic/raceClock.js';
 
-const track = buildTrack(CONFIG.track);
+const track = buildTrack(requireTrackDefinition(CONFIG, CONFIG.tracks.defaultId));
 const count = track.checkpoints.length;
 
 /** Punto a `distance` de la meta y `lateral` metros a la derecha de la línea central. */
@@ -30,7 +31,7 @@ function drive(state, from, to, lateral = 0, step = 1) {
 const grid = () => createProgress(track, at(-8));
 
 test('el circuito tiene checkpoints invisibles secuenciales y una meta como datos de lógica (RF-022)', () => {
-  assert.equal(count, CONFIG.track.checkpointCount);
+  assert.equal(count, track.checkpoints.length);
   assert.ok(count >= 1);
   const distances = track.checkpoints.map((c) => c.distance);
   for (let i = 0; i < count; i++) {
@@ -43,7 +44,7 @@ test('el circuito tiene checkpoints invisibles secuenciales y una meta como dato
     assert.ok(track.checkpoints[i].halfWidth >= track.width / 2);
   }
   assert.equal(track.finish.distance, 0);
-  assert.throws(() => buildTrack({ ...CONFIG.track, checkpointCount: 0 }), /checkpoint/);
+  assert.throws(() => buildTrack({ ...requireTrackDefinition(CONFIG, CONFIG.tracks.defaultId), checkpointCount: 0 }), /checkpoint/);
 });
 
 test('crossesGateForward solo cuenta el cruce hacia delante y dentro de la anchura de la puerta', () => {
@@ -86,7 +87,7 @@ test('cruzar la meta saltándose un checkpoint no suma vuelta (CA-02)', () => {
     const gate = track.checkpoints[skipped].distance;
     let state = drive(grid(), -8, gate - 5);
     // Rodea el checkpoint por fuera de la puerta y vuelve a la calzada.
-    const outside = track.width / 2 + CONFIG.track.checkpointMargin + 30;
+    const outside = track.width / 2 + CONFIG.tracks.common.checkpointMargin + 30;
     state = stepProgress(state, track, at(gate - 4, outside));
     state = stepProgress(state, track, at(gate + 4, outside));
     state = drive(state, gate + 4, track.length + 20);
@@ -97,7 +98,7 @@ test('cruzar la meta saltándose un checkpoint no suma vuelta (CA-02)', () => {
 
 test('el progreso no supera el siguiente checkpoint pendiente aunque se recorte', () => {
   const gate = track.checkpoints[2].distance;
-  const outside = track.width / 2 + CONFIG.track.checkpointMargin + 30;
+  const outside = track.width / 2 + CONFIG.tracks.common.checkpointMargin + 30;
   let state = drive(grid(), -8, gate - 5);
   state = stepProgress(state, track, at(gate - 4, outside));
   state = stepProgress(state, track, at(gate + 100, outside));

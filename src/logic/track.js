@@ -36,12 +36,13 @@ function sampleClosedCatmullRom(controlPoints, samplesPerSegment) {
 }
 
 /**
- * Construye el trazado a partir de su definición (sección `track` de CONFIG).
+ * Construye el trazado a partir de su definición (un circuito de `tracks.circuits` de CONFIG, con los
+ * valores de `tracks.common`; véase `requireTrackDefinition`).
  * La línea central es un polígono cerrado: el tramo del último punto al primero existe
  * y es uno más. La meta está en el punto 0 y su rumbo es el del primer tramo.
  */
 export function buildTrack(definition) {
-  const { name, width, controlPoints, samplesPerSegment, checkpointCount, checkpointMargin } = definition;
+  const { id, name, width, controlPoints, samplesPerSegment, checkpointCount, checkpointMargin } = definition;
   if (controlPoints.length < 3) throw new Error('Un circuito cerrado necesita al menos 3 puntos de control');
   if (!(checkpointCount >= 1)) throw new Error('Un circuito necesita al menos 1 checkpoint (RF-022)');
   const points = sampleClosedCatmullRom(controlPoints, samplesPerSegment);
@@ -60,7 +61,7 @@ export function buildTrack(definition) {
   }
 
   const finish = { x: points[0].x, z: points[0].z, heading: headings[0] };
-  const track = { name, width, points, starts, headings, length, finish };
+  const track = { id, name, width, points, starts, headings, length, finish };
 
   // Puertas de cruce: la meta (distancia 0) y los checkpoints invisibles, en el orden de la carrera.
   // Todas cruzan la calzada en perpendicular a la línea central y sobresalen `checkpointMargin`.

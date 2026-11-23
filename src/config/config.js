@@ -107,12 +107,24 @@ export const CONFIG = deepFreeze({
       title: 'Crash Circuit',
       startLabel: 'Empezar',
     },
-    // Pantalla de selección de coche (RF-002).
+    // Pantalla de selección de coche (RF-002): primer paso, al que sigue el del circuito.
     selection: {
       title: 'Elige tu coche',
-      confirmLabel: 'Confirmar',
+      confirmLabel: 'Siguiente',
       backLabel: 'Volver',
       groupLabel: 'Modelos de coche',
+    },
+    // Pantalla de selección de circuito (RF-004, RF-005): segundo paso; al confirmar empieza la carrera.
+    trackSelection: {
+      title: 'Elige tu circuito',
+      confirmLabel: 'Confirmar',
+      backLabel: 'Volver',
+      groupLabel: 'Circuitos',
+      difficultyLabel: 'Dificultad',
+      lengthLabel: 'Longitud',
+      lengthUnit: 'm',
+      curvesLabel: 'Curvas',
+      difficultyLabels: { veryEasy: 'Muy fácil', easy: 'Fácil', medium: 'Medio', hard: 'Difícil' },
     },
     // Pantalla de resultados al terminar la carrera (RF-056).
     results: {
@@ -146,20 +158,75 @@ export const CONFIG = deepFreeze({
     },
   },
 
-  // Circuito de E1: nombre provisional y trazado simple a la espera de nombres y assets definitivos.
-  // Los circuitos definitivos llegan en E2. Coordenadas [x, z] en metros; la meta es el primer punto
-  // y el sentido de la carrera es el orden de los puntos.
-  track: {
-    name: 'Circuito provisional',
-    width: 16,
-    samplesPerSegment: 16,
-    // Checkpoints invisibles intermedios (RF-022), repartidos a igual distancia a lo largo de la
-    // vuelta; la meta es el punto de inicio. Cada uno es una puerta que cruza toda la calzada.
-    checkpointCount: 8,
-    checkpointMargin: 6, // metros que la puerta sobresale a cada lado de la calzada
-    controlPoints: [
-      [0, -100], [60, -100], [130, -80], [170, -20], [150, 50], [90, 80], [40, 50],
-      [0, 70], [-60, 100], [-130, 70], [-150, 0], [-120, -60], [-60, -100],
+  // Catálogo de circuitos (RF-004, RF-005, RF-014): exactamente cuatro, uno por dificultad. La
+  // dificultad sale del trazado (longitud, número de curvas y anchura) y nunca de las estadísticas del
+  // coche (RN-07). Los nombres son provisionales, a la espera de los definitivos (E8).
+  // Coordenadas [x, z] en metros; la meta es el primer punto y el sentido de la carrera es el orden
+  // de los puntos. Cada trazado debe tener una recta antes de la meta para alojar la parrilla.
+  tracks: {
+    defaultId: 'ribera', // circuito preseleccionado al abrir la selección (el de E1)
+    // Valores comunes a todos los circuitos: se combinan con cada entrada de `circuits`.
+    common: {
+      samplesPerSegment: 16,
+      // Los checkpoints invisibles intermedios (RF-022) se reparten a igual distancia a lo largo de
+      // la vuelta; la meta es el punto de inicio. Cada uno es una puerta que cruza toda la calzada.
+      checkpointMargin: 6, // metros que la puerta sobresale a cada lado de la calzada
+    },
+    // Qué cuenta como «curva» en los datos básicos de la selección (RF-004): tramo seguido de la línea
+    // central que gira hacia el mismo lado con un radio de, como mucho, `1 / minTurnRate` metros y que
+    // acumula al menos `minAngle` radianes.
+    curveDetection: { minTurnRate: 0.01, minAngle: 0.6 },
+    // `difficulty` es el identificador de la etiqueta (`ui.trackSelection.difficultyLabels`).
+    circuits: [
+      {
+        id: 'llanura',
+        name: 'Llanura',
+        difficulty: 'veryEasy',
+        width: 20,
+        checkpointCount: 6,
+        controlPoints: [
+          [0, -70], [60, -70], [110, -50], [130, 0], [110, 50], [60, 70],
+          [0, 70], [-60, 70], [-110, 50], [-130, 0], [-110, -50], [-60, -70],
+        ],
+      },
+      {
+        // Circuito de E1, conservado.
+        id: 'ribera',
+        name: 'Ribera',
+        difficulty: 'easy',
+        width: 16,
+        checkpointCount: 8,
+        controlPoints: [
+          [0, -100], [60, -100], [130, -80], [170, -20], [150, 50], [90, 80], [40, 50],
+          [0, 70], [-60, 100], [-130, 70], [-150, 0], [-120, -60], [-60, -100],
+        ],
+      },
+      {
+        id: 'sierra',
+        name: 'Sierra',
+        difficulty: 'medium',
+        width: 14,
+        checkpointCount: 10,
+        controlPoints: [
+          [0, -120], [80, -120], [160, -110], [210, -70], [220, -10], [190, 40], [130, 60],
+          [90, 100], [100, 150], [60, 190], [-10, 190], [-60, 150], [-50, 100], [-90, 60],
+          [-150, 70], [-200, 30], [-210, -30], [-180, -80], [-120, -100], [-60, -120],
+        ],
+      },
+      {
+        id: 'abismo',
+        name: 'Abismo',
+        difficulty: 'hard',
+        width: 12,
+        checkpointCount: 14,
+        controlPoints: [
+          [0, -150], [90, -150], [140, -180], [190, -130], [250, -110], [270, -50], [230, 0],
+          [160, 10], [120, 50], [150, 100], [230, 120], [270, 170], [240, 230], [170, 250],
+          [100, 230], [60, 180], [0, 200], [-60, 250], [-110, 215], [-170, 250], [-230, 215],
+          [-220, 150], [-180, 110], [-120, 70], [-170, 30], [-240, 20], [-280, -30], [-260, -90],
+          [-200, -130], [-120, -150], [-60, -150],
+        ],
+      },
     ],
   },
 

@@ -20,10 +20,11 @@
 - `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
 - `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos).
 - `src/logic/gameState.js`: estados del juego y máquina de estados, con el flujo `MENU -> SELECCION -> PARRILLA` (sin Three.js ni DOM).
+- `src/logic/trackCatalog.js`: consulta del catálogo de circuitos de la configuración (`trackDefinitions`, `findTrackDefinition`, `requireTrackDefinition`) y datos básicos para la selección (`trackSummary`, `trackSummaries`, `countCurves`) (sin Three.js ni DOM).
 - `src/logic/carModels.js`: consulta del catálogo de modelos de coche de la configuración (`carModels`, `findCarModel`, `requireCarModel`) (sin Three.js ni DOM).
 - `src/logic/track.js`: trazado del circuito como dato (línea central cerrada, anchura, meta, checkpoints, parrilla) y funciones geométricas (sin Three.js ni DOM).
-- `src/logic/race.js`: crea la carrera con su lista de participantes colocados en la parrilla, define `ParticipantStatus` (estado de cada participante, distinto de `GameState`), `stepRace` (avanza reloj y coches y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
-- `src/logic/raceSession.js`: flujo de la partida (`RaceSession`): guarda el modelo de coche elegido, crea y descarta la carrera según el estado, avanza con `step` y aplica `beginCountdown`, `startGo` y `finishRace` (sin Three.js ni DOM).
+- `src/logic/race.js`: crea la carrera (en el circuito elegido) con su lista de participantes colocados en la parrilla, define `ParticipantStatus` (estado de cada participante, distinto de `GameState`), `stepRace` (avanza reloj y coches y marca la llegada al completar las vueltas) y `raceTimeOf` (sin Three.js ni DOM).
+- `src/logic/raceSession.js`: flujo de la partida (`RaceSession`): guarda el coche y el circuito elegidos y los pasos de la selección (`confirmSelection`, `backSelection`), crea y descarta la carrera según el estado, avanza con `step` y aplica `beginCountdown`, `startGo` y `finishRace` (sin Three.js ni DOM).
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
@@ -31,7 +32,9 @@
 - `src/ui/keyboardInput.js`: captura de las flechas (DOM); evita las acciones del navegador mientras dura la carrera.
 - `src/ui/raceHud.js`: HUD de la carrera (DOM); muestra la señal de la cuenta atrás, el cronómetro y la vuelta actual.
 - `src/ui/resultsScreen.js`: pantalla de resultados (DOM); muestra «Carrera terminada» con el tiempo final y las opciones «Repetir» y «Menú».
-- `src/ui/carSelectionScreen.js`: pantalla de selección de coche (DOM); muestra los cuatro modelos como opciones (ratón y flechas), marca el elegido y avisa con funciones de retorno.
+- `src/ui/optionSelectionScreen.js`: pantalla genérica de selección (DOM); muestra opciones (ratón y flechas), marca la elegida y avisa con funciones de retorno.
+- `src/ui/carSelectionScreen.js`: primer paso de la selección (DOM); los cuatro modelos de coche como opciones, con su muestra de colores.
+- `src/ui/trackSelectionScreen.js`: segundo paso de la selección (DOM); los cuatro circuitos como opciones, con su dificultad, longitud y número de curvas.
 - `src/ui/mainMenu.js`: menú principal (DOM); muestra el título y la opción «Empezar» y avisa con una función de retorno.
 - `src/render/sceneRenderer.js`: escena, cámara y renderizador de Three.js; dibuja el circuito, la meta y los coches de la carrera, muestra la vista previa giratoria del coche en la selección y libera sus recursos.
 - `src/render/carMesh.js`: construye la malla de un coche a partir del aspecto de su modelo y devuelve los recursos que hay que liberar (no necesita WebGL).
@@ -41,6 +44,8 @@
 - `tests/config.test.js`: pruebas del módulo de configuración.
 - `tests/track.test.js`: pruebas del trazado cerrado, la normalización de distancias (`wrapDistance`, `signedDistance`), la meta y las posiciones de parrilla (los huecos no se solapan, comprobado con rectángulos de coche).
 - `tests/carModels.test.js`: pruebas del catálogo (cuatro modelos únicos, sin rendimiento propio), de que la carrera guarda el modelo, de la misma trayectoria con los cuatro modelos (RF-003) y de la elección en la sesión (repetir la conserva).
+- `tests/trackCatalog.test.js`: pruebas de los cuatro circuitos (trazado cerrado, parrilla, checkpoints, una vuelta válida, checkpoint omitido, longitudes, curvas y dificultades distintas).
+- `tests/trackSelection.test.js`: pruebas de los pasos de la selección (coche y circuito), de que la carrera usa el circuito elegido y de que los 16 pares coche-circuito llegan a los resultados.
 - `tests/carMesh.test.js`: pruebas de la malla de cada modelo (aspecto distinto, mismas dimensiones, recursos liberados).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
 - `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.

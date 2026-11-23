@@ -2,16 +2,18 @@
 import { CONFIG } from './config/config.js';
 import { GameState, GameStateMachine } from './logic/gameState.js';
 import { raceTimeOf } from './logic/race.js';
-import { RaceSession } from './logic/raceSession.js';
+import { RaceSession, SelectionStep } from './logic/raceSession.js';
+import { trackSummaries } from './logic/trackCatalog.js';
 import { computeChaseCamera } from './logic/chaseCamera.js';
 import { inputFromKeys } from './logic/driving.js';
 import { lapCounterText } from './logic/progress.js';
 import { GO_SIGNAL, countdownSignal, formatRaceTime } from './logic/raceClock.js';
-import { CarSelectionScreen } from './ui/carSelectionScreen.js';
+import { createCarSelectionScreen } from './ui/carSelectionScreen.js';
 import { KeyboardInput } from './ui/keyboardInput.js';
 import { MainMenu } from './ui/mainMenu.js';
 import { RaceHud } from './ui/raceHud.js';
 import { ResultsScreen } from './ui/resultsScreen.js';
+import { createTrackSelectionScreen } from './ui/trackSelectionScreen.js';
 import { SceneRenderer } from './render/sceneRenderer.js';
 
 const canvas = document.getElementById('game-canvas');
@@ -26,16 +28,43 @@ const hud = new RaceHud(document.body);
 // El menú solo avisa; la máquina de estados decide (RNF-05).
 const mainMenu = new MainMenu(document.body, CONFIG.ui.menu, () => stateMachine.openSelection());
 
-// La selección de coche solo avisa; la sesión guarda el modelo elegido y la máquina de estados decide (RF-002).
-const selectionScreen = new CarSelectionScreen(document.body, CONFIG.ui.selection, CONFIG.cars.models, {
+// La selección tiene dos pasos, coche y circuito (RF-002, RF-004). Las pantallas solo avisan; la sesión
+// guarda lo elegido y decide el paso siguiente, y la máquina de estados decide los estados.
+const onConfirm = () => {
+  session.confirmSelection();
+  showSelectionStep();
+};
+const onBack = () => {
+  session.backSelection();
+  showSelectionStep();
+};
+const selectionScreen = createCarSelectionScreen(document.body, CONFIG.ui.selection, CONFIG.cars.models, {
   onSelect: (id) => {
     session.selectCarModel(id);
     selectionScreen.setSelected(session.selectedCarModelId);
     sceneRenderer.showCarPreview(CONFIG.race.car, session.selectedCarModelId);
   },
-  onConfirm: () => stateMachine.startRace(),
-  onBack: () => stateMachine.cancelSelection(),
+  onConfirm,
+  onBack,
 });
+const trackSelectionScreen = createTrackSelectionScreen(document.body, CONFIG.ui.trackSelection, trackSummaries(CONFIG), {
+  onSelect: (id) => {
+    session.selectTrack(id);
+    trackSelectionScreen.setSelected(session.selectedTrackId);
+  },
+  onConfirm,
+  onBack,
+});
+
+// Muestra la pantalla del paso en curso de la selección (la vista previa del coche sigue de fondo).
+function showSelectionStep() {
+  if (stateMachine.state !== GameState.SELECCION) return; // al confirmar el circuito o volver al menú, cambia de estado
+  const isCarStep = session.selectionStep === SelectionStep.CAR;
+  trackSelectionScreen.hide();
+  selectionScreen.hide();
+  if (isCarStep) selectionScreen.show(session.selectedCarModelId);
+  else trackSelectionScreen.show(session.selectedTrackId);
+}
 
 // Igual que el menú: la pantalla de resultados solo avisa y la máquina de estados decide (RF-057, RF-008).
 const resultsScreen = new ResultsScreen(document.body, CONFIG.ui.results, {
@@ -48,6 +77,7 @@ stateMachine.onChange((from, to) => {
   if (to === GameState.PARRILLA) {
     // También al repetir desde resultados: la sesión ya ha creado una carrera nueva (RF-057).
     selectionScreen.hide();
+    trackSelectionScreen.hide();
     sceneRenderer.disposePreview();
     resultsScreen.hide();
     sceneRenderer.buildRace(session.race);
@@ -66,11 +96,12 @@ stateMachine.onChange((from, to) => {
     sceneRenderer.disposeRace();
     if (to === GameState.MENU) {
       selectionScreen.hide();
+      trackSelectionScreen.hide();
       sceneRenderer.disposePreview();
       mainMenu.show();
     } else {
       mainMenu.hide();
-      selectionScreen.show(session.selectedCarModelId);
+      showSelectionStep();
       sceneRenderer.showCarPreview(CONFIG.race.car, session.selectedCarModelId);
     }
   }

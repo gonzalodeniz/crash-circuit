@@ -9,7 +9,7 @@
 - `INDEX.md`: este índice.
 - `README.md`: descripción del juego y cómo arrancarlo. Lo mantiene `doc-teams`.
 - `CHANGELOG.md`: resumen de cada issue terminada, agrupado por entrega. Lo mantiene `doc-teams`.
-- `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*`, `logs/`, `node_modules/` y `dist/`).
+- `.gitignore`: ficheros excluidos de git (`.env`, copias de seguridad `*.bak.*`, `logs/`, `node_modules/`, `dist/` y la caché de Python `__pycache__/` que genera el hook).
 - `package.json` y `package-lock.json`: dependencias (`three`, `vite`) y scripts npm (`dev`, `build`, `preview`, `test`).
 - `vite.config.js`: configuración de Vite (raíz `src/`, salida `dist/`, puertos locales) y plugin que inserta la Content Security Policy en el build.
 

@@ -2,6 +2,7 @@
 import { CONFIG } from './config/config.js';
 import { GameState, GameStateMachine } from './logic/gameState.js';
 import { raceTimeOf } from './logic/race.js';
+import { buildRaceResults, resultsTexts } from './logic/raceResults.js';
 import { RaceSession, SelectionStep } from './logic/raceSession.js';
 import { trackSummaries } from './logic/trackCatalog.js';
 import { lapOptions } from './logic/lapOptions.js';
@@ -102,7 +103,7 @@ stateMachine.onChange((from, to) => {
     keyboard.setEnabled(false); // los controles del jugador se detienen (RF-025)
     hud.hide();
     const { race } = session;
-    resultsScreen.show(formatRaceTime(raceTimeOf(race, race.player)));
+    resultsScreen.show(resultsTexts(buildRaceResults(race), CONFIG.ui.results));
   } else if (to === GameState.MENU || to === GameState.SELECCION) {
     keyboard.setEnabled(false);
     hud.hide();

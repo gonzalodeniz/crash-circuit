@@ -208,10 +208,10 @@ test('el contador de vueltas del HUD es correcto en cada tramo, incluida la últ
   assert.equal(lapCounterText(label, state, total), `${label} 3/3`); // no pasa de 3/3
 });
 
-test('la carrera lee el total de vueltas de la configuración', () => {
+test('la carrera usa las vueltas por defecto de la configuración o las indicadas', () => {
   const race = createRace(CONFIG);
-  assert.equal(race.totalLaps, CONFIG.race.laps);
-  assert.equal(createRace({ ...CONFIG, race: { ...CONFIG.race, laps: 5 } }).totalLaps, 5);
+  assert.equal(race.totalLaps, CONFIG.race.defaultLaps);
+  assert.equal(createRace(CONFIG, undefined, undefined, 5).totalLaps, 5);
   assert.equal(race.player.progress.laps, 0);
 });
 

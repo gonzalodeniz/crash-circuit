@@ -114,7 +114,8 @@ export const CONFIG = deepFreeze({
       backLabel: 'Volver',
       groupLabel: 'Modelos de coche',
     },
-    // Pantalla de selección de circuito (RF-004, RF-005): segundo paso; al confirmar empieza la carrera.
+    // Pantalla de selección de circuito y vueltas (RF-004, RF-005, RF-006): segundo paso; al confirmar
+    // empieza la carrera.
     trackSelection: {
       title: 'Elige tu circuito',
       confirmLabel: 'Confirmar',
@@ -124,6 +125,8 @@ export const CONFIG = deepFreeze({
       lengthLabel: 'Longitud',
       lengthUnit: 'm',
       curvesLabel: 'Curvas',
+      lapsTitle: 'Vueltas',
+      lapsGroupLabel: 'Número de vueltas',
       difficultyLabels: { veryEasy: 'Muy fácil', easy: 'Fácil', medium: 'Medio', hard: 'Difícil' },
     },
     // Pantalla de resultados al terminar la carrera (RF-056).
@@ -147,9 +150,10 @@ export const CONFIG = deepFreeze({
     player: { id: 'player', name: 'Jugador', isPlayer: true },
     // Dimensiones del coche en metros (el rendimiento es idéntico para todos los modelos, RN-07).
     car: { length: 4.4, width: 2 },
-    // Vueltas de la carrera. E1 no permite elegir (RF-014 llega en E2): 1 vuelta por defecto.
-    // La lógica funciona con cualquier número de vueltas (1/3/5/10 en E2).
-    laps: 1,
+    // Vueltas de la carrera (RF-006): exactamente estas cuatro opciones, contenido fijo. La elegida
+    // se aplica como `totalLaps`. La preseleccionada es la de E1, para no alargar el camino a la carrera.
+    lapOptions: [1, 3, 5, 10],
+    defaultLaps: 1,
     // Cuenta atrás de salida «3, 2, 1» (RF-020). Duraciones iniciales, pendientes de calibrar jugando.
     countdown: {
       steps: 3, // números de la cuenta (3, 2, 1)

@@ -1,11 +1,12 @@
 // Sesión de carrera: orquesta el flujo de la partida sobre la máquina de estados. Lógica pura (RNF-05).
-// Guarda el coche y el circuito elegidos y los pasos de la selección. Decide cuándo se crea y se
+// Guarda el coche, el circuito y las vueltas elegidos y los pasos de la selección. Decide cuándo se crea y se
 // descarta la carrera, cuándo empieza la cuenta atrás, cuándo se da la salida y cuándo se abren los
 // resultados. Quien la use (main.js) solo traduce eventos y dibuja.
 import { GameState } from './gameState.js';
 import { createRace, stepRace } from './race.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
+import { requireLapOption } from './lapOptions.js';
 
 // Estados en los que la simulación avanza. En PAUSA (E7) y fuera de la carrera no avanza nada.
 // RESULTADOS sigue avanzando: el coche del jugador rueda por inercia tras terminar (RN-03, RF-025).
@@ -22,6 +23,7 @@ export class RaceSession {
   #race = null;
   #selectedCarModelId;
   #selectedTrackId;
+  #selectedLaps;
   #selectionStep = SelectionStep.CAR;
   #unsubscribe;
 
@@ -36,6 +38,7 @@ export class RaceSession {
     this.#config = config;
     this.#selectedCarModelId = config.cars.defaultModelId;
     this.#selectedTrackId = config.tracks.defaultId;
+    this.#selectedLaps = config.race.defaultLaps;
     this.#unsubscribe = stateMachine.onChange((from, to) => this.#handleChange(to));
   }
 
@@ -60,6 +63,19 @@ export class RaceSession {
   /** Circuito elegido para la próxima carrera (solo en memoria; se reinicia al recargar). */
   get selectedTrackId() {
     return this.#selectedTrackId;
+  }
+
+  /** Número de vueltas elegido para la próxima carrera (solo en memoria; se reinicia al recargar). */
+  get selectedLaps() {
+    return this.#selectedLaps;
+  }
+
+  /** Elige el número de vueltas (uno de `race.lapOptions`); solo durante la selección (RF-006). */
+  selectLaps(laps) {
+    if (this.#stateMachine.state !== GameState.SELECCION) {
+      throw new Error(`Solo se puede elegir el número de vueltas en ${GameState.SELECCION}`);
+    }
+    this.#selectedLaps = requireLapOption(this.#config, laps);
   }
 
   /** Paso en curso de la selección (`SelectionStep`); solo tiene sentido en `SELECCION`. */
@@ -98,9 +114,9 @@ export class RaceSession {
 
   #handleChange(to) {
     if (to === GameState.PARRILLA) {
-      // También al repetir desde resultados: una carrera nueva con el mismo modelo elegido (RF-057).
+      // También al repetir desde resultados: una carrera nueva con el mismo modelo, circuito y vueltas (RF-057).
       const player = { ...this.#config.race.player, carModelId: this.#selectedCarModelId };
-      this.#race = createRace(this.#config, [player], this.#selectedTrackId);
+      this.#race = createRace(this.#config, [player], this.#selectedTrackId, this.#selectedLaps);
     } else if (to === GameState.MENU || to === GameState.SELECCION) {
       this.#race = null;
       this.#selectionStep = SelectionStep.CAR; // la selección siempre empieza por el coche

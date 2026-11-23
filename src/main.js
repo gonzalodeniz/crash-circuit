@@ -4,6 +4,7 @@ import { GameState, GameStateMachine } from './logic/gameState.js';
 import { raceTimeOf } from './logic/race.js';
 import { RaceSession, SelectionStep } from './logic/raceSession.js';
 import { trackSummaries } from './logic/trackCatalog.js';
+import { lapOptions } from './logic/lapOptions.js';
 import { computeChaseCamera } from './logic/chaseCamera.js';
 import { inputFromKeys } from './logic/driving.js';
 import { lapCounterText } from './logic/progress.js';
@@ -47,10 +48,14 @@ const selectionScreen = createCarSelectionScreen(document.body, CONFIG.ui.select
   onConfirm,
   onBack,
 });
-const trackSelectionScreen = createTrackSelectionScreen(document.body, CONFIG.ui.trackSelection, trackSummaries(CONFIG), {
+const trackSelectionScreen = createTrackSelectionScreen(document.body, CONFIG.ui.trackSelection, trackSummaries(CONFIG), lapOptions(CONFIG), {
   onSelect: (id) => {
     session.selectTrack(id);
     trackSelectionScreen.setSelected(session.selectedTrackId);
+  },
+  onSelectLaps: (laps) => {
+    session.selectLaps(laps);
+    trackSelectionScreen.setSecondarySelected(session.selectedLaps);
   },
   onConfirm,
   onBack,
@@ -63,7 +68,7 @@ function showSelectionStep() {
   trackSelectionScreen.hide();
   selectionScreen.hide();
   if (isCarStep) selectionScreen.show(session.selectedCarModelId);
-  else trackSelectionScreen.show(session.selectedTrackId);
+  else trackSelectionScreen.show(session.selectedTrackId, session.selectedLaps);
 }
 
 // Igual que el menú: la pantalla de resultados solo avisa y la máquina de estados decide (RF-057, RF-008).

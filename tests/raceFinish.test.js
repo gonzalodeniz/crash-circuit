@@ -29,8 +29,6 @@ function driveUntilFinished(race, config) {
   return steps;
 }
 
-const configWithLaps = (laps) => ({ ...CONFIG, race: { ...CONFIG.race, laps } });
-
 test('al completar la última vuelta el jugador termina, con tiempo final y progreso congelados (RF-025)', () => {
   const race = createRace(CONFIG);
   assert.equal(race.player.finished, false);
@@ -43,7 +41,7 @@ test('al completar la última vuelta el jugador termina, con tiempo final y prog
   }
   assert.equal(race.player.finished, true);
   assert.deepEqual(reported, ['player'], 'stepRace avisa del participante que termina, una sola vez');
-  assert.equal(race.player.progress.laps, CONFIG.race.laps);
+  assert.equal(race.player.progress.laps, CONFIG.race.defaultLaps);
   assert.equal(race.player.finishTime, race.clock.raceTime, 'el tiempo final es el cronómetro de ese paso');
   assert.ok(race.player.finishTime > 0);
 });
@@ -58,7 +56,7 @@ test('tras terminar, más pasos no cambian el tiempo final ni el progreso, aunqu
   }
   assert.equal(race.player.finishTime, finishTime);
   assert.deepEqual(race.player.progress, progress);
-  assert.equal(race.player.progress.laps, CONFIG.race.laps, 'las vueltas no pasan del total');
+  assert.equal(race.player.progress.laps, CONFIG.race.defaultLaps, 'las vueltas no pasan del total');
   assert.ok(race.clock.raceTime > finishTime, 'el reloj de la carrera sigue; el tiempo del jugador no');
   assert.equal(raceTimeOf(race, race.player), finishTime);
 });
@@ -71,16 +69,16 @@ test('tras terminar, los controles dejan de actuar y el coche se detiene por ine
 });
 
 test('con varias vueltas solo termina al completar la última, y el contador no se pasa del total', () => {
-  const config = configWithLaps(2);
-  const race = createRace(config);
+  const config = CONFIG;
+  const race = createRace(config, undefined, undefined, 3);
   const finishedAtLap = [];
   let steps = 0;
   while (!race.player.finished && steps++ < 60 * 900) {
     const { finished } = stepRace(race, { player: autopilot(race) }, DT, config);
     if (finished.length > 0) finishedAtLap.push(race.player.progress.laps);
   }
-  assert.deepEqual(finishedAtLap, [2]);
-  assert.equal(race.player.progress.laps, 2);
+  assert.deepEqual(finishedAtLap, [3]);
+  assert.equal(race.player.progress.laps, 3);
 });
 
 test('el tiempo final coincide con lo que mostraba el cronómetro del HUD', () => {

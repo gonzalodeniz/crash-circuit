@@ -1,7 +1,6 @@
 // Renderizado con Three.js. Solo dibuja; no contiene lógica de competición (RNF-05).
 import {
   AmbientLight,
-  BoxGeometry,
   BufferAttribute,
   BufferGeometry,
   Color,
@@ -20,9 +19,11 @@ import {
   WebGLRenderer,
 } from 'three';
 import { rightOf } from '../logic/track.js';
+import { createCarMesh } from './carMesh.js';
 
 export class SceneRenderer {
   #config;
+  #carModels;
   #renderer;
   #scene;
   #camera;
@@ -30,14 +31,21 @@ export class SceneRenderer {
   #raceGroup = null;
   #raceDisposables = [];
   #carMeshes = new Map();
+  // Vista previa de la selección: plataforma fija y coche giratorio, con recursos aparte (RNF-04).
+  #previewGroup = null;
+  #previewDisposables = [];
+  #previewCar = null;
+  #previewCarDisposables = [];
   #onResize = () => this.resize();
 
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {object} renderConfig sección `render` de CONFIG
+   * @param {Array<{id: string, appearance: object}>} carModels catálogo de modelos (`cars.models` de CONFIG)
    */
-  constructor(canvas, renderConfig) {
+  constructor(canvas, renderConfig, carModels) {
     this.#config = renderConfig;
+    this.#carModels = carModels;
 
     this.#renderer = new WebGLRenderer({ canvas, antialias: true });
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, renderConfig.maxPixelRatio));
@@ -148,38 +156,11 @@ export class SceneRenderer {
     this.#raceGroup.add(mesh);
   }
 
-  // Coche simple (carrocería, cabina y cuatro ruedas) con el morro hacia +Z local.
+  // Coche del participante con el aspecto de su modelo (RF-002); sus recursos se liberan con la carrera.
   #addCar(participant, race) {
-    const car = this.#config.car;
-    const { length, width } = race.car;
-    const group = new Group();
-
-    const bodyMaterial = this.#disposable(new MeshStandardMaterial({ color: car.bodyColor }));
-    const cabinMaterial = this.#disposable(new MeshStandardMaterial({ color: car.cabinColor }));
-    const wheelMaterial = this.#disposable(new MeshStandardMaterial({ color: car.wheelColor }));
-
-    const bodyHeight = car.height * car.bodyHeightRatio;
-    const cabinHeight = car.height * car.cabinHeightRatio;
-    const bodyGeometry = this.#disposable(new BoxGeometry(width, bodyHeight, length));
-    const body = new Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = car.wheelRadius + bodyHeight / 2;
-    group.add(body);
-
-    const cabinGeometry = this.#disposable(new BoxGeometry(width * car.cabinWidthRatio, cabinHeight, length * car.cabinLengthRatio));
-    const cabin = new Mesh(cabinGeometry, cabinMaterial);
-    cabin.position.set(0, body.position.y + cabinHeight, -length * car.cabinOffsetRatio);
-    group.add(cabin);
-
-    const wheelGeometry = this.#disposable(new CylinderGeometry(car.wheelRadius, car.wheelRadius, car.wheelWidth, car.wheelSegments));
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        const wheel = new Mesh(wheelGeometry, wheelMaterial);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(sx * (width / 2), car.wheelRadius, sz * (length / 2 - car.wheelInset));
-        group.add(wheel);
-      }
-    }
-
+    const appearance = this.#carModels.find((model) => model.id === participant.carModelId).appearance;
+    const { group, disposables } = createCarMesh(race.car, this.#config.car, appearance);
+    this.#raceDisposables.push(...disposables);
     this.#carMeshes.set(participant.id, group);
     this.#raceGroup.add(group);
     this.updateCar(participant);
@@ -191,6 +172,66 @@ export class SceneRenderer {
     if (!group) return;
     group.position.set(participant.x, 0, participant.z);
     group.rotation.y = participant.heading;
+  }
+
+  /**
+   * Muestra en una plataforma el coche del modelo indicado, con su aspecto, y coloca la cámara de la
+   * vista previa. Si ya había otro modelo, libera antes su geometría y sus materiales (RNF-04).
+   * @param {{length: number, width: number}} dimensions dimensiones del coche (`race.car`)
+   * @param {string} modelId identificador del modelo
+   */
+  showCarPreview(dimensions, modelId) {
+    const preview = this.#config.carPreview;
+    if (!this.#previewGroup) {
+      this.#previewGroup = new Group();
+      const { ground } = this.#config;
+      const groundMesh = new Mesh(
+        this.#previewResource(new PlaneGeometry(ground.size, ground.size)),
+        this.#previewResource(new MeshStandardMaterial({ color: ground.color })),
+      );
+      groundMesh.rotation.x = -Math.PI / 2;
+      groundMesh.position.y = this.#config.layers.ground;
+      const platform = new Mesh(
+        this.#previewResource(new CylinderGeometry(preview.platformRadius, preview.platformRadius, preview.platformHeight, preview.platformSegments)),
+        this.#previewResource(new MeshStandardMaterial({ color: preview.platformColor })),
+      );
+      platform.position.y = -preview.platformHeight / 2; // la cara superior queda a y = 0
+      this.#previewGroup.add(groundMesh, platform);
+      this.#scene.add(this.#previewGroup);
+    }
+    this.#disposePreviewCar();
+    const appearance = this.#carModels.find((model) => model.id === modelId).appearance;
+    const { group, disposables } = createCarMesh(dimensions, this.#config.car, appearance);
+    this.#previewCarDisposables = disposables;
+    this.#previewCar = group;
+    this.#previewGroup.add(group);
+    this.setCamera({ position: preview.cameraPosition, target: preview.cameraTarget });
+  }
+
+  #previewResource(resource) {
+    this.#previewDisposables.push(resource);
+    return resource;
+  }
+
+  /** Gira el coche de la vista previa `dt` segundos. */
+  spinCarPreview(dt) {
+    if (this.#previewCar) this.#previewCar.rotation.y += this.#config.carPreview.spinSpeed * dt;
+  }
+
+  #disposePreviewCar() {
+    if (this.#previewCar) this.#previewGroup.remove(this.#previewCar);
+    for (const resource of this.#previewCarDisposables) resource.dispose();
+    this.#previewCarDisposables = [];
+    this.#previewCar = null;
+  }
+
+  /** Libera la vista previa: coche, plataforma y suelo (RNF-04). */
+  disposePreview() {
+    this.#disposePreviewCar();
+    if (this.#previewGroup) this.#scene.remove(this.#previewGroup);
+    for (const resource of this.#previewDisposables) resource.dispose();
+    this.#previewDisposables = [];
+    this.#previewGroup = null;
   }
 
   /** Coloca la cámara con la posición y el punto de mira calculados por la lógica. */
@@ -221,10 +262,11 @@ export class SceneRenderer {
     this.#raceGroup = null;
   }
 
-  /** Libera la carrera y el contexto WebGL (RNF-04). */
+  /** Libera la carrera, la vista previa y el contexto WebGL (RNF-04). */
   dispose() {
     window.removeEventListener('resize', this.#onResize);
     this.disposeRace();
+    this.disposePreview();
     this.#renderer.dispose();
   }
 }

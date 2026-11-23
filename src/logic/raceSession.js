@@ -3,6 +3,7 @@
 // salida y cuándo se abren los resultados. Quien la use (main.js) solo traduce eventos y dibuja.
 import { GameState } from './gameState.js';
 import { createRace, stepRace } from './race.js';
+import { requireCarModel } from './carModels.js';
 
 // Estados en los que la simulación avanza. En PAUSA (E7) y fuera de la carrera no avanza nada.
 // RESULTADOS sigue avanzando: el coche del jugador rueda por inercia tras terminar (RN-03, RF-025).
@@ -14,6 +15,7 @@ export class RaceSession {
   #stateMachine;
   #config;
   #race = null;
+  #selectedCarModelId;
   #unsubscribe;
 
   /**
@@ -25,6 +27,7 @@ export class RaceSession {
   constructor(stateMachine, config) {
     this.#stateMachine = stateMachine;
     this.#config = config;
+    this.#selectedCarModelId = config.cars.defaultModelId;
     this.#unsubscribe = stateMachine.onChange((from, to) => this.#handleChange(to));
   }
 
@@ -33,10 +36,24 @@ export class RaceSession {
     return this.#race;
   }
 
+  /** Modelo de coche elegido para la próxima carrera (solo en memoria; se reinicia al recargar). */
+  get selectedCarModelId() {
+    return this.#selectedCarModelId;
+  }
+
+  /** Elige el modelo de coche del jugador; solo se puede cambiar durante la selección (RF-002). */
+  selectCarModel(id) {
+    if (this.#stateMachine.state !== GameState.SELECCION) {
+      throw new Error(`Solo se puede elegir coche en ${GameState.SELECCION}`);
+    }
+    this.#selectedCarModelId = requireCarModel(this.#config, id).id;
+  }
+
   #handleChange(to) {
     if (to === GameState.PARRILLA) {
-      // También al repetir desde resultados: una carrera nueva, sin nada de la anterior (RF-057).
-      this.#race = createRace(this.#config);
+      // También al repetir desde resultados: una carrera nueva con el mismo modelo elegido (RF-057).
+      const player = { ...this.#config.race.player, carModelId: this.#selectedCarModelId };
+      this.#race = createRace(this.#config, [player]);
     } else if (to === GameState.MENU || to === GameState.SELECCION) {
       this.#race = null;
     }

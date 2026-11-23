@@ -54,11 +54,65 @@ export const CONFIG = deepFreeze({
     maxStep: 1 / 30, // s: paso de tiempo máximo por actualización, para evitar saltos
   },
 
+  // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
+  // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
+  // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.
+  // `appearance`: colores (hex) y proporciones de la carrocería y la cabina respecto a
+  // `render.car.height` y a las dimensiones del coche; `stripe` y `spoiler` activan los adornos.
+  cars: {
+    defaultModelId: 'rayo', // modelo preseleccionado al abrir la selección
+    models: [
+      {
+        id: 'rayo',
+        name: 'Rayo',
+        appearance: {
+          bodyColor: 0xd62828, cabinColor: 0x222831, accentColor: 0xf2f2f2,
+          bodyHeightRatio: 0.5, cabinWidthRatio: 0.8, cabinHeightRatio: 0.45,
+          cabinLengthRatio: 0.45, cabinOffsetRatio: 0.08, stripe: false, spoiler: false,
+        },
+      },
+      {
+        id: 'bruma',
+        name: 'Bruma',
+        appearance: {
+          bodyColor: 0x1d6fd8, cabinColor: 0x0b1b33, accentColor: 0xf2f2f2,
+          bodyHeightRatio: 0.38, cabinWidthRatio: 0.7, cabinHeightRatio: 0.38,
+          cabinLengthRatio: 0.55, cabinOffsetRatio: 0.02, stripe: true, spoiler: false,
+        },
+      },
+      {
+        id: 'trueno',
+        name: 'Trueno',
+        appearance: {
+          bodyColor: 0xf6c90e, cabinColor: 0x3b2a14, accentColor: 0x222831,
+          bodyHeightRatio: 0.62, cabinWidthRatio: 0.9, cabinHeightRatio: 0.55,
+          cabinLengthRatio: 0.32, cabinOffsetRatio: 0.16, stripe: false, spoiler: true,
+        },
+      },
+      {
+        id: 'jade',
+        name: 'Jade',
+        appearance: {
+          bodyColor: 0x2bb673, cabinColor: 0x10281c, accentColor: 0xff7f11,
+          bodyHeightRatio: 0.44, cabinWidthRatio: 0.6, cabinHeightRatio: 0.36,
+          cabinLengthRatio: 0.28, cabinOffsetRatio: -0.1, stripe: true, spoiler: true,
+        },
+      },
+    ],
+  },
+
   // Textos de la interfaz (no son «propuesta» de producto; nombres finales pendientes de calibrar).
   ui: {
     menu: {
       title: 'Crash Circuit',
       startLabel: 'Empezar',
+    },
+    // Pantalla de selección de coche (RF-002).
+    selection: {
+      title: 'Elige tu coche',
+      confirmLabel: 'Confirmar',
+      backLabel: 'Volver',
+      groupLabel: 'Modelos de coche',
     },
     // Pantalla de resultados al terminar la carrera (RF-056).
     results: {
@@ -139,19 +193,26 @@ export const CONFIG = deepFreeze({
       },
     },
     car: {
-      bodyColor: 0xd62828,
-      cabinColor: 0x222831,
       wheelColor: 0x111111,
       height: 1.1, // metros: altura total de referencia (carrocería + cabina)
       wheelRadius: 0.4, // metros
       wheelWidth: 0.4, // metros: grosor de cada rueda
       wheelSegments: 16, // lados del cilindro de cada rueda
       wheelInset: 0.9, // metros: separación de cada eje respecto a la punta del coche
-      bodyHeightRatio: 0.5, // altura de la carrocería, proporción de `height`
-      cabinWidthRatio: 0.8, // ancho de la cabina, proporción del ancho del coche
-      cabinHeightRatio: 0.45, // altura de la cabina, proporción de `height`
-      cabinLengthRatio: 0.45, // largo de la cabina, proporción del largo del coche
-      cabinOffsetRatio: 0.08, // desplazamiento de la cabina hacia atrás, proporción del largo
+      // Franja decorativa sobre la carrocería (`appearance.stripe`).
+      stripe: { widthRatio: 0.2, thickness: 0.03 }, // proporción del ancho del coche; metros
+      // Alerón trasero (`appearance.spoiler`): ala sobre un soporte central.
+      spoiler: { widthRatio: 0.95, depth: 0.7, thickness: 0.1, lift: 0.45, postWidth: 0.15 }, // metros salvo la proporción
+    },
+    // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
+    carPreview: {
+      cameraPosition: [0, 2.6, 8],
+      cameraTarget: [0, 0.6, 0],
+      spinSpeed: 0.8, // rad/s
+      platformRadius: 3.4, // metros
+      platformHeight: 0.1, // metros
+      platformSegments: 48, // lados del cilindro de la plataforma
+      platformColor: 0x55555c,
     },
     light: {
       sunColor: 0xffffff,

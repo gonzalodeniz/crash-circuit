@@ -44,6 +44,7 @@ ETIQUETAS=(
   "changelog-pendiente|C2E0C6|Fusionada; doc-teams debe anotarla en CHANGELOG.md"
   "tipo:tecnica|5319E7|Deuda técnica o hallazgo de auditoría"
   "origen:security-auditor|E99695|Hallazgo de la auditoría de seguridad"
+  "origen:quality-auditor|F9D0C4|Hallazgo de la auditoría de calidad de código"
   "requiere-decision|B60205|Bloqueada: un rol necesita una decisión del usuario"
 )
 

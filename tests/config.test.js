@@ -49,3 +49,10 @@ test('la sección render conserva las alturas de capas y las proporciones del co
   assert.equal(car.wheelInset, 0.9);
   assert.ok(Object.isFrozen(CONFIG.render.layers));
 });
+
+test('el catálogo de circuitos está en la configuración y congelado (RF-004)', () => {
+  assert.equal(CONFIG.tracks.circuits.length, 4);
+  assert.ok(CONFIG.tracks.circuits.some((circuit) => circuit.id === CONFIG.tracks.defaultId));
+  assert.ok(Object.isFrozen(CONFIG.tracks.circuits[0].controlPoints));
+  assert.equal('track' in CONFIG, false);
+});

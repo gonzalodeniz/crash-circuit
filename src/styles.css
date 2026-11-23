@@ -161,7 +161,7 @@ body {
   outline-offset: 3px;
 }
 
-/* Selección de coche: la escena 3D muestra el coche; aquí van el título y las opciones */
+/* Selección de coche y de circuito: la escena 3D va de fondo; aquí van el título y las opciones */
 .selection {
   position: fixed;
   inset: 0;
@@ -188,14 +188,16 @@ body {
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
 }
 
-.selection__cars,
+.selection__options,
 .selection__actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 1.2rem;
   pointer-events: auto;
 }
 
-.selection__car {
+.selection__option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -212,18 +214,23 @@ body {
   cursor: pointer;
 }
 
-.selection__car:hover {
+.selection__option:hover {
   border-color: #aaa;
 }
 
-.selection__car--selected {
+.selection__option--selected {
   background: rgba(214, 40, 40, 0.85);
   border-color: #fff;
 }
 
-.selection__car:focus-visible {
+.selection__option:focus-visible {
   outline: 3px solid #f77f00;
   outline-offset: 3px;
+}
+
+.selection__fact {
+  font-size: 1rem;
+  font-weight: normal;
 }
 
 .selection__swatch {

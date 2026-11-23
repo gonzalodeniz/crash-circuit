@@ -4,6 +4,7 @@ import { createCarState, stepCar } from './driving.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
 import { createProgress, stepProgress } from './progress.js';
 import { requireCarModel } from './carModels.js';
+import { requireTrackDefinition } from './trackCatalog.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -21,10 +22,12 @@ const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false,
  * La lista admite hasta `race.maxParticipants` (10 desde E3); en E1 solo contiene al jugador.
  * Cada participante guarda su modelo de coche (`carModelId`, por defecto `cars.defaultModelId`): solo
  * afecta al aspecto, nunca al rendimiento (RF-003).
- * @param {object} config CONFIG (secciones `track`, `grid`, `race` y `cars`; `race.laps` fija las vueltas)
+ * El circuito es el indicado por `trackId` (por defecto `tracks.defaultId`); la parrilla se coloca en él.
+ * @param {object} config CONFIG (secciones `tracks`, `grid`, `race` y `cars`; `race.laps` fija las vueltas)
  * @param {Array<{id: string, name: string, isPlayer?: boolean, carModelId?: string}>} entries participantes en orden de parrilla
+ * @param {string} trackId identificador del circuito del catálogo
  */
-export function createRace(config, entries = [config.race.player]) {
+export function createRace(config, entries = [config.race.player], trackId = config.tracks.defaultId) {
   if (entries.length === 0 || entries.length > config.race.maxParticipants) {
     throw new Error(`La carrera admite de 1 a ${config.race.maxParticipants} participantes`);
   }
@@ -35,7 +38,7 @@ export function createRace(config, entries = [config.race.player]) {
     throw new Error('Debe haber exactamente un participante jugador');
   }
 
-  const track = buildTrack(config.track);
+  const track = buildTrack(requireTrackDefinition(config, trackId));
   const participants = entries.map((entry, index) => {
     const slot = gridSlot(track, config.grid, index);
     return {

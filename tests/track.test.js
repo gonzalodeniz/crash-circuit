@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
+import { requireTrackDefinition } from '../src/logic/trackCatalog.js';
 import {
   buildTrack, forwardOf, gridSlot, isOnRoad, nearestOnCenterline, pointAtDistance, rightOf, signedDistance, wrapDistance,
 } from '../src/logic/track.js';
 
-const track = buildTrack(CONFIG.track);
+const track = buildTrack(requireTrackDefinition(CONFIG, CONFIG.tracks.defaultId));
 const angleDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 
 test('el trazado es cerrado: el último tramo enlaza con el primero', () => {

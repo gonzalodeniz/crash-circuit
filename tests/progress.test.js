@@ -4,6 +4,7 @@ import { CONFIG } from '../src/config/config.js';
 import { buildTrack, crossesGateForward, pointAtDistance, rightOf } from '../src/logic/track.js';
 import { createProgress, currentLap, lapCounterText, stepProgress } from '../src/logic/progress.js';
 import { createRace, stepRace } from '../src/logic/race.js';
+import { ClockPhase } from '../src/logic/raceClock.js';
 
 const track = buildTrack(CONFIG.track);
 const count = track.checkpoints.length;
@@ -219,10 +220,12 @@ test('conduciendo de verdad con stepRace, el progreso sigue al coche y completa 
   const idle = { accelerate: false, brake: false, left: false, right: false };
   // Cuenta atrás: el coche no avanza ni gana progreso.
   const initialProgress = race.player.progress.progress;
-  for (let t = 0; race.clock.phase === 'COUNTDOWN'; t += dt) {
-    stepRace(race, { player: { ...idle, accelerate: true } }, dt, CONFIG);
+  while (race.clock.phase === ClockPhase.COUNTDOWN) {
+    const result = stepRace(race, { player: { ...idle, accelerate: true } }, dt, CONFIG);
+    // El paso de la salida ya cuenta el sobrante como tiempo de carrera: el coche puede moverse en él.
+    if (result.started) break;
+    assert.equal(race.player.progress.progress, initialProgress);
   }
-  assert.equal(race.player.progress.progress <= initialProgress + 1, true);
   // Piloto automático sencillo: apunta a un punto de la línea central por delante y limita la velocidad.
   let steps = 0;
   while (race.player.progress.laps < 1 && steps < 60 * 300) {

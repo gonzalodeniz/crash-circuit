@@ -45,6 +45,8 @@ test-results/
 .temp/
 .tmp/
 *.tsbuildinfo
+__pycache__/
+*.pyc
 node_modules/.vite/
 node_modules/.vitest/
 

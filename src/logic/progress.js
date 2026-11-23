@@ -12,6 +12,13 @@
 import { crossesGateForward, nearestOnCenterline, signedDistance, wrapDistance } from './track.js';
 
 /**
+ * Semiancho (m) del tramo del trazado donde se busca el punto más cercano, alrededor de la posición
+ * anterior del coche. Un coche avanza como mucho `maxSpeed * maxStep` (1,5 m) por paso, así que sobra
+ * de largo; si el coche aparece lejos de ese tramo, `nearestOnCenterline` busca en todo el trazado.
+ */
+export const NEAREST_SEARCH_SPAN = 30;
+
+/**
  * Progreso inicial de un participante colocado en `pose` (normalmente la parrilla).
  * @param {object} track trazado
  * @param {{x: number, z: number}} pose posición inicial
@@ -40,8 +47,8 @@ export function createProgress(track, pose) {
  */
 export function stepProgress(state, track, pose) {
   const from = { x: state.x, z: state.z };
-  const { along } = nearestOnCenterline(track, pose.x, pose.z);
   const previousAlong = wrapDistance(track, state.lapPosition);
+  const { along } = nearestOnCenterline(track, pose.x, pose.z, { along: previousAlong, span: NEAREST_SEARCH_SPAN });
   let lapPosition = state.lapPosition + signedDistance(track, along - previousAlong);
   let { started, laps, checkpointIndex } = state;
   const checkpointCount = track.checkpoints.length;

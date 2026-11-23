@@ -36,11 +36,14 @@ test('la sección render conserva las alturas de capas y las proporciones del co
   assert.ok(layers.ground < layers.border && layers.border < layers.road && layers.road < layers.finishLine);
   assert.equal(road.finishLine.lightShade, 255);
   assert.equal(road.finishLine.darkShade, 20);
-  assert.equal(car.bodyHeightRatio, 0.5);
-  assert.equal(car.cabinWidthRatio, 0.8);
-  assert.equal(car.cabinHeightRatio, 0.45);
-  assert.equal(car.cabinLengthRatio, 0.45);
-  assert.equal(car.cabinOffsetRatio, 0.08);
+  // Las proporciones de carrocería y cabina son del aspecto de cada modelo (CONFIG.cars).
+  assert.equal('bodyHeightRatio' in car, false);
+  const rayo = CONFIG.cars.models.find((model) => model.id === 'rayo').appearance;
+  assert.equal(rayo.bodyHeightRatio, 0.5);
+  assert.equal(rayo.cabinWidthRatio, 0.8);
+  assert.equal(rayo.cabinHeightRatio, 0.45);
+  assert.equal(rayo.cabinLengthRatio, 0.45);
+  assert.equal(rayo.cabinOffsetRatio, 0.08);
   assert.equal(car.wheelWidth, 0.4);
   assert.equal(car.wheelSegments, 16);
   assert.equal(car.wheelInset, 0.9);

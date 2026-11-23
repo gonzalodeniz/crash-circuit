@@ -40,6 +40,7 @@ function playUntilResults({ machine, session }) {
 test('al empezar no hay carrera; entrar en PARRILLA la crea', () => {
   const { machine, session } = createSession();
   assert.equal(session.race, null);
+  machine.openSelection();
   machine.startRace();
   assert.equal(machine.state, GameState.PARRILLA);
   assert.notEqual(session.race, null);
@@ -48,6 +49,7 @@ test('al empezar no hay carrera; entrar en PARRILLA la crea', () => {
 
 test('el primer paso lleva de la parrilla a la cuenta atrás sin mover los coches (RF-020)', () => {
   const { machine, session } = createSession();
+  machine.openSelection();
   machine.startRace();
   const result = session.step(DT, { player: { ...IDLE, accelerate: true } });
   assert.equal(machine.state, GameState.CUENTA_ATRAS);
@@ -57,6 +59,7 @@ test('el primer paso lleva de la parrilla a la cuenta atrás sin mover los coche
 
 test('la señal de salida pasa a EN_CARRERA una sola vez (RF-021)', () => {
   const { machine, session, states } = createSession();
+  machine.openSelection();
   machine.startRace();
   let starts = 0;
   let steps = 0;
@@ -67,11 +70,12 @@ test('la señal de salida pasa a EN_CARRERA una sola vez (RF-021)', () => {
   assert.equal(starts, 1);
   assert.equal(session.race.player.status, ParticipantStatus.EN_CARRERA);
   for (let i = 0; i < 120; i++) assert.equal(session.step(DT, { player: IDLE }).started, false);
-  assert.deepEqual(states, [GameState.PARRILLA, GameState.CUENTA_ATRAS, GameState.EN_CARRERA]);
+  assert.deepEqual(states, [GameState.SELECCION, GameState.PARRILLA, GameState.CUENTA_ATRAS, GameState.EN_CARRERA]);
 });
 
 test('al terminar el jugador se abren los resultados y finishRace se llama una sola vez (RN-03, RF-025)', () => {
   const ctx = createSession();
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   const finishes = [];
   let steps = 0;
@@ -94,6 +98,7 @@ test('al terminar el jugador se abren los resultados y finishRace se llama una s
 
 test('en RESULTADOS la simulación sigue: el coche rueda por inercia hasta detenerse y el tiempo no cambia (RF-025)', () => {
   const ctx = createSession();
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   playUntilResults(ctx);
   const { finishTime } = ctx.session.race.player;
@@ -104,6 +109,7 @@ test('en RESULTADOS la simulación sigue: el coche rueda por inercia hasta deten
 
 test('repetir crea una carrera nueva, igual que una recién creada, y la anterior conserva su resultado (RF-057)', () => {
   const ctx = createSession();
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   playUntilResults(ctx);
   const first = ctx.session.race;
@@ -125,12 +131,14 @@ test('repetir crea una carrera nueva, igual que una recién creada, y la anterio
 
 test('volver al menú descarta la carrera y una nueva parte de cero (RF-008)', () => {
   const ctx = createSession();
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   playUntilResults(ctx);
   ctx.machine.backToMenu();
   assert.equal(ctx.machine.state, GameState.MENU);
   assert.equal(ctx.session.race, null);
   assert.deepEqual(ctx.session.step(DT, { player: IDLE }), { started: false, finished: [], playerFinished: false });
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   assert.equal(ctx.session.race.player.progress.laps, 0);
   assert.equal(ctx.session.race.player.finishTime, null);
@@ -138,6 +146,7 @@ test('volver al menú descarta la carrera y una nueva parte de cero (RF-008)', (
 
 test('al llegar a SELECCION también se descarta la carrera', () => {
   const ctx = createSession();
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   playUntilResults(ctx);
   ctx.machine.transitionTo(GameState.SELECCION);
@@ -150,6 +159,7 @@ test('sin carrera o fuera de los estados simulados, step no avanza nada', () => 
   assert.equal(ctx.machine.state, GameState.MENU);
 
   // PAUSA congela la simulación y todos los relojes (E7): el reloj no avanza.
+  ctx.machine.openSelection();
   ctx.machine.startRace();
   ctx.session.step(DT, { player: IDLE }); // PARRILLA -> CUENTA_ATRAS
   let steps = 0;
@@ -165,6 +175,7 @@ test('sin carrera o fuera de los estados simulados, step no avanza nada', () => 
 
 test('dispose deja de escuchar la máquina de estados y descarta la carrera', () => {
   const { machine, session } = createSession();
+  machine.openSelection();
   machine.startRace();
   session.dispose();
   assert.equal(session.race, null);
@@ -172,6 +183,7 @@ test('dispose deja de escuchar la máquina de estados y descarta la carrera', ()
   machine.startGo();
   machine.finishRace();
   machine.backToMenu();
+  machine.openSelection();
   machine.startRace();
   assert.equal(session.race, null);
 });

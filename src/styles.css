@@ -160,3 +160,98 @@ body {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
+
+/* Selección de coche: la escena 3D muestra el coche; aquí van el título y las opciones */
+.selection {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  pointer-events: none; /* deja ver la escena; solo los controles reciben el ratón */
+  font-family: system-ui, sans-serif;
+  color: #fff;
+}
+
+.selection[hidden] {
+  display: none;
+}
+
+.selection__title {
+  margin: 0;
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.selection__cars,
+.selection__actions {
+  display: flex;
+  gap: 1.2rem;
+  pointer-events: auto;
+}
+
+.selection__car {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 9rem;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border: 3px solid transparent;
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.selection__car:hover {
+  border-color: #aaa;
+}
+
+.selection__car--selected {
+  background: rgba(214, 40, 40, 0.85);
+  border-color: #fff;
+}
+
+.selection__car:focus-visible {
+  outline: 3px solid #f77f00;
+  outline-offset: 3px;
+}
+
+.selection__swatch {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.selection__chip {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.selection__button {
+  padding: 0.7rem 2.5rem;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #fff;
+  background: #d62828;
+  border: 3px solid #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.selection__button:hover,
+.selection__button:focus-visible {
+  background: #f77f00;
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}

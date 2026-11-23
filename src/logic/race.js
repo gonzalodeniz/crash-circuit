@@ -3,6 +3,7 @@ import { buildTrack, gridSlot } from './track.js';
 import { createCarState, stepCar } from './driving.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
 import { createProgress, stepProgress } from './progress.js';
+import { requireCarModel } from './carModels.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -18,8 +19,10 @@ const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false,
 /**
  * Crea una carrera con sus participantes colocados en la parrilla.
  * La lista admite hasta `race.maxParticipants` (10 desde E3); en E1 solo contiene al jugador.
- * @param {object} config CONFIG (secciones `track`, `grid` y `race`; `race.laps` fija las vueltas)
- * @param {Array<{id: string, name: string, isPlayer?: boolean}>} entries participantes en orden de parrilla
+ * Cada participante guarda su modelo de coche (`carModelId`, por defecto `cars.defaultModelId`): solo
+ * afecta al aspecto, nunca al rendimiento (RF-003).
+ * @param {object} config CONFIG (secciones `track`, `grid`, `race` y `cars`; `race.laps` fija las vueltas)
+ * @param {Array<{id: string, name: string, isPlayer?: boolean, carModelId?: string}>} entries participantes en orden de parrilla
  */
 export function createRace(config, entries = [config.race.player]) {
   if (entries.length === 0 || entries.length > config.race.maxParticipants) {
@@ -38,6 +41,7 @@ export function createRace(config, entries = [config.race.player]) {
     return {
       id: entry.id,
       name: entry.name,
+      carModelId: requireCarModel(config, entry.carModelId ?? config.cars.defaultModelId).id,
       isPlayer: Boolean(entry.isPlayer),
       gridIndex: index,
       status: ParticipantStatus.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)

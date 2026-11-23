@@ -130,6 +130,7 @@ test('un paso de tiempo grande se limita a maxStep también en el reloj', () => 
 
 test('la máquina de estados enlaza parrilla, cuenta atrás y carrera', () => {
   const machine = new GameStateMachine();
+  machine.openSelection();
   machine.startRace();
   assert.equal(machine.beginCountdown(), GameState.CUENTA_ATRAS);
   assert.equal(machine.startGo(), GameState.EN_CARRERA);

@@ -91,6 +91,7 @@ test('el tiempo final coincide con lo que mostraba el cronómetro del HUD', () =
 
 test('la máquina de estados abre los resultados desde la carrera y permite repetir o volver al menú', () => {
   const machine = new GameStateMachine();
+  machine.openSelection();
   machine.startRace();
   machine.beginCountdown();
   machine.startGo();

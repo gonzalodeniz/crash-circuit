@@ -123,13 +123,36 @@ export const CONFIG = deepFreeze({
     // Cámara de seguimiento (RF-009): detrás y por encima del coche, mirando hacia delante.
     chaseCamera: { distance: 9, height: 4, lookAhead: 6, lookHeight: 1 },
     ground: { size: 1200, color: 0x3a7d44 },
+    // Alturas (metros sobre el plano y = 0) de las capas del suelo, de menor a mayor. La
+    // separación entre ellas evita que parpadeen al solaparse (z-fighting).
+    layers: { ground: -0.1, border: 0, road: 0.05, finishLine: 0.1 },
     road: {
       color: 0x3a3a3f,
       borderColor: 0xf2f2f2,
       borderExtra: 1, // metros de borde blanco a cada lado de la calzada
-      finishLine: { depth: 2, checkerColumns: 16, checkerRows: 2 }, // metros de fondo y casillas
+      finishLine: {
+        depth: 2, // metros de fondo
+        checkerColumns: 16, // casillas a lo ancho
+        checkerRows: 2, // casillas a lo largo
+        lightShade: 255, // tono de las casillas claras (0-255)
+        darkShade: 20, // tono de las casillas oscuras (0-255)
+      },
     },
-    car: { bodyColor: 0xd62828, cabinColor: 0x222831, wheelColor: 0x111111, height: 1.1, wheelRadius: 0.4 },
+    car: {
+      bodyColor: 0xd62828,
+      cabinColor: 0x222831,
+      wheelColor: 0x111111,
+      height: 1.1, // metros: altura total de referencia (carrocería + cabina)
+      wheelRadius: 0.4, // metros
+      wheelWidth: 0.4, // metros: grosor de cada rueda
+      wheelSegments: 16, // lados del cilindro de cada rueda
+      wheelInset: 0.9, // metros: separación de cada eje respecto a la punta del coche
+      bodyHeightRatio: 0.5, // altura de la carrocería, proporción de `height`
+      cabinWidthRatio: 0.8, // ancho de la cabina, proporción del ancho del coche
+      cabinHeightRatio: 0.45, // altura de la cabina, proporción de `height`
+      cabinLengthRatio: 0.45, // largo de la cabina, proporción del largo del coche
+      cabinOffsetRatio: 0.08, // desplazamiento de la cabina hacia atrás, proporción del largo
+    },
     light: {
       sunColor: 0xffffff,
       sunIntensity: 2.5,

@@ -73,19 +73,19 @@ export class SceneRenderer {
    */
   buildRace(race) {
     this.disposeRace();
-    const { ground, road } = this.#config;
+    const { ground, road, layers } = this.#config;
     this.#raceGroup = new Group();
 
     const groundGeometry = this.#disposable(new PlaneGeometry(ground.size, ground.size));
     const groundMaterial = this.#disposable(new MeshStandardMaterial({ color: ground.color }));
     const groundMesh = new Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = -Math.PI / 2;
-    groundMesh.position.y = -0.1;
+    groundMesh.position.y = layers.ground;
     this.#raceGroup.add(groundMesh);
 
     // Borde blanco (más ancho y ligeramente más bajo) y calzada encima.
-    this.#addRibbon(race.track, race.track.width + road.borderExtra * 2, 0, road.borderColor);
-    this.#addRibbon(race.track, race.track.width, 0.05, road.color);
+    this.#addRibbon(race.track, race.track.width + road.borderExtra * 2, layers.border, road.borderColor);
+    this.#addRibbon(race.track, race.track.width, layers.road, road.color);
     this.#addFinishLine(race.track);
 
     for (const participant of race.participants) this.#addCar(participant, race);
@@ -127,7 +127,7 @@ export class SceneRenderer {
     const data = new Uint8Array(columns * rows * 4);
     for (let row = 0; row < rows; row++) {
       for (let column = 0; column < columns; column++) {
-        const value = (row + column) % 2 === 0 ? 255 : 20;
+        const value = (row + column) % 2 === 0 ? finishLine.lightShade : finishLine.darkShade;
         data.set([value, value, value, 255], (row * columns + column) * 4);
       }
     }
@@ -144,7 +144,7 @@ export class SceneRenderer {
     // Con rotation.y = rumbo, el ancho del plano (eje X) queda atravesado respecto al avance.
     mesh.rotation.order = 'YXZ';
     mesh.rotation.y = track.finish.heading;
-    mesh.position.set(track.finish.x, 0.1, track.finish.z);
+    mesh.position.set(track.finish.x, this.#config.layers.finishLine, track.finish.z);
     this.#raceGroup.add(mesh);
   }
 
@@ -158,22 +158,24 @@ export class SceneRenderer {
     const cabinMaterial = this.#disposable(new MeshStandardMaterial({ color: car.cabinColor }));
     const wheelMaterial = this.#disposable(new MeshStandardMaterial({ color: car.wheelColor }));
 
-    const bodyGeometry = this.#disposable(new BoxGeometry(width, car.height * 0.5, length));
+    const bodyHeight = car.height * car.bodyHeightRatio;
+    const cabinHeight = car.height * car.cabinHeightRatio;
+    const bodyGeometry = this.#disposable(new BoxGeometry(width, bodyHeight, length));
     const body = new Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = car.wheelRadius + (car.height * 0.5) / 2;
+    body.position.y = car.wheelRadius + bodyHeight / 2;
     group.add(body);
 
-    const cabinGeometry = this.#disposable(new BoxGeometry(width * 0.8, car.height * 0.45, length * 0.45));
+    const cabinGeometry = this.#disposable(new BoxGeometry(width * car.cabinWidthRatio, cabinHeight, length * car.cabinLengthRatio));
     const cabin = new Mesh(cabinGeometry, cabinMaterial);
-    cabin.position.set(0, body.position.y + car.height * 0.45, -length * 0.08);
+    cabin.position.set(0, body.position.y + cabinHeight, -length * car.cabinOffsetRatio);
     group.add(cabin);
 
-    const wheelGeometry = this.#disposable(new CylinderGeometry(car.wheelRadius, car.wheelRadius, 0.4, 16));
+    const wheelGeometry = this.#disposable(new CylinderGeometry(car.wheelRadius, car.wheelRadius, car.wheelWidth, car.wheelSegments));
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
         const wheel = new Mesh(wheelGeometry, wheelMaterial);
         wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(sx * (width / 2), car.wheelRadius, sz * (length / 2 - 0.9));
+        wheel.position.set(sx * (width / 2), car.wheelRadius, sz * (length / 2 - car.wheelInset));
         group.add(wheel);
       }
     }

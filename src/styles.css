@@ -188,6 +188,21 @@ body {
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
 }
 
+.selection__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.selection__subtitle {
+  margin: 0;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
 .selection__options,
 .selection__actions {
   display: flex;

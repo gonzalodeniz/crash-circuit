@@ -5,6 +5,7 @@ import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
 import { createProgress, stepProgress } from './progress.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
+import { requireLapOption } from './lapOptions.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -23,11 +24,18 @@ const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false,
  * Cada participante guarda su modelo de coche (`carModelId`, por defecto `cars.defaultModelId`): solo
  * afecta al aspecto, nunca al rendimiento (RF-003).
  * El circuito es el indicado por `trackId` (por defecto `tracks.defaultId`); la parrilla se coloca en él.
- * @param {object} config CONFIG (secciones `tracks`, `grid`, `race` y `cars`; `race.laps` fija las vueltas)
+ * Las vueltas son `laps` (por defecto `race.defaultLaps`) y deben ser una de `race.lapOptions` (RF-006).
+ * @param {object} config CONFIG (secciones `tracks`, `grid`, `race` y `cars`)
  * @param {Array<{id: string, name: string, isPlayer?: boolean, carModelId?: string}>} entries participantes en orden de parrilla
  * @param {string} trackId identificador del circuito del catálogo
+ * @param {number} laps número de vueltas de la carrera
  */
-export function createRace(config, entries = [config.race.player], trackId = config.tracks.defaultId) {
+export function createRace(
+  config,
+  entries = [config.race.player],
+  trackId = config.tracks.defaultId,
+  laps = config.race.defaultLaps,
+) {
   if (entries.length === 0 || entries.length > config.race.maxParticipants) {
     throw new Error(`La carrera admite de 1 a ${config.race.maxParticipants} participantes`);
   }
@@ -58,7 +66,7 @@ export function createRace(config, entries = [config.race.player], trackId = con
   return {
     track,
     car: config.race.car,
-    totalLaps: config.race.laps,
+    totalLaps: requireLapOption(config, laps),
     participants,
     clock: createRaceClock(), // cuenta atrás y cronómetro de carrera
     get player() {

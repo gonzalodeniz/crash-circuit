@@ -6,6 +6,7 @@ import { carModels } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { lapOptions } from '../src/logic/lapOptions.js';
 import { ParticipantStatus, stepRace } from '../src/logic/race.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession } from '../src/logic/raceSession.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { aiDrivers, createGridEntries } from '../src/logic/startingGrid.js';
@@ -15,6 +16,8 @@ import { trackDefinitions } from '../src/logic/trackCatalog.js';
 const DT = 1 / 60;
 const IDLE = { accelerate: false, brake: false, left: false, right: false };
 const GAS = { ...IDLE, accelerate: true };
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 const SETUP = { carModelId: 'rayo', trackId: 'ribera', laps: 1 };
 const everySetup = () => carModels(CONFIG).flatMap((model) => trackDefinitions(CONFIG).flatMap((definition) =>
   lapOptions(CONFIG).map((laps) => ({ carModelId: model.id, trackId: definition.id, laps }))));
@@ -46,7 +49,7 @@ function overlap(a, b) {
 
 test('cada carrera tiene exactamente diez participantes con identificadores únicos: el jugador y nueve pilotos IA (RF-016)', () => {
   for (const setup of everySetup()) {
-    const { participants } = createRaceFromSetup(CONFIG, setup);
+    const { participants } = createRaceFromSetup(CONFIG, setup, createSeededRandom(SEED));
     assert.equal(participants.length, 10);
     assert.equal(new Set(participants.map((p) => p.id)).size, 10);
     assert.equal(participants.filter((p) => p.isPlayer).length, 1);
@@ -61,7 +64,7 @@ test('los nueve nombres de los rivales son fijos: los mismos en todas las carrer
   assert.equal(new Set(expected).size, 9);
   assert.ok(expected.every((name) => typeof name === 'string' && name.trim() !== ''));
   for (const setup of everySetup()) {
-    const rivals = createRaceFromSetup(CONFIG, setup).participants.filter((p) => !p.isPlayer);
+    const rivals = createRaceFromSetup(CONFIG, setup, createSeededRandom(SEED)).participants.filter((p) => !p.isPlayer);
     assert.deepEqual(rivals.map((p) => p.name), expected);
     assert.deepEqual(rivals.map((p) => p.id), aiDrivers(CONFIG).map((driver) => driver.id));
   }
@@ -72,7 +75,7 @@ test('cada rival usa un modelo del catálogo y nunca un quinto modelo (RF-018)',
   assert.equal(catalog.size, 4);
   for (const driver of aiDrivers(CONFIG)) assert.ok(catalog.has(driver.carModelId), driver.name);
   for (const setup of everySetup()) {
-    const { participants } = createRaceFromSetup(CONFIG, setup);
+    const { participants } = createRaceFromSetup(CONFIG, setup, createSeededRandom(SEED));
     assert.ok(participants.every((p) => catalog.has(p.carModelId)));
     assert.equal(participants.find((p) => p.isPlayer).carModelId, setup.carModelId);
   }
@@ -81,7 +84,7 @@ test('cada rival usa un modelo del catálogo y nunca un quinto modelo (RF-018)',
 });
 
 test('los diez comparten el rendimiento: con las mismas órdenes aceleran igual, sea cual sea su modelo (RF-003, RN-07)', () => {
-  const race = createRaceFromSetup(CONFIG, SETUP);
+  const race = createRaceFromSetup(CONFIG, SETUP, createSeededRandom(SEED));
   const all = Object.fromEntries(race.participants.map((p) => [p.id, GAS]));
   const total = CONFIG.race.countdown.steps * CONFIG.race.countdown.stepDuration;
   for (let t = 0; t < (total + 1) / DT + 2; t++) stepRace(race, all, DT, CONFIG);
@@ -95,10 +98,10 @@ test('los diez comparten el rendimiento: con las mismas órdenes aceleran igual,
 
 test('el hueco del jugador sale de la configuración y los rivales ocupan los demás en su orden (RF-019)', () => {
   assert.equal(CONFIG.grid.playerSlotIndex, 9, 'propuesta: el jugador sale el último');
-  assert.equal(createRaceFromSetup(CONFIG, SETUP).player.gridIndex, CONFIG.grid.playerSlotIndex);
+  assert.equal(createRaceFromSetup(CONFIG, SETUP, createSeededRandom(SEED)).player.gridIndex, CONFIG.grid.playerSlotIndex);
   for (const slot of [0, 3, 9]) {
     const config = { ...CONFIG, grid: { ...CONFIG.grid, playerSlotIndex: slot } };
-    const race = createRaceFromSetup(config, SETUP);
+    const race = createRaceFromSetup(config, SETUP, createSeededRandom(SEED));
     assert.equal(race.player.gridIndex, slot);
     assert.deepEqual(
       race.participants.filter((p) => !p.isPlayer).map((p) => p.id),
@@ -116,12 +119,12 @@ test('una configuración con otro número de rivales, un hueco imposible o un qu
   assert.throws(() => createGridEntries(withRaceConfig({ aiDrivers: fifth }), 'rayo'), /Modelo de coche desconocido/);
   assert.throws(() => createGridEntries(CONFIG, 'quinto'), /Modelo de coche desconocido/);
   const repeated = aiDrivers(CONFIG).map((driver, i) => (i === 1 ? { ...driver, id: aiDrivers(CONFIG)[0].id } : driver));
-  assert.throws(() => createRaceFromSetup(withRaceConfig({ aiDrivers: repeated }), SETUP), /únicos/);
+  assert.throws(() => createRaceFromSetup(withRaceConfig({ aiDrivers: repeated }), SETUP, createSeededRandom(SEED)), /únicos/);
 });
 
 for (const definition of trackDefinitions(CONFIG)) {
   test(`${definition.id}: los diez huecos de parrilla están en la calzada, tras la meta, mirando en el sentido de la carrera y sin solaparse (RF-019)`, () => {
-    const race = createRaceFromSetup(CONFIG, { ...SETUP, trackId: definition.id });
+    const race = createRaceFromSetup(CONFIG, { ...SETUP, trackId: definition.id }, createSeededRandom(SEED));
     const { track, participants } = race;
     for (const p of participants) {
       for (const corner of corners(p, CONFIG.race.car)) {
@@ -155,7 +158,7 @@ test('la prueba de solape detecta coches montados (control de la propia prueba)'
 });
 
 test('los diez pasan a EN_CARRERA en el mismo paso y antes ninguno suma progreso (RF-021)', () => {
-  const race = createRaceFromSetup(CONFIG, SETUP);
+  const race = createRaceFromSetup(CONFIG, SETUP, createSeededRandom(SEED));
   const all = Object.fromEntries(race.participants.map((p) => [p.id, GAS]));
   const before = race.participants.map((p) => ({ x: p.x, z: p.z, progress: p.progress.progress }));
   let result;
@@ -176,7 +179,7 @@ test('los diez pasan a EN_CARRERA en el mismo paso y antes ninguno suma progreso
 
 test('en la sesión, la salida cambia a los diez a la vez, los rivales no se mueven antes de la señal y conducen después', () => {
   const machine = new GameStateMachine();
-  const session = new RaceSession(machine, CONFIG);
+  const session = new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) });
   machine.openSelection();
   session.confirmSelection();
   session.confirmSelection();
@@ -203,7 +206,7 @@ test('en la sesión, la salida cambia a los diez a la vez, los rivales no se mue
 
 test('repetir o empezar otra carrera monta de nuevo la parrilla con los diez participantes (RNF-04)', () => {
   const machine = new GameStateMachine();
-  const session = new RaceSession(machine, CONFIG);
+  const session = new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) });
   machine.openSelection();
   session.confirmSelection();
   session.confirmSelection();
@@ -218,7 +221,7 @@ test('repetir o empezar otra carrera monta de nuevo la parrilla con los diez par
   assert.equal(second.participants.length, 10);
   assert.ok(second.participants.every((p) => !firstParticipants.has(p)), 'ningún participante de la carrera anterior');
   assert.ok(second.participants.every((p) => p.status === ParticipantStatus.PARRILLA && p.speed === 0 && p.progress.laps === 0));
-  const fresh = createRaceFromSetup(CONFIG, session.confirmedSetup);
+  const fresh = createRaceFromSetup(CONFIG, session.confirmedSetup, createSeededRandom(SEED));
   assert.deepEqual(second.participants.map((p) => [p.x, p.z]), fresh.participants.map((p) => [p.x, p.z]));
   // Otra carrera desde los resultados: se descarta la anterior.
   for (let i = 0; i < 400; i++) session.step(DT, { player: GAS });

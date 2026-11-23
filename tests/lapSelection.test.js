@@ -6,6 +6,7 @@ import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { lapOptions, requireLapOption } from '../src/logic/lapOptions.js';
 import { currentLap, lapCounterText } from '../src/logic/progress.js';
 import { createRace, raceTimeOf, stepRace } from '../src/logic/race.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession } from '../src/logic/raceSession.js';
 import { pointAtDistance } from '../src/logic/track.js';
 
@@ -22,9 +23,11 @@ function autopilot(race) {
   return { accelerate: p.speed < 22, brake: false, left: error > 0.05, right: error < -0.05 };
 }
 
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 function createSession() {
   const machine = new GameStateMachine();
-  return { machine, session: new RaceSession(machine, CONFIG) };
+  return { machine, session: new RaceSession(machine, CONFIG, { random: createSeededRandom(SEED) }) };
 }
 
 test('las opciones de vueltas son exactamente 1, 3, 5 y 10 y vienen de la configuración (RF-006)', () => {

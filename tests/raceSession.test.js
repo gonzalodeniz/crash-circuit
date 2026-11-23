@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../src/config/config.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
+import { createSeededRandom } from '../src/logic/random.js';
 import { RaceSession } from '../src/logic/raceSession.js';
 import { ParticipantStatus } from '../src/logic/race.js';
 import { pointAtDistance } from '../src/logic/track.js';
@@ -20,9 +21,11 @@ function autopilot(race) {
   return { accelerate: p.speed < 22, brake: false, left: error > 0.05, right: error < -0.05 };
 }
 
+// Semilla de los rivales: la carrera es la misma en cada ejecución y un fallo se puede repetir.
+const SEED = 65;
 function createSession(config = CONFIG) {
   const machine = new GameStateMachine();
-  const session = new RaceSession(machine, config);
+  const session = new RaceSession(machine, config, { random: createSeededRandom(SEED) });
   const states = [];
   machine.onChange((from, to) => states.push(to));
   return { machine, session, states };

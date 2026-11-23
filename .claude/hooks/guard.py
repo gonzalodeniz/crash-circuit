@@ -7,6 +7,8 @@
   que van dentro de `bash -c`, `eval`, `$(…)` y `…`. Los cuerpos de heredocs y
   los comentarios se ignoran, para no bloquear por palabras de una issue o PR.
 - developer-teams: no hace commit ni push en main ni fusiona PR sin estado:validado.
+- Todos los roles: ninguna orden puede tener como argumento ni redirección un fichero
+  `.env` o `.env.*` (salvo `.env.example`): contienen secretos.
 - Todos los roles: `gh pr checkout` y `gh pr merge` se bloquean si la PR viene de un fork
   (isCrossRepository) o si no se puede comprobar su origen.
 
@@ -302,7 +304,7 @@ def es_puntuacion(t):
 
 
 def ordenes(tokens):
-    """Agrupa los tokens en órdenes simples: [(palabras, redirecciones de salida)]."""
+    """Agrupa los tokens en órdenes simples: [(palabras, redirecciones de entrada y salida)]."""
     palabras, redirs, i = [], [], 0
     while i < len(tokens):
         t = tokens[i]
@@ -316,8 +318,7 @@ def ordenes(tokens):
                 if i + 1 < len(tokens) and not es_puntuacion(tokens[i + 1]):
                     destino = tokens[i + 1]
                     i += 1
-                if ">" in t:
-                    redirs.append((t, destino))
+                redirs.append((t, destino))
             else:
                 if palabras or redirs:
                     yield palabras, redirs
@@ -373,10 +374,34 @@ def analizar(texto, nivel=0):
         analizar(sub, nivel + 1)
 
 
+# Ficheros de entorno con secretos: `.env`, `.env.local`, `.env*`… (no `.env.example`).
+FICHERO_ENTORNO = re.compile(r"\.env(?:[.*?\[].*)?")
+ENTORNO_PUBLICO = ".env.example"
+
+
+def es_fichero_entorno(texto):
+    """True si el texto (o el valor tras `=` de una opción) apunta a un fichero de entorno."""
+    for candidato in (texto, texto.split("=", 1)[-1]):
+        base = os.path.basename(candidato.rstrip("/"))
+        if base != ENTORNO_PUBLICO and FICHERO_ENTORNO.fullmatch(base):
+            return True
+    return False
+
+
+def comprobar_ficheros_entorno(palabras, redirs):
+    """Bloquea cualquier orden que reciba un fichero .env: es el complemento de las reglas
+    `deny` de los permisos, que solo cubren `cat` y la herramienta Read."""
+    if any(es_fichero_entorno(a) for a in palabras) or any(
+            destino is not None and es_fichero_entorno(destino) for _, destino in redirs):
+        bloquear("los ficheros .env contienen secretos y ninguna orden puede leerlos ni modificarlos "
+                 "(.env.example sí se puede usar).")
+
+
 def comprobar_orden(palabras, redirs, nivel):
+    comprobar_ficheros_entorno(palabras, redirs)
     if ROL in SIN_FICHEROS:
         for op, destino in redirs:
-            if escribe_en_proyecto(op, destino):
+            if ">" in op and escribe_en_proyecto(op, destino):
                 bloquear(f"{SIN_FICHEROS[ROL]} (redirección a {destino})")
     p = normalizar(palabras)
     if not p:

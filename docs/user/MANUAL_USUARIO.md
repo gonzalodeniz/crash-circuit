@@ -72,7 +72,7 @@ Cada carrera tiene diez participantes: tú y nueve pilotos controlados por el ju
 - Todos reciben la señal de salida a la vez. Antes de la señal nadie se mueve ni suma progreso.
 - Si repites la carrera o empiezas otra, la parrilla se monta de nuevo con los diez coches.
 
-Todavía no hay choques entre coches, así que tu coche puede atravesar a los rivales y ellos a ti.
+Los diez coches son sólidos: no se pueden atravesar (ver «Choques entre coches»).
 
 ### Cómo conducen los rivales
 
@@ -80,12 +80,12 @@ Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completa
 
 - Cada circuito tiene su propia trayectoria. Los rivales frenan antes de las curvas y aceleran en las rectas.
 - No van todos en fila. Cada rival se desplaza un poco hacia un lado o hacia otro de la calzada, y cada uno lleva un ritmo algo distinto. Por eso dos carreras con la misma configuración no son idénticas.
-- Los rivales intentan no salirse de la calzada. Si alguno se sale, pierde velocidad igual que tú (ver «Salirse de la calzada»). Tampoco reaccionan a otros coches: no te esquivan ni te bloquean.
+- Los rivales intentan no salirse de la calzada. Si alguno se sale, pierde velocidad igual que tú (ver «Salirse de la calzada»). No miran a los demás coches: no los esquivan ni intentan bloquearte, así que pueden chocar contigo y entre ellos.
 - Los rivales chocan con el muro y los obstáculos igual que tú (ver «Muro y obstáculos»). Si uno se queda casi parado contra algo, da marcha atrás, lo rodea y sigue.
 - Sus vueltas cuentan con las mismas reglas que las tuyas: tienen que pasar por todos los puntos de control, en orden, antes de la meta.
 - Conducen con las mismas limitaciones que tú, y los cuatro modelos de coche rinden igual. Un rival no corre más por llevar un coche u otro.
 - Cuanto más difícil es el circuito, más exigentes son: en Abismo van más rápidos y frenan más tarde en las curvas que en Llanura. Con Ribera, Sierra y Abismo la exigencia sube por pasos.
-- Si tú terminas la carrera, los rivales que siguen en pista continúan conduciendo mientras ves los resultados. Cuando terminan su carrera, ruedan un poco y se paran.
+- Si tú terminas la carrera, los rivales que siguen en pista continúan conduciendo mientras ves los resultados. Cuando terminan su carrera, ruedan un poco y se paran en la calzada, donde siguen siendo sólidos.
 
 Los valores de exigencia de cada circuito son iniciales y pueden cambiar tras probar el juego.
 
@@ -109,7 +109,7 @@ Cómo se conduce:
 - Si pulsas arriba y abajo a la vez, gana el freno.
 - La cámara acompaña al coche y se mantiene detrás al girar.
 
-No puedes conducir hasta la señal de salida. Puedes chocar con el muro y los obstáculos (ver «Muro y obstáculos»), pero todavía no con otros coches. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
+No puedes conducir hasta la señal de salida. Puedes chocar con el muro y los obstáculos (ver «Muro y obstáculos») y con los demás coches (ver «Choques entre coches»). Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
 
 ## Salirse de la calzada
 
@@ -152,6 +152,35 @@ Para volver a la pista, gira y sigue. Si te quedas atascado de frente, suelta la
 - Por ahora los golpes no dañan ni destruyen el coche, no restan puntos y no tienen sonido.
 
 La forma de los obstáculos, su posición y la fuerza del rebote son iniciales y pueden cambiar tras probar el juego.
+
+## Choques entre coches
+
+Tu coche y los de los rivales son sólidos. Al tocarse se separan y ninguno atraviesa a otro, por muy rápido que vaya. También chocan los rivales entre sí.
+
+El golpe cambia la velocidad y la dirección:
+
+- **Por detrás:** quien golpea pierde velocidad y el de delante sale empujado.
+- **De frente:** los dos frenan en seco o salen rebotados, según lo rápido que fueran.
+- **De costado:** los coches se apartan hacia los lados.
+- **Descentrado:** además, el coche gira un poco.
+
+Las reglas son las mismas para los diez, con cualquier modelo.
+
+**Si un golpe te lanza hacia atrás:**
+
+- Si ya tenías pulsada la flecha abajo antes del golpe, el coche frena poco a poco hasta pararse.
+- Si pulsas abajo cuando ya vas hacia atrás, cuenta como marcha atrás: el coche pierde el exceso de velocidad, pero sigue retrocediendo.
+- Para pararlo y volver a avanzar, pulsa la flecha arriba.
+
+**Empujones y avance en la carrera:**
+
+- Lo que un coche avanza empujado cuenta igual que si condujera, siempre que vaya por la calzada y pase los puntos de control en orden.
+- Por eso un empujón puede dar posiciones, completar una vuelta e incluso ganar la carrera. Vale para ti y para los rivales.
+- Un empujón hacia atrás no suma. Tampoco cuenta una vuelta si falta algún punto de control.
+
+**Coches que ya han terminado:** se paran en la calzada, pasada la meta, y siguen siendo sólidos. Si aún estás corriendo (por ejemplo, porque te han doblado), puede que tengas que rodearlos. Si hay varios en fila, no podrás apartarlos: da marcha atrás y pasa por un lado.
+
+Por ahora los choques no dañan ni destruyen los coches, no dan ni quitan puntos y no tienen sonido. La fuerza de los choques es inicial y puede cambiar tras probar el juego.
 
 ## Salida y cronómetro
 
@@ -207,6 +236,6 @@ El juego no guarda nada: si recargas la página, vuelves al menú y no queda nin
 
 ## Qué falta
 
-Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, choques entre coches, destrucción, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
+Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, destrucción, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

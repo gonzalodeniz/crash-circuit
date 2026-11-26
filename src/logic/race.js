@@ -232,12 +232,13 @@ function stepWrecked(participant, drivingTime, config) {
 /**
  * Devuelve a la pista un coche cuyo bloqueo ha terminado (RF-039, RN-04): nuevo, intacto, protegido y
  * en un sitio libre junto a su último avance válido. Conserva piloto, modelo, vueltas, checkpoints y
- * resultado (RF-040, RF-027): solo cambia lo del coche y dónde está. Si no hay ningún sitio libre, sigue
+ * resultado (RF-040, RF-027): solo cambia lo del coche y dónde está. Quien ya había terminado no vuelve a
+ * conducir, así que reaparece pegado a un borde de la calzada. Si no hay ningún sitio libre, sigue
  * destruido y se vuelve a intentar en el paso siguiente.
  */
 function respawnParticipant(race, participant, config) {
   const others = race.participants.filter((other) => other !== participant);
-  const spot = findRespawnSpot(race, participant.progress, others, config.respawn);
+  const spot = findRespawnSpot(race, participant.progress, others, config.respawn, { aside: participant.finished });
   if (spot === null) return;
   Object.assign(participant, createCarState(spot), {
     speed: config.respawn.exitSpeed,

@@ -130,6 +130,9 @@ export const CONFIG = deepFreeze({
     maxSearchDistance: 150, // m que como mucho se retrocede; si no hay sitio, se reintenta en el paso siguiente
     lateralStep: 3, // m entre dos intentos hacia los lados, sin sacar el coche de la calzada
     clearance: 1, // m libres que como mínimo quedan hasta otro coche o un objeto
+    // s hacia delante en los que se mira por dónde pasarán los coches en marcha, para no reaparecer delante de
+    // uno que llega lanzado. Con 1 s, quien venga de más lejos alcanza al coche ya en marcha sin golpe fuerte.
+    approachTime: 1,
     gateClearance: 3, // m que como mínimo queda por detrás del checkpoint o la meta que tiene pendiente
   },
 

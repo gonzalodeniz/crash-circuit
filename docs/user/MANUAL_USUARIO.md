@@ -109,7 +109,7 @@ Cómo se conduce:
 - Si pulsas arriba y abajo a la vez, gana el freno.
 - La cámara acompaña al coche y se mantiene detrás al girar.
 
-No puedes conducir hasta la señal de salida. Puedes chocar con el muro y los obstáculos (ver «Muro y obstáculos») y con los demás coches (ver «Choques entre coches»). Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
+No puedes conducir hasta la señal de salida. Puedes chocar con el muro y los obstáculos (ver «Muro y obstáculos») y con los demás coches (ver «Choques entre coches»), y los golpes dejan daños (ver «Golpes y daños»). Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
 
 ## Salirse de la calzada
 
@@ -149,7 +149,7 @@ Para volver a la pista, gira y sigue. Si te quedas atascado de frente, suelta la
 
 - Las mismas reglas valen para ti y para los rivales, con cualquier coche.
 - Rebotar no te hace avanzar en la carrera ni sumar vueltas.
-- Por ahora los golpes no dañan ni destruyen el coche, no restan puntos y no tienen sonido.
+- Los golpes dejan daños en el coche, y uno fuerte lo deja casi parado (ver «Golpes y daños»). No lo destruyen, no restan puntos y no tienen sonido.
 
 La forma de los obstáculos, su posición y la fuerza del rebote son iniciales y pueden cambiar tras probar el juego.
 
@@ -157,7 +157,7 @@ La forma de los obstáculos, su posición y la fuerza del rebote son iniciales y
 
 Tu coche y los de los rivales son sólidos. Al tocarse se separan y ninguno atraviesa a otro, por muy rápido que vaya. También chocan los rivales entre sí.
 
-El golpe cambia la velocidad y la dirección:
+El golpe cambia la velocidad y la dirección. En un golpe leve ocurre así (si es fuerte, ver «Golpes y daños»):
 
 - **Por detrás:** quien golpea pierde velocidad y el de delante sale empujado.
 - **De frente:** los coches pierden velocidad y pueden salir despedidos hacia atrás, según lo rápido que fueran.
@@ -180,7 +180,33 @@ Las reglas son las mismas para los diez, con cualquier modelo.
 
 **Coches que ya han terminado:** se paran en la calzada, pasada la meta, y siguen siendo sólidos. Si aún estás corriendo (por ejemplo, porque te han doblado), puede que tengas que rodearlos. Si hay varios en fila, no podrás apartarlos: da marcha atrás y pasa por un lado.
 
-Por ahora los choques no dañan ni destruyen los coches, no dan ni quitan puntos y no tienen sonido. La fuerza de los choques es inicial y puede cambiar tras probar el juego.
+Los choques dejan daños (ver «Golpes y daños»). No destruyen los coches, no dan ni quitan puntos y no tienen sonido. La fuerza de los choques es inicial y puede cambiar tras probar el juego.
+
+## Golpes y daños
+
+Cada golpe contra otro coche, el muro o un obstáculo es leve o fuerte. Depende de lo deprisa que te acercas a lo que golpeas, en la dirección del choque:
+
+- Cuenta la diferencia de velocidad. Alcanzar a un coche que va casi tan rápido como tú es un golpe suave.
+- Un roce de refilón cuenta menos que un golpe de frente a la misma velocidad.
+- Es fuerte a partir de unos 72 km/h de velocidad de impacto. El juego no muestra la velocidad.
+- Un contacto muy suave (por debajo de unos 7 km/h), como ir apoyado en otro coche, no deja daño.
+
+| | Golpe leve | Golpe fuerte |
+|---|---|---|
+| Velocidad | La que pierdes por el choque o el rebote. | Además, pierdes casi toda la que te quedaba: el coche queda casi parado. |
+| Aspecto | Pequeñas marcas y la carrocería algo más oscura. | Marcas grandes y abolladuras, un parachoques suelto y la carrocería mucho más oscura. |
+| Efectos | Unas pocas chispas, un instante. | Muchas chispas y humo, durante casi un segundo. |
+
+- En un choque entre dos coches, los dos reciben el mismo tipo de golpe, aunque uno estuviera parado. En un alcance fuerte, el de delante también pierde casi toda su velocidad.
+- Un golpe de frente puede frenarte bastante aunque sea leve.
+- Fuera de la calzada vas más despacio. Para darte un golpe fuerte contra un obstáculo tienes que llegar lanzado desde la pista.
+- Las marcas se quedan hasta el final de la carrera. Muchos roces no llegan a dejar el coche como un golpe fuerte.
+- El daño es solo de aspecto: después del golpe, el coche acelera, corre y gira igual que antes.
+- Las reglas son las mismas para ti y para los rivales, con cualquier coche.
+- Ningún golpe destruye un coche ni lo saca de la carrera. La destrucción todavía no está disponible.
+- Al pulsar «Repetir» o empezar otra carrera, todos los coches salen sin daños.
+
+Estos valores son iniciales y pueden cambiar tras probar el juego.
 
 ## Salida y cronómetro
 

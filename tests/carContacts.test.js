@@ -5,12 +5,13 @@ import { applySlide, carsOverlap, resolveCarContacts } from '../src/logic/carCon
 import { touchesScenery } from '../src/logic/collisions.js';
 import { createCarState, stepCar } from '../src/logic/driving.js';
 import { createProgress } from '../src/logic/progress.js';
-import { createRace, stepRace } from '../src/logic/race.js';
+import { ParticipantStatus, createRace, stepRace } from '../src/logic/race.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { rankParticipants } from '../src/logic/standings.js';
 import { pointAtDistance, rightOf } from '../src/logic/track.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
+import { withoutDestruction } from './helpers/withoutDestruction.js';
 
 const P = CONFIG.carPerformance;
 const CAR = CONFIG.race.car;
@@ -18,6 +19,8 @@ const PARAMS = CONFIG.carContact;
 /** Velocidad de la embestida más rápida que aún es un golpe leve contra un coche parado (`impact.js`). */
 const FIRM_PUSH = CONFIG.impact.strongSpeed - 1;
 const DT = 1 / 60;
+// Para las pruebas de conducción tras los contactos: sin destrucción, que no deja seguir hasta #92.
+const NO_WRECKS = withoutDestruction();
 const NONE = { accelerate: false, brake: false, left: false, right: false };
 const GAS = { ...NONE, accelerate: true };
 const BRAKE = { ...NONE, brake: true };
@@ -52,7 +55,9 @@ function startedRace(trackId = 'llanura', laps = 1) {
 
 /** Coloca un participante en una pose, con su progreso partiendo de ella. */
 function place(race, participant, pose, speed = 0) {
-  Object.assign(participant, createCarState(pose), { speed, surfaceSample: null, progress: createProgress(race.track, pose) });
+  Object.assign(participant, createCarState(pose), {
+    speed, surfaceSample: null, progress: createProgress(race.track, pose), status: ParticipantStatus.EN_CARRERA, wreck: null,
+  });
 }
 
 /** Avanza la carrera: quien no esté en `inputs` queda sin tocar los controles. */
@@ -162,7 +167,7 @@ test('en un alcance por detrás, quien golpea pierde velocidad y el golpeado rec
 
 test('el contacto nunca adelanta de golpe a un coche parado: solo retrocede quien iba hacia él', () => {
   const still = carAt(0, 10);
-  const mover = carAt(0, 10 - CAR.length - 0.01, 0, 30);
+  const mover = carAt(0, 10 - CAR.length - 0.01, 0, FIRM_PUSH);
   const next = stepCar(mover, GAS, DT, P);
   const [after, struck] = resolveCarContacts(
     [{ previous: mover, next }, { previous: still, next: still }], { car: CAR, scenery: OPEN }, DT, CONFIG,
@@ -174,7 +179,7 @@ test('el contacto nunca adelanta de golpe a un coche parado: solo retrocede quie
 });
 
 test('un choque de frente rebota a los dos', () => {
-  const [a, b] = stepCars([carAt(0, 0, 0, 20), carAt(0, CAR.length + 0.2, Math.PI, 20)], [NONE, NONE]);
+  const [a, b] = stepCars([carAt(0, 0, 0, 8), carAt(0, CAR.length + 0.2, Math.PI, 8)], [NONE, NONE]);
   assert.ok(a.speed < 0 && b.speed < 0, `${a.speed}, ${b.speed}`);
   assert.ok(Math.abs(a.speed - b.speed) < 1e-9, 'misma regla para los dos');
 });
@@ -301,7 +306,7 @@ test('un coche que ya ha terminado y rueda por inercia sigue siendo sólido y co
 // cuenta como lo conducido (decisión de producto en #83); hacia atrás o saltando checkpoints, no.
 
 /** `striker` embiste a `speed` a `struck`, parado, desde detrás en la dirección `heading`. */
-function ram(race, striker, struck, pose, speed = P.maxSpeed, seconds = 1.5) {
+function ram(race, striker, struck, pose, speed = FIRM_PUSH, seconds = 1.5) {
   const forward = { x: Math.sin(pose.heading), z: Math.cos(pose.heading) };
   const behind = CAR.length + 0.2;
   place(race, struck, pose);
@@ -358,7 +363,7 @@ for (const definition of trackDefinitions(CONFIG)) {
     const lapDistance = struck.progress.lapDistance;
     Object.assign(struck, atGate, { speed: 0, progress: { ...struck.progress, x: atGate.x, z: atGate.z, lapPosition: second - 3 } });
     const forward = { x: Math.sin(atGate.heading), z: Math.cos(atGate.heading) };
-    place(race, striker, { ...atGate, x: atGate.x - forward.x * (CAR.length + 0.2), z: atGate.z - forward.z * (CAR.length + 0.2) }, P.maxSpeed);
+    place(race, striker, { ...atGate, x: atGate.x - forward.x * (CAR.length + 0.2), z: atGate.z - forward.z * (CAR.length + 0.2) }, FIRM_PUSH);
     for (let i = 0; i < 60; i++) step(race, { [striker.id]: GAS });
     assert.ok(struck.progress.lapPosition > second, 'ha pasado la puerta');
     assert.equal(struck.progress.checkpointIndex, 0);
@@ -374,7 +379,7 @@ for (const definition of trackDefinitions(CONFIG)) {
     place(race, struck, pose);
     struck.progress = { ...struck.progress, started: true };
     const before = struck.progress;
-    place(race, striker, { ...poseAt(race.track, 40 + CAR.length + 0.2), heading: pose.heading + Math.PI }, P.maxSpeed);
+    place(race, striker, { ...poseAt(race.track, 40 + CAR.length + 0.2), heading: pose.heading + Math.PI }, FIRM_PUSH);
     for (let i = 0; i < 90; i++) {
       step(race, { [striker.id]: GAS });
       assert.equal(struck.progress.progress, before.progress, `paso ${i}`);
@@ -441,14 +446,14 @@ for (const definition of trackDefinitions(CONFIG)) {
 
   test(`${definition.id}: una carrera completa con semilla, con contactos, termina y la clasificación es coherente`, () => {
     for (const seed of [7, 8]) {
-      const race = createRaceFromSetup(CONFIG, { carModelId: 'rayo', trackId: definition.id, laps: 3 }, createSeededRandom(seed));
+      const race = createRaceFromSetup(NO_WRECKS, { carModelId: 'rayo', trackId: definition.id, laps: 3 }, createSeededRandom(seed));
       const rivals = race.participants.filter((p) => !p.isPlayer);
       let steps = 0;
       let bumps = 0;
       // El jugador no toca los controles: es un coche parado en la calzada al que los rivales deben superar.
       while (rivals.some((p) => !p.finished) && steps++ < 60 * 600) {
         const speeds = rivals.map((p) => p.speed);
-        stepRace(race, {}, DT, CONFIG);
+        stepRace(race, {}, DT, NO_WRECKS);
         rivals.forEach((p, i) => { if (!p.finished && speeds[i] - p.speed > 1) bumps++; });
         if (steps % 10 === 0) assertNoOverlap(race.participants, `${definition.id}, semilla ${seed}, paso ${steps}`);
       }
@@ -490,7 +495,7 @@ test('un rival rebasa una hilera de coches parados que no puede empujar', () => 
   row.forEach((p, i) => place(race, p, poseAt(race.track, 30 + i * (CAR.length + 0.05))));
   place(race, rival, poseAt(race.track, 10));
   const others = Object.fromEntries(race.participants.filter((p) => p !== rival).map((p) => [p.id, NONE]));
-  for (let i = 0; i < 60 * 40; i++) stepRace(race, others, DT, CONFIG);
+  for (let i = 0; i < 60 * 40; i++) stepRace(race, others, DT, NO_WRECKS);
   assert.ok(rival.progress.lapPosition > 30 + row.length * (CAR.length + 0.05) + 20, `${rival.progress.lapPosition}`);
 });
 

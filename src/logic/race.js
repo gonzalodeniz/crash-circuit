@@ -11,15 +11,18 @@ import { rankParticipants, standingsOf } from './standings.js';
 import { buildScenery } from './scenery.js';
 import { resolveSceneryCollision } from './collisions.js';
 import { applySlide, resolveCarContacts } from './carContacts.js';
-import { createDamage, stepDamage } from './impact.js';
+import { ImpactSeverity, classifyImpact, createDamage, stepDamage } from './impact.js';
+import { createWreck, stepWreck } from './destruction.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
- * `DESTRUIDO` (subestado del vehículo, RN-04) se añadirá aquí en E5.
+ * `DESTRUIDO` es el subestado del vehículo tras un golpe fuerte (RN-04): sigue en la carrera y en la
+ * clasificación (no es un abandono), pero no se conduce ni avanza; su temporizador es `participant.wreck`.
  */
 export const ParticipantStatus = Object.freeze({
   PARRILLA: 'PARRILLA',
   EN_CARRERA: 'EN_CARRERA',
+  DESTRUIDO: 'DESTRUIDO',
 });
 
 const IDLE_INPUT = Object.freeze({ accelerate: false, brake: false, left: false, right: false });
@@ -76,6 +79,7 @@ export function createRace(
       offRoad: false, // va fuera de la calzada (RF-013); la parrilla está sobre el asfalto
       surfaceSample: null, // última posición en la que se ha mirado la superficie ({x, z, along})
       damage: createDamage(), // daño visual por golpes (RF-034); no cambia el rendimiento
+      wreck: null, // bloqueo del coche destruido (`destruction.js`, RF-038); `null` si no lo está
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
       progress: createProgress(track, slot), // vueltas válidas, checkpoints y distancia válida (RN-01)
     };
@@ -196,22 +200,43 @@ function moveParticipant(race, participant, inputs, drivingTime, config) {
 
 /**
  * Aplica a un participante el estado en que termina el paso y convierte los golpes recibidos en daño
- * (RF-034), con la misma regla para los diez (RF-032).
+ * (RF-034) y, si alguno es fuerte, en destrucción (RF-035, RF-036): contra coche, límite u obstáculo, con
+ * la misma regla para los diez (RF-032). El coche destruido se queda parado donde ha chocado.
  */
 function settleParticipant(participant, state, drivingTime, config) {
   const damage = stepDamage(participant.damage, state.impactSpeed, drivingTime, config.impact);
+  const destroyed = classifyImpact(state.impactSpeed, config.impact) === ImpactSeverity.STRONG;
   Object.assign(participant, state, { damage, impactSpeed: 0 });
+  if (!destroyed) return;
+  Object.assign(participant, createCarState(participant), {
+    status: ParticipantStatus.DESTRUIDO,
+    wreck: createWreck(config.destruction),
+  });
+}
+
+/**
+ * Avanza el bloqueo de un coche destruido y la reacción visual de su golpe. No se conduce, no se mueve, no
+ * suma progreso y no choca con nadie (RF-038): sus restos no son sólidos.
+ */
+function stepWrecked(participant, drivingTime, config) {
+  participant.wreck = stepWreck(participant.wreck, drivingTime);
+  participant.damage = stepDamage(participant.damage, 0, drivingTime, config.impact);
 }
 
 /**
  * Avanza a los participantes que ya están en carrera: mueve a todos, resuelve los contactos entre coches
- * (RF-033), también los de quienes ya han terminado, anota el daño de los golpes y actualiza el progreso
- * con la posición resultante.
+ * (RF-033), también los de quienes ya han terminado, anota el daño y las destrucciones de los golpes y
+ * actualiza el progreso con la posición resultante (la del paso en que un coche se destruye también cuenta).
+ * Los destruidos en pasos anteriores solo avanzan su bloqueo (`stepWrecked`).
  * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
  * @returns {string[]} los que terminan en este paso
  */
 function stepParticipants(race, inputs, drivingTime, config) {
   if (drivingTime <= 0) return [];
+  // Antes de mover a nadie: el coche que se destruya en este paso empieza a contar en el siguiente.
+  for (const participant of race.participants) {
+    if (participant.status === ParticipantStatus.DESTRUIDO) stepWrecked(participant, drivingTime, config);
+  }
   const racing = race.participants.filter((participant) => participant.status === ParticipantStatus.EN_CARRERA);
   const moves = racing.map((participant) => moveParticipant(race, participant, inputs, drivingTime, config));
   const states = resolveCarContacts(moves, race, drivingTime, config);
@@ -241,7 +266,7 @@ function recordWinner(race, finished) {
  *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
  * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance`, `offRoad`, `collision`,
- *   `carContact` e `impact`)
+ *   `carContact`, `impact` y `destruction`)
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): su tiempo de llegada
  * y su progreso quedan congelados, sus controles dejan de actuar y su coche rueda por inercia hasta
  * detenerse. El reloj de la carrera no se detiene.

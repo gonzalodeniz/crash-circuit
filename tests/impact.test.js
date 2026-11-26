@@ -39,7 +39,9 @@ function openRace(config = ASPHALT, scenery = OPEN) {
 const held = (race) => Object.fromEntries(race.participants.map((p) => [p.id, NONE]));
 
 function place(race, participant, pose, speed = 0) {
-  Object.assign(participant, createCarState(pose), { speed, surfaceSample: null, progress: createProgress(race.track, pose) });
+  Object.assign(participant, createCarState(pose), {
+    speed, surfaceSample: null, progress: createProgress(race.track, pose), status: ParticipantStatus.EN_CARRERA, wreck: null,
+  });
 }
 
 /** Un paso en el que solo actúa lo indicado en `inputs`. */
@@ -74,7 +76,6 @@ const rivals = [...Array(CONFIG.race.maxParticipants).keys()].filter((i) => i !=
 test('los parámetros de los golpes están en la configuración, congelados y son coherentes (RF-034)', () => {
   assert.ok(Object.isFrozen(IMPACT) && Object.isFrozen(IMPACT.light) && Object.isFrozen(IMPACT.strong));
   assert.ok(IMPACT.minSpeed > 0 && IMPACT.minSpeed < IMPACT.strongSpeed && IMPACT.strongSpeed < P.maxSpeed);
-  assert.ok(IMPACT.strong.speedKeep >= 0 && IMPACT.strong.speedKeep < 0.5);
   // Las rozaduras nunca llegan a verse como un accidente grave, y el daño está acotado.
   assert.ok(IMPACT.light.maxDamage < IMPACT.strong.damage);
   assert.ok(IMPACT.strong.maxDamage <= 1);
@@ -92,13 +93,10 @@ test('por debajo del umbral el golpe es leve; desde el umbral, fuerte; un simple
   assert.equal(classifyImpact(P.maxSpeed * 2, IMPACT), STRONG);
 });
 
-test('un golpe leve no toca el movimiento de la respuesta física; uno fuerte quita casi toda la velocidad', () => {
+test('un golpe leve no toca el movimiento de la respuesta física; uno fuerte detiene el coche', () => {
   const motion = { speed: -10, slideX: 4, slideZ: -2, impactSpeed: 3 };
   assert.deepEqual(applyImpact(motion, STRONG_SPEED - 1, IMPACT), { ...motion, impactSpeed: STRONG_SPEED - 1 });
-  const keep = IMPACT.strong.speedKeep;
-  assert.deepEqual(applyImpact(motion, STRONG_SPEED, IMPACT), {
-    speed: -10 * keep, slideX: 4 * keep, slideZ: -2 * keep, impactSpeed: STRONG_SPEED,
-  });
+  assert.deepEqual(applyImpact(motion, STRONG_SPEED, IMPACT), { speed: 0, slideX: 0, slideZ: 0, impactSpeed: STRONG_SPEED });
   // Se anota la mayor velocidad de impacto, no la última.
   assert.equal(applyImpact(motion, 1, IMPACT).impactSpeed, 3);
 });
@@ -111,7 +109,8 @@ test('el umbral se lee de la configuración: el mismo choque es leve o fuerte se
   const strong = crash(0, 1, speed, openRace(config), config);
   assert.equal(strong.a.damage.worst, STRONG);
   assert.equal(strong.b.damage.worst, STRONG);
-  assert.ok(Math.abs(strong.b.speed - light.b.speed * IMPACT.strong.speedKeep) < 1e-9);
+  assert.ok(light.b.speed > 0);
+  assert.equal(strong.b.speed, 0);
 });
 
 for (const [name, scenery] of [['el límite', WALL], ['un obstáculo', ROCK]]) {
@@ -159,7 +158,7 @@ test('un toque suave entre dos coches: reacción leve, ninguno se destruye y amb
   assert.ok(a.z > from[0] + 20 && b.z > from[1] + 20, `${a.z}, ${b.z}`);
 });
 
-test('en un golpe fuerte entre coches los dos pierden casi toda la velocidad y quedan dañados', () => {
+test('en un golpe fuerte entre coches los dos pierden la velocidad y quedan dañados', () => {
   const light = crash(0, 1, STRONG_SPEED - 1);
   const strong = crash(0, 1, STRONG_SPEED + 1);
   assert.equal(strong.a.damage.worst, STRONG);
@@ -214,15 +213,17 @@ test('misma clasificación y consecuencias para los diez, entre rivales y con cu
   }
 });
 
-test('ningún golpe destruye ni elimina a un participante, que puede seguir conduciendo', () => {
+test('los golpes leves repetidos no destruyen ni eliminan a nadie, que sigue conduciendo (RF-034)', () => {
   const race = openRace(ASPHALT, WALL);
   for (let hit = 0; hit < 8; hit++) {
-    place(race, race.player, { x: 0, z: 20 - CAR.length / 2 - 0.1, heading: 0 }, P.maxSpeed);
+    place(race, race.player, { x: 0, z: 20 - CAR.length / 2 - 0.1, heading: 0 }, STRONG_SPEED - 1);
+    // Sin `place` reponiendo el estado entre medias: el golpe anterior no lo ha dejado fuera de juego.
     step(race, { player: GAS });
+    assert.equal(race.player.status, ParticipantStatus.EN_CARRERA, `golpe ${hit}`);
+    assert.equal(race.player.wreck, null);
   }
   assert.equal(race.participants.length, 10);
-  assert.ok(race.participants.every((p) => p.status === ParticipantStatus.EN_CARRERA));
-  assert.equal(race.player.damage.worst, STRONG);
+  assert.equal(race.player.damage.worst, LIGHT);
   place(race, race.player, { x: 0, z: -100, heading: 0 });
   for (let i = 0; i < 120; i++) step(race, { player: GAS });
   assert.ok(race.player.speed > P.maxSpeed * 0.5);
@@ -303,6 +304,7 @@ test('al repetir la carrera o empezar otra, los coches salen sin daños', () => 
     for (const p of session.race.participants) {
       assert.deepEqual(p.damage, createDamage());
       assert.equal(p.impactSpeed, 0);
+      assert.equal(p.wreck, null);
     }
   };
   const start = () => {

@@ -1,8 +1,8 @@
 // Estado de la carrera: trazado y participantes. Lógica pura (RNF-05).
-import { buildTrack, gridSlot } from './track.js';
+import { buildTrack, gridSlot, locateOnRoad, wrapDistance } from './track.js';
 import { createCarState, stepCar } from './driving.js';
 import { ClockPhase, createRaceClock, stepRaceClock } from './raceClock.js';
-import { createProgress, stepProgress } from './progress.js';
+import { NEAREST_SEARCH_SPAN, createProgress, stepProgress } from './progress.js';
 import { requireCarModel } from './carModels.js';
 import { requireTrackDefinition } from './trackCatalog.js';
 import { requireLapOption } from './lapOptions.js';
@@ -68,6 +68,8 @@ export function createRace(
       status: ParticipantStatus.PARRILLA, // pasa a EN_CARRERA con la señal de salida (RF-021)
       finished: false, // ha completado todas las vueltas (RF-025)
       finishTime: null, // tiempo real de llegada en s, congelado al terminar (RF-025)
+      offRoad: false, // va fuera de la calzada (RF-013); la parrilla está sobre el asfalto
+      surfaceSample: null, // última posición en la que se ha mirado la superficie ({x, z, along})
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
       progress: createProgress(track, slot), // vueltas válidas, checkpoints y distancia válida (RN-01)
     };
@@ -145,13 +147,32 @@ function updateProgress(race, participant) {
 }
 
 /**
+ * Actualiza `participant.offRoad`: si el coche está fuera de la calzada del circuito en curso, con el
+ * margen de `offRoad` (RF-013). Un coche que no se ha movido conserva el resultado anterior.
+ * La posición en el trazado de la última consulta acelera la búsqueda; no se usa solo la del progreso
+ * porque queda congelada al terminar la carrera.
+ */
+function updateSurface(race, participant, offRoad) {
+  const { x, z, surfaceSample } = participant;
+  if (surfaceSample?.x === x && surfaceSample.z === z) return;
+  const along = surfaceSample?.along ?? wrapDistance(race.track, participant.progress.lapPosition);
+  const location = locateOnRoad(race.track, x, z, offRoad.margin, { along, span: NEAREST_SEARCH_SPAN });
+  participant.offRoad = !location.onRoad;
+  participant.surfaceSample = { x, z, along: location.along };
+}
+
+/**
  * Mueve un participante `drivingTime` segundos y actualiza su progreso.
+ * Antes de moverlo se mira sobre qué superficie está (`participant.offRoad`): fuera de la calzada rinde
+ * menos, con la misma regla para el jugador y los rivales (RF-013, RF-032, RN-07).
  * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
  * @returns {boolean} verdadero si termina en este paso
  */
 function stepParticipant(race, participant, inputs, drivingTime, config) {
   const input = participantInput(race, participant, inputs, config);
-  Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance));
+  updateSurface(race, participant, config.offRoad);
+  const surface = participant.offRoad ? config.offRoad : null;
+  Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance, surface));
   if (participant.finished) return false;
   return updateProgress(race, participant);
 }
@@ -186,7 +207,7 @@ function recordWinner(race, finished) {
  * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante;
  *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
- * @param {object} config CONFIG (secciones `race`, `ai` y `carPerformance`)
+ * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance` y `offRoad`)
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): su tiempo de llegada
  * y su progreso quedan congelados, sus controles dejan de actuar y su coche rueda por inercia hasta
  * detenerse. El reloj de la carrera no se detiene.

@@ -178,6 +178,20 @@ export function isOnRoad(track, x, z, margin = 0) {
 }
 
 /**
+ * Sitúa un punto respecto a la calzada ampliada `margin` metros a cada lado: si está sobre ella
+ * (`onRoad`) y la distancia recorrida del punto más cercano de la línea central (`along`). Con `hint`
+ * (véase `nearestOnCenterline`) mira primero los tramos cercanos y solo recorre todo el trazado si allí
+ * no está sobre la calzada: el resultado es el mismo que sin él.
+ * @param {{along: number, span: number}} [hint]
+ */
+export function locateOnRoad(track, x, z, margin = 0, hint) {
+  const halfWidth = track.width / 2 + margin;
+  let nearest = hint ? nearestOnCenterline(track, x, z, hint) : null;
+  if (!nearest || nearest.distance > halfWidth) nearest = nearestOnCenterline(track, x, z);
+  return { along: nearest.along, onRoad: nearest.distance <= halfWidth };
+}
+
+/**
  * Posición de parrilla `index` (0 = pole): filas de dos coches escalonadas por detrás de la meta
  * (en el sentido contrario al de la carrera), con el rumbo del trazado en ese punto.
  * @param {object} gridConfig sección `grid` de CONFIG

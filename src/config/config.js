@@ -54,6 +54,15 @@ export const CONFIG = deepFreeze({
     maxStep: 1 / 30, // s: paso de tiempo máximo por actualización, para evitar saltos
   },
 
+  // Circular fuera de la calzada (RF-013): vale igual para los diez coches y para cualquier modelo (RN-07).
+  // Solo afecta a la velocidad. Valores iniciales (propuestas), pendientes de calibrar jugando.
+  offRoad: {
+    margin: 0, // metros que el centro del coche puede rebasar el borde de la calzada sin penalización
+    maxSpeedFactor: 0.4, // fracción de la velocidad máxima (hacia delante y marcha atrás) alcanzable fuera
+    accelerationFactor: 0.5, // fracción de la aceleración (hacia delante y marcha atrás) disponible fuera
+    deceleration: 25, // m/s²: ritmo mínimo al que pierde velocidad quien va por encima del máximo de fuera
+  },
+
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
   // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
   // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.

@@ -342,7 +342,8 @@ for (const definition of trackDefinitions(CONFIG)) {
     const before = struck.progress.progress;
     ram(race, striker, struck, atFinish);
     assert.ok(struck.progress.lapPosition > 0, 'ha cruzado la meta');
-    assert.ok(struck.progress.progress <= 0, `solo cuenta hasta la meta: ${struck.progress.progress} (antes ${before})`);
+    // El progreso sigue al recorrido real sobre la calzada, nunca por delante de donde está el coche.
+    assert.ok(struck.progress.progress >= before && struck.progress.progress <= struck.progress.lapPosition + 1e-9);
     assert.equal(struck.progress.laps, 0);
     assert.equal(struck.progress.checkpointIndex, 0);
 

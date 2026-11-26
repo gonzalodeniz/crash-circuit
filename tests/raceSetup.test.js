@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../src/config/config.js';
+import { aiDrive, aiLevel, createAiDriver, createAiRecovery } from '../src/logic/aiDriver.js';
 import { carModels } from '../src/logic/carModels.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { lapOptions } from '../src/logic/lapOptions.js';
@@ -9,8 +10,7 @@ import { createSeededRandom } from '../src/logic/random.js';
 import { raceTimeOf } from '../src/logic/race.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { createRaceFromSetup, createRaceSetup, defaultRaceSetup, raceSetupSummary } from '../src/logic/raceSetup.js';
-import { trackDefinitions } from '../src/logic/trackCatalog.js';
-import { autopilot, CORNERING_AUTOPILOT } from './helpers/autopilot.js';
+import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCatalog.js';
 
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 1800;
@@ -187,9 +187,24 @@ test('tras los resultados, elegir otra selección descarta la configuración con
   assert.deepEqual(session.pendingSetup, VALID);
 });
 
-// CA-10 (parcial): las 64 combinaciones, con los rivales conduciendo, hasta los resultados. Cada circuito se
-// recorre siguiendo su línea central con la lógica de progreso real; la jugabilidad con teclado
-// queda en la verificación manual.
+/**
+ * Conductor del jugador en la matriz: un piloto IA propio, que sabe salir de un atasco. Hace falta porque
+ * los coches son sólidos y quien va doblado se encuentra en la calzada con los que ya han terminado.
+ */
+function playerPilot(race, seed) {
+  const level = aiLevel(CONFIG.ai, requireTrackDefinition(CONFIG, race.track.id).difficulty);
+  const driver = createAiDriver(race.track, CONFIG.ai, level, CONFIG.carPerformance, race.car, createSeededRandom(seed));
+  let recovery = createAiRecovery();
+  return () => {
+    const result = aiDrive(recovery, driver, race.player, CONFIG.ai, DT);
+    recovery = result.recovery;
+    return result.input;
+  };
+}
+
+// CA-10 (parcial): las 64 combinaciones, con los rivales conduciendo, hasta los resultados. El jugador lo
+// conduce un piloto automático con la lógica de progreso real; la jugabilidad con teclado queda en la
+// verificación manual.
 // La semilla de cada combinación es su índice (0..63), así cada caso se repite por separado.
 const MODELS = carModels(CONFIG);
 const TRACKS = trackDefinitions(CONFIG);
@@ -207,10 +222,11 @@ for (const [modelIndex, model] of MODELS.entries()) {
         assert.equal(race.totalLaps, laps, label);
         assert.equal(race.participants.length, 10, `${label}: diez participantes`);
         const lapsReached = [];
+        const drive = playerPilot(race, seed);
         let steps = 0;
         while (machine.state !== GameState.RESULTADOS && steps++ < MAX_STEPS) {
           const before = race.player.progress.laps;
-          session.step(DT, { player: autopilot(race, race.player, CORNERING_AUTOPILOT) });
+          session.step(DT, { player: race.clock.raceTime > 0 ? drive() : {} });
           if (race.player.progress.laps !== before) lapsReached.push(race.player.progress.laps);
         }
         assert.equal(machine.state, GameState.RESULTADOS, `${label} no termina`);

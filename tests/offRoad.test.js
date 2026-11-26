@@ -147,8 +147,9 @@ for (const definition of trackDefinitions(CONFIG)) {
 test('un rival IA y cualquier modelo de coche sufren la misma penalización que el jugador (RF-032, RN-07)', () => {
   const race = startedRace('llanura', { rivals: true });
   const outside = race.track.width / 2 + OFF.margin + 30;
+  // Por el exterior de la curva (a la izquierda), donde quedan separados: los coches son sólidos entre sí.
   race.participants.forEach((participant, i) => {
-    place(race, participant, poseAt(race.track, -10 - i * 6, outside), P.maxSpeed);
+    place(race, participant, poseAt(race.track, -10 - i * 6, -outside), P.maxSpeed);
   });
   const inputs = Object.fromEntries(race.participants.map((p) => [p.id, GAS]));
   step(race, inputs);
@@ -160,7 +161,7 @@ test('un rival IA y cualquier modelo de coche sufren la misma penalización que 
   }
   // También con las entradas de su propio piloto IA.
   const rival = race.participants.find((p) => !p.isPlayer);
-  place(race, rival, poseAt(race.track, 40, outside), P.maxSpeed);
+  place(race, rival, poseAt(race.track, 40, -outside), P.maxSpeed);
   stepRace(race, { player: NONE }, DT, CONFIG);
   assert.equal(rival.offRoad, true);
   assert.ok(rival.speed < P.maxSpeed);
@@ -201,18 +202,22 @@ function follow(race, participant, first, last, lateral = 0) {
   for (let along = first; along <= last; along += 1) carry(race, participant, poseAt(race.track, along, lateral));
 }
 
+/** Metros a la derecha de la línea central por los que va el rival de `duel`: no estorba al jugador. */
+const RIVAL_LANE = 4;
+
 /**
  * Jugador y un rival que ya han cruzado la salida: el jugador va por la distancia 5 y el rival está
- * parado en la calzada en `rivalAlong`.
+ * parado en la calzada en `rivalAlong`, a un lado (los coches son sólidos entre sí).
  */
 function duel(trackId, rivalAlong) {
   const race = createRace(CONFIG, [CONFIG.race.player, { id: 'r', name: 'Rival' }], trackId);
   const held = { player: NONE, r: NONE };
   while (!stepRace(race, held, DT, CONFIG).started);
   const [player, rival] = race.participants;
-  for (const participant of race.participants) place(race, participant, poseAt(race.track, -3));
+  place(race, player, poseAt(race.track, -3));
+  place(race, rival, poseAt(race.track, -3, RIVAL_LANE));
   follow(race, player, -2, 5);
-  follow(race, rival, -2, rivalAlong(race.track));
+  follow(race, rival, -2, rivalAlong(race.track), RIVAL_LANE);
   return { race, player, rival };
 }
 

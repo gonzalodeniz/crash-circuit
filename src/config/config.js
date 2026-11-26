@@ -55,12 +55,16 @@ export const CONFIG = deepFreeze({
   },
 
   // Circular fuera de la calzada (RF-013): vale igual para los diez coches y para cualquier modelo (RN-07).
-  // Solo afecta a la velocidad. Valores iniciales (propuestas), pendientes de calibrar jugando.
+  // Reduce la velocidad y no suma progreso. Valores iniciales (propuestas), pendientes de calibrar jugando.
   offRoad: {
     margin: 0, // metros que el centro del coche puede rebasar el borde de la calzada sin penalización
     maxSpeedFactor: 0.4, // fracción de la velocidad máxima (hacia delante y marcha atrás) alcanzable fuera
     accelerationFactor: 0.5, // fracción de la aceleración (hacia delante y marcha atrás) disponible fuera
     deceleration: 25, // m/s²: ritmo mínimo al que pierde velocidad quien va por encima del máximo de fuera
+    // Metros de trazado que se reconocen de golpe al volver a la calzada (RN-01): perdona pisar fuera un
+    // momento. Con un salto mayor, el progreso no avanza hasta regresar o cruzar el checkpoint pendiente.
+    // Debe superar de sobra lo que avanza un coche en un paso (`maxSpeed * maxStep`, 1,5 m).
+    maxRejoinAdvance: 10,
   },
 
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`

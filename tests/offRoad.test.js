@@ -4,7 +4,7 @@ import { CONFIG } from '../src/config/config.js';
 import { createCarState, stepCar } from '../src/logic/driving.js';
 import { createRace, stepRace } from '../src/logic/race.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
-import { createProgress } from '../src/logic/progress.js';
+import { createProgress, stepProgress } from '../src/logic/progress.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { isOnRoad, pointAtDistance, rightOf } from '../src/logic/track.js';
 import { trackDefinitions } from '../src/logic/trackCatalog.js';
@@ -60,6 +60,8 @@ test('los parámetros de la penalización están en la configuración, congelado
   assert.ok(OFF.maxSpeedFactor > 0 && OFF.maxSpeedFactor < 1);
   assert.ok(OFF.accelerationFactor > 0 && OFF.accelerationFactor < 1);
   assert.ok(OFF.deceleration > 0);
+  // Por encima de lo que avanza un coche en un paso, o conducir por la calzada dejaría de sumar.
+  assert.ok(OFF.maxRejoinAdvance > 2 * P.maxSpeed * P.maxStep);
 });
 
 test('con la misma entrada, fuera de la calzada se acelera menos y la velocidad máxima es menor (RF-013)', () => {
@@ -194,30 +196,141 @@ function carry(race, participant, to) {
   return wentOff;
 }
 
-/** Lleva el coche por la línea central entre dos distancias del recorrido. */
-function follow(race, participant, first, last) {
-  for (let along = first; along <= last; along += 1) carry(race, participant, pointAtDistance(race.track, along));
+/** Lleva el coche entre dos distancias del recorrido, a `lateral` metros de la línea central. */
+function follow(race, participant, first, last, lateral = 0) {
+  for (let along = first; along <= last; along += 1) carry(race, participant, poseAt(race.track, along, lateral));
+}
+
+/**
+ * Jugador y un rival que ya han cruzado la salida: el jugador va por la distancia 5 y el rival está
+ * parado en la calzada en `rivalAlong`.
+ */
+function duel(trackId, rivalAlong) {
+  const race = createRace(CONFIG, [CONFIG.race.player, { id: 'r', name: 'Rival' }], trackId);
+  const held = { player: NONE, r: NONE };
+  while (!stepRace(race, held, DT, CONFIG).started);
+  const [player, rival] = race.participants;
+  for (const participant of race.participants) place(race, participant, poseAt(race.track, -3));
+  follow(race, player, -2, 5);
+  follow(race, rival, -2, rivalAlong(race.track));
+  return { race, player, rival };
+}
+
+const aheadOf = (race, first, second) => race.standings.indexOf(first.id) < race.standings.indexOf(second.id);
+
+/** Entradas para conducir hacia un punto con las flechas. */
+function toward(car, target) {
+  const wanted = Math.atan2(target.x - car.x, target.z - car.z) - car.heading;
+  const error = Math.atan2(Math.sin(wanted), Math.cos(wanted));
+  return { ...GAS, left: error > 0.03, right: error < -0.03 };
+}
+
+// Conducción continua, sin recolocar coches: el jugador ataja campo a través hacia un punto de la
+// calzada situado más allá del primer checkpoint, sin cruzarlo.
+for (const [trackId, targetAlong] of [['llanura', 297], ['abismo', 340]]) {
+  test(`${trackId}: atajar conduciendo por fuera no suma progreso ni adelanta al rival (RN-01)`, () => {
+    const race = createRace(CONFIG, [CONFIG.race.player, { id: 'r', name: 'Rival' }], trackId);
+    const [player, rival] = race.participants;
+    const road = (car) => toward(car, pointAtDistance(race.track, car.progress.lapPosition + 12));
+    const drivePair = (mine, theirs) => stepRace(race, { player: mine, r: theirs }, DT, CONFIG);
+    while (!drivePair(NONE, NONE).started);
+    for (let i = 0; player.progress.progress < 5 && i < 600; i++) drivePair(road(player), road(rival));
+    for (let i = 0; rival.progress.progress < 40 && i < 600; i++) drivePair(NONE, road(rival));
+    for (let i = 0; rival.speed > 0 && i < 600; i++) drivePair(NONE, BRAKE);
+    assert.ok(aheadOf(race, rival, player), 'antes del atajo va delante el rival');
+
+    const target = pointAtDistance(race.track, targetAlong);
+    let lastOnRoad = player.progress.progress;
+    let wentOff = false;
+    for (let i = 0; i < 1500 && Math.hypot(player.x - target.x, player.z - target.z) > 4; i++) {
+      drivePair(toward(player, target), NONE);
+      wentOff ||= player.offRoad;
+      if (!wentOff) lastOnRoad = player.progress.progress;
+      assert.ok(aheadOf(race, rival, player), `adelanta con ${player.progress.progress} m`);
+    }
+    assert.ok(wentOff, 'el atajo va por fuera');
+    assert.ok(Math.hypot(player.x - target.x, player.z - target.z) <= 4, 'el jugador llega al otro lado');
+    assert.equal(player.progress.checkpointIndex, 0);
+    assert.ok(player.progress.progress <= lastOnRoad + OFF.maxRejoinAdvance, `progreso ${player.progress.progress}`);
+    assert.ok(player.progress.progress < rival.progress.progress);
+  });
 }
 
 for (const definition of trackDefinitions(CONFIG)) {
-  test(`${definition.id}: recortar por fuera sin cruzar los checkpoints no suma vueltas, progreso ni posiciones (RN-01)`, () => {
-    const race = startedRace(definition.id, { rivals: true });
-    const { track, player } = race;
-    const rival = race.participants.find((p) => !p.isPlayer);
-    const middle = track.length * 0.5;
-    // El rival recorre media vuelta por la calzada.
-    place(race, rival, poseAt(track, -3));
-    follow(race, rival, -2, middle);
-    // El jugador cruza la salida y ataja por fuera hasta los tres cuartos de la vuelta.
-    place(race, player, poseAt(track, -3));
-    follow(race, player, -2, 5);
-    assert.equal(player.progress.started, true);
-    assert.equal(carry(race, player, pointAtDistance(track, track.length * 0.75)), true, 'el atajo va por fuera');
-    // Termina el recorrido por la calzada y cruza la meta.
-    follow(race, player, track.length * 0.75, track.length + 10);
-    assert.equal(player.progress.laps, 0);
-    assert.equal(player.finished, false);
-    assert.ok(player.progress.progress <= track.checkpoints[1].distance, `progreso ${player.progress.progress}`);
-    assert.ok(race.standings.indexOf(rival.id) < race.standings.indexOf(player.id), 'no adelanta al rival');
+  // El rival está entre el jugador y el checkpoint pendiente: es a quien un atajo podría adelantar.
+  const nearFirstCheckpoint = (track) => track.checkpoints[0].distance - 10;
+  // Por fuera de la puerta del checkpoint, a un lado de la calzada.
+  const around = (track) => track.width / 2 + CONFIG.tracks.common.checkpointMargin + 4;
+
+  test(`${definition.id}: recortar rodeando un checkpoint no suma progreso, vueltas ni posiciones (RN-01)`, () => {
+    for (const side of [-1, 1]) {
+      const { race, player, rival } = duel(definition.id, nearFirstCheckpoint);
+      const { track } = race;
+      const gate = track.checkpoints[0].distance;
+      const before = player.progress.progress;
+      carry(race, player, poseAt(track, 5, side * around(track)));
+      follow(race, player, 6, gate + 20, side * around(track));
+      assert.equal(player.offRoad, true);
+      assert.equal(player.progress.progress, before, 'fuera de la calzada no se suma nada');
+      // Vuelve a la calzada más adelante y sigue: tampoco entonces recibe el tramo saltado.
+      follow(race, player, gate + 20, gate + 60);
+      assert.equal(player.offRoad, false);
+      assert.equal(player.progress.progress, before, 'al volver no hay salto');
+      assert.ok(aheadOf(race, rival, player), 'no adelanta al rival');
+      // Completa el recorrido y cruza la meta: sin el checkpoint no hay vuelta.
+      follow(race, player, gate + 60, track.length + 4);
+      assert.equal(player.progress.laps, 0);
+      assert.equal(player.progress.checkpointIndex, 0);
+      assert.equal(player.progress.progress, before);
+      assert.ok(aheadOf(race, rival, player));
+      // En la pasada siguiente, desde donde dejó el recorrido válido, vuelve a avanzar con normalidad.
+      follow(race, player, track.length + 4, track.length + gate + 20);
+      assert.equal(player.progress.checkpointIndex, 1);
+      assert.ok(Math.abs(player.progress.progress - (gate + 20)) < 2, `progreso ${player.progress.progress}`);
+      assert.ok(aheadOf(race, player, rival));
+    }
+  });
+
+  test(`${definition.id}: tras salirse sin saltarse el checkpoint, al cruzarlo se recupera el progreso (RN-01)`, () => {
+    const { race, player } = duel(definition.id, nearFirstCheckpoint);
+    const { track } = race;
+    const gate = track.checkpoints[0].distance;
+    const before = player.progress.progress;
+    carry(race, player, poseAt(track, 5, around(track)));
+    follow(race, player, 6, gate - 30, around(track));
+    follow(race, player, gate - 30, gate - 5);
+    assert.equal(player.progress.progress, before, 'sin cruzar el checkpoint no se recupera el tramo');
+    follow(race, player, gate - 5, gate + 5);
+    assert.equal(player.progress.checkpointIndex, 1);
+    assert.ok(Math.abs(player.progress.progress - (gate + 5)) < 2, `progreso ${player.progress.progress}`);
+  });
+
+  test(`${definition.id}: pisar fuera un momento no deja el progreso parado`, () => {
+    const { race, player } = duel(definition.id, nearFirstCheckpoint);
+    const outside = race.track.width / 2 + OFF.margin + 0.5;
+    follow(race, player, 6, 10);
+    carry(race, player, poseAt(race.track, 11, outside));
+    assert.equal(player.offRoad, true);
+    const off = player.progress.progress;
+    carry(race, player, poseAt(race.track, 14, outside));
+    assert.equal(player.progress.progress, off, 'mientras va fuera no avanza');
+    carry(race, player, pointAtDistance(race.track, 15));
+    assert.ok(Math.abs(player.progress.progress - 15) < 1, `progreso ${player.progress.progress}`);
+  });
+
+  test(`${definition.id}: por cualquier parte de la calzada, a velocidad máxima, el progreso sigue al coche`, () => {
+    const race = startedRace(definition.id);
+    const { track } = race;
+    const advance = P.maxSpeed * P.maxStep;
+    for (const side of [-1, 0, 1]) {
+      const lateral = side * (track.width / 2 + OFF.margin - 0.05);
+      let state = createProgress(track, poseAt(track, -3, lateral));
+      for (let along = -3 + advance; along < track.length * 2; along += advance) {
+        state = stepProgress(state, track, poseAt(track, along, lateral), OFF);
+        // En el interior de una curva la proyección sobre la línea central no es exacta: margen amplio.
+        assert.ok(Math.abs(state.progress - along) < OFF.maxRejoinAdvance, `lateral ${lateral}, ${along} m: ${state.progress}`);
+      }
+      assert.equal(state.laps, 1);
+    }
   });
 }

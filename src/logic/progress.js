@@ -6,7 +6,10 @@
 //   delante, todos los checkpoints de la vuelta. Cruzar la meta sin ellos no hace nada.
 // - Cruzar una puerta hacia atrás nunca suma ni resta, y un checkpoint fuera de orden se ignora.
 // - La distancia válida en la vuelta nunca disminuye y no puede superar el siguiente checkpoint
-//   pendiente: recortar o retroceder no da progreso ficticio.
+//   pendiente.
+// - Solo avanza con el coche sobre la calzada y de forma continua desde donde iba. Quien se salta un
+//   trozo del trazado (p. ej. atajando por fuera) no lo recibe al volver: tiene que regresar a donde
+//   dejó el recorrido válido o cruzar en orden el checkpoint pendiente, que valida todo lo anterior.
 // - Los coches salen por detrás de la meta: antes de cruzarla por primera vez no tienen vuelta
 //   empezada y su distancia es negativa (lo que les falta hasta la meta).
 import { crossesGateForward, nearestOnCenterline, signedDistance, wrapDistance } from './track.js';
@@ -44,36 +47,46 @@ export function createProgress(track, pose) {
  * @param {ReturnType<typeof createProgress>} state progreso actual
  * @param {object} track trazado
  * @param {{x: number, z: number}} pose posición nueva del coche
+ * @param {{margin: number, maxRejoinAdvance: number}} offRoad sección `offRoad` de CONFIG: margen de la
+ *   calzada y máximo de recorrido sin validar que se reconoce al avanzar (RN-01)
  */
-export function stepProgress(state, track, pose) {
+export function stepProgress(state, track, pose, offRoad) {
   const from = { x: state.x, z: state.z };
   const previousAlong = wrapDistance(track, state.lapPosition);
-  const { along } = nearestOnCenterline(track, pose.x, pose.z, { along: previousAlong, span: NEAREST_SEARCH_SPAN });
+  const hint = { along: previousAlong, span: NEAREST_SEARCH_SPAN };
+  const { along, distance } = nearestOnCenterline(track, pose.x, pose.z, hint);
   let lapPosition = state.lapPosition + signedDistance(track, along - previousAlong);
-  let { started, laps, checkpointIndex } = state;
+  let { started, laps, checkpointIndex, lapDistance } = state;
   const checkpointCount = track.checkpoints.length;
 
   // Cruces de puertas en el sentido de la carrera. Una meta cruzada sin todos los checkpoints,
   // o un checkpoint fuera de orden, se ignora (RN-01).
   if (started && checkpointIndex < checkpointCount && crossesGateForward(track.checkpoints[checkpointIndex], from, pose)) {
+    lapDistance = Math.max(lapDistance, track.checkpoints[checkpointIndex].distance);
     checkpointIndex += 1;
   }
   if (crossesGateForward(track.finish, from, pose)) {
     if (!started) {
       started = true;
+      lapDistance = Math.max(lapDistance, 0);
     } else if (checkpointIndex === checkpointCount) {
       laps += 1;
       checkpointIndex = 0;
       lapPosition -= track.length; // la posición continua vuelve a empezar tras la meta
+      lapDistance = 0;
     }
   }
 
   // Tope: sin salir, la meta; con la vuelta empezada, el siguiente checkpoint (o la meta, al final).
   let cap = 0;
   if (started) cap = checkpointIndex < checkpointCount ? track.checkpoints[checkpointIndex].distance : track.length;
-  const lapChanged = laps !== state.laps;
-  const base = lapChanged ? 0 : state.lapDistance;
-  const lapDistance = Math.max(base, Math.min(lapPosition, cap));
+  // Lo que el coche está por delante de su recorrido válido. Se mide sobre el trazado, no con
+  // `lapPosition`, que tras un atajo largo puede haber quedado una vuelta desplazada.
+  const advance = signedDistance(track, along - lapDistance);
+  const onRoad = distance <= track.width / 2 + offRoad.margin;
+  if (onRoad && advance > 0 && advance <= offRoad.maxRejoinAdvance) {
+    lapDistance = Math.max(lapDistance, Math.min(lapDistance + advance, cap));
+  }
   const progress = Math.max(state.progress, laps * track.length + lapDistance);
 
   return { started, laps, checkpointIndex, lapPosition, lapDistance, progress, x: pose.x, z: pose.z };

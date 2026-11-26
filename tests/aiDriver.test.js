@@ -224,7 +224,7 @@ test('el progreso de un rival se calcula con la misma lógica de checkpoints y m
     while (!rival.finished && steps++ < MAX_STEPS) {
       const before = { x: rival.x, z: rival.z };
       stepRace(race, {}, DT, CONFIG);
-      if (rival.x !== before.x || rival.z !== before.z) shadow = rival.finished ? shadow : stepProgress(shadow, race.track, rival);
+      if (rival.x !== before.x || rival.z !== before.z) shadow = rival.finished ? shadow : stepProgress(shadow, race.track, rival, CONFIG.offRoad);
       if (!rival.finished) assert.deepEqual(rival.progress, shadow, `${trackId}: progreso distinto en el paso ${steps}`);
     }
     assert.ok(rival.finished, trackId);

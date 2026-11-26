@@ -135,11 +135,11 @@ function participantInput(race, participant, inputs, config) {
  * completar las vueltas (RF-025): congela su `finishTime` (el cronómetro de ese paso).
  * @returns {boolean} verdadero si termina en este paso
  */
-function updateProgress(race, participant) {
+function updateProgress(race, participant, offRoad) {
   // Un coche que no se ha movido no cambia su progreso: se evita buscar su punto más cercano del
   // trazado (el paso más caro) para los rivales parados en la parrilla.
   if (participant.x === participant.progress.x && participant.z === participant.progress.z) return false;
-  participant.progress = stepProgress(participant.progress, race.track, participant);
+  participant.progress = stepProgress(participant.progress, race.track, participant, offRoad);
   if (participant.progress.laps < race.totalLaps) return false;
   participant.finished = true;
   participant.finishTime = race.clock.raceTime;
@@ -174,7 +174,7 @@ function stepParticipant(race, participant, inputs, drivingTime, config) {
   const surface = participant.offRoad ? config.offRoad : null;
   Object.assign(participant, stepCar(participant, input, drivingTime, config.carPerformance, surface));
   if (participant.finished) return false;
-  return updateProgress(race, participant);
+  return updateProgress(race, participant, config.offRoad);
 }
 
 /** Avanza a los participantes que ya están en carrera. @returns {string[]} los que terminan en este paso */

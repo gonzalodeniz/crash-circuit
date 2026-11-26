@@ -2,6 +2,10 @@
 
 Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más reciente a la más antigua). Lo mantiene `doc-teams` tras cada fusión.
 
+## E5 — Destrucción y reaparición
+
+- **#91 E5 · Un golpe fuerte destruye el coche y lo deja fuera de juego 3 segundos** (PR #95, 2026-11-26): un golpe fuerte contra un coche, el muro o un obstáculo destruye el coche (aplastado y casi negro), igual para los diez participantes: no se conduce, no avanza y no es un abandono; los golpes leves no destruyen. El bloqueo de 3 segundos de juego ya se cuenta, pero la reaparición todavía no existe: el coche no vuelve a moverse y, si es el del jugador, hay que recargar la página. Requisitos: RF-035, RF-036, RF-038, RF-041 (parcial). Reglas de negocio: RN-04 (parcial). Casos de aceptación: CA-04 (parcial).
+
 ## E4 — Colisiones y obstáculos
 
 - **#81 E4 · Perder velocidad al salirse de la carretera** (PR #85, 2026-11-26): fuera de la calzada, el coche del jugador y los de los rivales aceleran menos, tienen menos velocidad máxima y frenan hasta ella; al volver al asfalto recuperan lo normal. Atajar por fuera no suma progreso ni posiciones: tras una salida larga, el avance queda parado hasta volver a donde se dejó o pasar por el punto de control pendiente. Los valores son iniciales. Requisitos: RF-013, RF-032 (parcial). Reglas de negocio: RN-01.

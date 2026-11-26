@@ -160,7 +160,7 @@ Tu coche y los de los rivales son sólidos. Al tocarse se separan y ninguno atra
 El golpe cambia la velocidad y la dirección:
 
 - **Por detrás:** quien golpea pierde velocidad y el de delante sale empujado.
-- **De frente:** los dos frenan en seco o salen rebotados, según lo rápido que fueran.
+- **De frente:** los coches pierden velocidad y pueden salir despedidos hacia atrás, según lo rápido que fueran.
 - **De costado:** los coches se apartan hacia los lados.
 - **Descentrado:** además, el coche gira un poco.
 

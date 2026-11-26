@@ -235,10 +235,17 @@ export class SceneRenderer {
     this.updateCar(participant);
   }
 
-  /** Coloca el coche de un participante en su pose (x, z, rumbo), muestra su daño y, si está destruido, lo aplasta. */
+  /**
+   * Coloca el coche de un participante en su pose (x, z, rumbo), muestra su daño, si está destruido lo
+   * aplasta y, mientras está protegido tras reaparecer, lo hace parpadear (RF-042).
+   */
   updateCar(participant) {
     const group = this.#carMeshes.get(participant.id);
     if (!group) return;
+    // El parpadeo sale del tiempo que le queda de protección, así que se detiene con la simulación.
+    const { blinkPeriod, visibleFraction } = this.#config.protection;
+    const { protection } = participant;
+    group.visible = !protection || (protection.timeLeft / blinkPeriod) % 1 < visibleFraction;
     group.position.set(participant.x, 0, participant.z);
     group.rotation.y = participant.heading;
     const destroyed = participant.status === ParticipantStatus.DESTRUIDO;

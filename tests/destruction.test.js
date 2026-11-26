@@ -1,5 +1,5 @@
 // Destrucción por golpe fuerte y bloqueo posterior (RF-035, RF-036, RF-038, RF-041 parcial, RN-04).
-// La reaparición llega en #92: aquí el coche queda destruido y, al acabar el bloqueo, listo para ella.
+// La reaparición, al acabar el bloqueo, se prueba en `respawn.test.js`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
@@ -57,6 +57,9 @@ function hitScenery(scenery, speed, index = playerIndex, config = ASPHALT) {
   const front = scenery.obstacles[0] ? scenery.obstacles[0].z - scenery.obstacles[0].radius : scenery.bounds.maxZ;
   place(race, car, { x: 0, z: front - CAR.length / 2 - 0.1, heading: 0 }, speed + P.coastDeceleration * DT);
   step(race, {}, config);
+  // El choque se monta lejos de la calzada: se le da el avance válido de un coche que aún no ha pasado la
+  // meta, para que al acabar el bloqueo tenga dónde reaparecer.
+  car.progress = createProgress(race.track, pointAtDistance(race.track, -20));
   return { race, car };
 }
 
@@ -77,10 +80,10 @@ function assertTenUnique(race) {
   assert.equal(new Set(race.standings).size, 10);
 }
 
-/** Pasos de simulación hasta que el bloqueo del coche termina. */
+/** Pasos de simulación hasta que el bloqueo del coche termina y deja de estar destruido. */
 function stepsToRelease(race, car, config = ASPHALT, dt = DT) {
   let steps = 0;
-  while (!car.wreck.readyToRespawn && steps < 100000) {
+  while (car.status === DESTRUIDO && steps < 100000) {
     step(race, {}, config, dt);
     steps++;
   }
@@ -140,16 +143,15 @@ test('el umbral y la duración se leen de la configuración', () => {
   assert.equal(stepsToRelease(race, car, config), Math.round(1 / DT));
 });
 
-test('el jugador destruido no responde a las flechas durante el bloqueo ni después, hasta reaparecer (RF-038)', () => {
+test('el jugador destruido no responde a las flechas durante el bloqueo (RF-038)', () => {
   const { race, car } = hitScenery(WALL, STRONG_SPEED + 5);
   const pose = [car.x, car.z, car.heading];
-  for (let i = 0; i < (LOCK + 2) / DT; i++) {
+  for (let i = 0; i < Math.round(LOCK / DT) - 1; i++) {
     const input = i % 2 === 0 ? GAS : { accelerate: false, brake: true, left: false, right: true };
     step(race, { [car.id]: input });
     assert.deepEqual([car.x, car.z, car.heading, car.speed, car.steer], [...pose, 0, 0], `paso ${i}`);
+    assert.equal(car.status, DESTRUIDO);
   }
-  assert.equal(car.status, DESTRUIDO);
-  assert.equal(car.wreck.readyToRespawn, true);
 });
 
 test('un rival destruido sigue las mismas reglas y su piloto IA deja de conducir (RF-038, RF-041)', () => {
@@ -159,18 +161,19 @@ test('un rival destruido sigue las mismas reglas y su piloto IA deja de conducir
   const memory = race.recoveries[car.id];
   const inputs = held(race);
   delete inputs[car.id]; // sin entrada propia, conduciría su piloto
-  for (let i = 0; i < LOCK / DT; i++) stepRace(race, inputs, DT, ASPHALT);
+  for (let i = 0; i < Math.round(LOCK / DT) - 1; i++) stepRace(race, inputs, DT, ASPHALT);
   assert.deepEqual([car.x, car.z, car.heading, car.speed], [...pose, 0]);
   assert.equal(race.recoveries[car.id], memory, 'el piloto no ha producido entradas');
-  assert.equal(car.wreck.readyToRespawn, true);
+  assert.equal(car.status, DESTRUIDO);
 });
 
-test('el coche queda listo para reaparecer a los tres segundos de simulación, no antes, a cualquier ritmo de fotogramas', () => {
+test('el bloqueo termina a los tres segundos de simulación, no antes, a cualquier ritmo de fotogramas', () => {
   for (const dt of [1 / 144, DT, P.maxStep]) {
     const { race, car } = hitScenery(WALL, STRONG_SPEED + 5);
     const steps = stepsToRelease(race, car, ASPHALT, dt);
     assert.ok(Math.abs(steps - LOCK / dt) < 1 + 1e-6, `${steps} pasos de ${dt}`);
-    assert.deepEqual(car.wreck, { timeLeft: 0, readyToRespawn: true });
+    assert.ok(steps * dt >= LOCK - 1e-6, 'no antes de tiempo');
+    assert.equal(car.wreck, null);
   }
 });
 
@@ -224,10 +227,12 @@ test('destruido conserva vueltas, checkpoints y distancia, no suma nada y el cro
   assert.equal(progress.laps, 1);
   assert.equal(progress.checkpointIndex, 1);
   const time = raceTimeOf(race, player);
-  for (let i = 0; i < LOCK / DT; i++) step(race, { [player.id]: GAS });
+  const waited = Math.round(LOCK / DT) - 1;
+  for (let i = 0; i < waited; i++) step(race, { [player.id]: GAS });
+  assert.equal(player.status, DESTRUIDO);
   assert.equal(player.progress, progress);
   assert.equal(player.finished, false);
-  assert.ok(Math.abs(raceTimeOf(race, player) - time - LOCK) < 1e-6, 'el cronómetro sigue corriendo');
+  assert.ok(Math.abs(raceTimeOf(race, player) - time - waited * DT) < 1e-6, 'el cronómetro sigue corriendo');
 });
 
 test('no es un abandono: sigue en la clasificación y los demás lo adelantan por progreso válido (RN-02, RN-04)', () => {
@@ -235,7 +240,7 @@ test('no es un abandono: sigue en la clasificación y los demás lo adelantan po
   const { player } = race;
   const other = race.participants[rivalIndex];
   place(race, other, pointAtDistance(race.track, 2));
-  place(race, player, pointAtDistance(race.track, 60));
+  place(race, player, pointAtDistance(race.track, 30));
   player.progress = { ...player.progress, started: true };
   other.progress = { ...other.progress, started: true };
   step(race);
@@ -243,7 +248,7 @@ test('no es un abandono: sigue en la clasificación y los demás lo adelantan po
   assertTenUnique(race);
 
   // El jugador se estrella donde está.
-  const pose = pointAtDistance(race.track, 60);
+  const pose = pointAtDistance(race.track, 30);
   const ahead = { x: pose.x + Math.sin(pose.heading) * (CAR.length / 2 + 1.1), z: pose.z + Math.cos(pose.heading) * (CAR.length / 2 + 1.1) };
   race.scenery = { bounds: OPEN.bounds, obstacles: [{ type: 'rock', ...ahead, radius: 1 }] };
   player.speed = P.maxSpeed;
@@ -255,7 +260,7 @@ test('no es un abandono: sigue en la clasificación y los demás lo adelantan po
   race.scenery = OPEN;
   const inputs = held(race);
   delete inputs[other.id];
-  for (let i = 0; i < 60 * 6; i++) {
+  for (let i = 0; i < Math.round(LOCK / DT) - 1; i++) {
     stepRace(race, inputs, DT, ASPHALT);
     assertTenUnique(race);
   }
@@ -264,20 +269,17 @@ test('no es un abandono: sigue en la clasificación y los demás lo adelantan po
   assert.equal(player.status, DESTRUIDO);
 });
 
-test('los restos no son sólidos: otro coche los atraviesa sin golpe ni daño durante el bloqueo y después', () => {
-  for (const wait of [0, Math.ceil(LOCK / DT) + 10]) {
-    const { race, car } = hitScenery(WALL, STRONG_SPEED + 5);
-    race.scenery = OPEN;
-    for (let i = 0; i < wait; i++) step(race);
-    const pose = [car.x, car.z];
-    const other = race.participants[rivalIndex];
-    place(race, other, { x: car.x, z: car.z - 12, heading: 0 }, P.maxSpeed);
-    for (let i = 0; i < 60; i++) step(race, { [other.id]: { ...NONE, accelerate: true } });
-    assert.ok(other.z > car.z + CAR.length, 'ha pasado');
-    assert.equal(other.status, EN_CARRERA);
-    assert.equal(other.damage.worst, null);
-    assert.deepEqual([car.x, car.z], pose);
-  }
+test('los restos no son sólidos: otro coche los atraviesa sin golpe ni daño durante el bloqueo', () => {
+  const { race, car } = hitScenery(WALL, STRONG_SPEED + 5);
+  race.scenery = OPEN;
+  const pose = [car.x, car.z];
+  const other = race.participants[rivalIndex];
+  place(race, other, { x: car.x, z: car.z - 12, heading: 0 }, P.maxSpeed);
+  for (let i = 0; i < 60; i++) step(race, { [other.id]: { ...NONE, accelerate: true } });
+  assert.ok(other.z > car.z + CAR.length, 'ha pasado');
+  assert.equal(other.status, EN_CARRERA);
+  assert.equal(other.damage.worst, null);
+  assert.deepEqual([car.x, car.z], pose);
 });
 
 test('quien ya había terminado y se destruye conserva su llegada y su tiempo (RF-027)', () => {

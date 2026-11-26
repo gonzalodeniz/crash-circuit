@@ -208,6 +208,28 @@ test('el coche dibujado muestra el daño de su participante y una carrera nueva 
   assert.deepEqual(strongMarks(), Array(10).fill(false));
 });
 
+test('el coche protegido tras reaparecer parpadea y al acabar la protección vuelve a verse siempre (RF-042)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const { blinkPeriod, visibleFraction } = CONFIG.render.protection;
+  const shown = () => {
+    const visible = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'damage') visible.push(object.parent.visible); });
+    return visible;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  const car = race.participants[3];
+  // `phase`: punto del ciclo de parpadeo, de 0 a 1.
+  for (const [phase, visible] of [[visibleFraction / 2, true], [(1 + visibleFraction) / 2, false]]) {
+    car.protection = { timeLeft: blinkPeriod * (3 + phase) };
+    sceneRenderer.updateCar(car);
+    assert.deepEqual(shown(), race.participants.map((_, i) => i !== 3 || visible));
+  }
+  car.protection = null;
+  sceneRenderer.updateCar(car);
+  assert.deepEqual(shown(), Array(10).fill(true));
+});
+
 test('el coche destruido se dibuja aplastado y distinto de los demás; una carrera nueva sale intacta (RF-035)', () => {
   const { sceneRenderer, scene } = createHarness();
   // Los grupos de los coches son los que contienen el grupo del daño, en el orden de los participantes.

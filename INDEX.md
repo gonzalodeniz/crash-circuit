@@ -18,7 +18,7 @@
 - `src/index.html`: página de arranque con el lienzo `#game-canvas`.
 - `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
 - `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
-- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales, los de los choques, los del contacto entre coches, los de la intensidad de los golpes y el daño, y los de la destrucción).
+- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales, los de los choques, los del contacto entre coches, los de la intensidad de los golpes y el daño, los de la destrucción y los de la reaparición).
 - `src/logic/gameState.js`: estados del juego y máquina de estados, con el flujo `MENU -> SELECCION -> PARRILLA` (sin Three.js ni DOM).
 - `src/logic/trackCatalog.js`: consulta del catálogo de circuitos de la configuración (`trackDefinitions`, `findTrackDefinition`, `requireTrackDefinition`) y datos básicos para la selección (`trackSummary`, `trackSummaries`, `countCurves`) (sin Three.js ni DOM).
 - `src/logic/carModels.js`: consulta del catálogo de modelos de coche de la configuración (`carModels`, `findCarModel`, `requireCarModel`) (sin Three.js ni DOM).
@@ -38,6 +38,7 @@
 - `src/logic/carContacts.js`: contacto entre coches (`resolveCarContacts`, `applySlide`, `carsOverlap`): detección continua, separación sin solapes y respuesta al golpe (intercambio de velocidad, deslizamiento y cambio de rumbo) (sin Three.js ni DOM).
 - `src/logic/impact.js`: intensidad de los golpes y daño de un coche (`ImpactSeverity`, `classifyImpact`, `applyImpact`, `createDamage`, `stepDamage`): leve o fuerte según la velocidad de impacto, pérdida de velocidad del golpe fuerte y estado del daño visual (sin Three.js ni DOM).
 - `src/logic/destruction.js`: bloqueo del coche destruido (`createWreck`, `stepWreck`): temporizador en tiempo de simulación hasta quedar listo para reaparecer (sin Three.js ni DOM).
+- `src/logic/respawn.js`: reaparición y protección (`findRespawnSpot`, `createProtection`, `stepProtection`): sitio libre sobre la calzada junto al último avance válido, sin buscar hacia delante, y temporizador de la protección (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
 - `src/logic/driving.js`: modelo de conducción arcade (`createCarState`, `stepCar`, `inputFromKeys`); recibe entradas y un paso de tiempo (sin Three.js ni DOM).
@@ -71,7 +72,8 @@
 - `tests/carContacts.test.js`: pruebas del contacto entre coches: sin solapes ni atravesarse a velocidad máxima, alcance, frente y costado, mismas reglas para los diez, montonera contra el muro, empujones (hacia atrás o saltando checkpoints no suman; el avance real cuenta para clasificación y vueltas), carreras completas con semilla y rivales que no se bloquean (RF-033, RF-032, RN-01).
 - `tests/impact.test.js`: pruebas de la intensidad de los golpes: leve o fuerte según el umbral de la configuración contra coches, muro y obstáculos, consecuencias distintas e iguales para los diez, toques leves sin destrucción (CA-03), daño acotado y sin efecto en el rendimiento, y carreras nuevas sin daños.
 - `tests/destruction.test.js`: pruebas de la destrucción por golpe fuerte y del bloqueo: umbral, sin control ni progreso, temporizador en tiempo de simulación, clasificación con diez participantes, restos no sólidos y mismas reglas para los diez (RF-035, RF-036, RF-038, RN-04).
-- `tests/helpers/withoutDestruction.js`: configuración sin golpes fuertes para las pruebas que necesitan que los coches sigan rodando. No es una prueba.
+- `tests/respawn.test.js`: pruebas de la reaparición y la protección: a los tres segundos, sitio seguro en los cuatro circuitos (también con el preferido ocupado), vueltas, checkpoints y llegada conservados, vuelta completa después, protección frente a golpes fuertes y mismas reglas para los diez (RF-039, RF-040, RF-042, RN-01, RN-04).
+- `tests/helpers/withoutDestruction.js`: configuración sin golpes fuertes para las pruebas de la respuesta física de rebotes y contactos. No es una prueba.
 - `tests/damageVisuals.test.js`: pruebas, sin WebGL, de lo que se muestra con cada daño y de que sus recursos se pueden liberar.
 - `tests/offRoad.test.js`: pruebas de la salida de calzada: detección dentro/fuera en los cuatro circuitos, menor velocidad fuera sin saltos, recuperación al volver, misma regla para los diez participantes y recortes sin vueltas, progreso ni posiciones (RN-01), con recuperación al cruzar el checkpoint pendiente.
 - `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.

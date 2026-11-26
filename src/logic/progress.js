@@ -43,6 +43,28 @@ export function createProgress(track, pose) {
 }
 
 /**
+ * Tope de la distancia válida en la vuelta: sin haber salido, la meta; con la vuelta empezada, el siguiente
+ * checkpoint pendiente (o la meta, al final).
+ */
+export function validDistanceCap({ started, checkpointIndex }, track) {
+  if (!started) return 0;
+  return checkpointIndex < track.checkpoints.length ? track.checkpoints[checkpointIndex].distance : track.length;
+}
+
+/**
+ * Progreso de un coche que se recoloca en `pose` sin recorrer el camino (reaparición, RF-040): vueltas,
+ * checkpoints y distancia válida no cambian y no se cruza ninguna puerta; solo se actualiza dónde está.
+ * La pose no debe quedar más de `offRoad.maxRejoinAdvance` por delante de la distancia válida (RN-01).
+ * No modifica el estado recibido.
+ */
+export function relocateProgress(state, track, pose) {
+  const hint = { along: wrapDistance(track, state.lapDistance), span: NEAREST_SEARCH_SPAN };
+  const { along } = nearestOnCenterline(track, pose.x, pose.z, hint);
+  const lapPosition = state.lapDistance + signedDistance(track, along - state.lapDistance);
+  return { ...state, lapPosition, x: pose.x, z: pose.z };
+}
+
+/**
  * Avanza el progreso con el nuevo desplazamiento del coche. No modifica el estado recibido.
  * @param {ReturnType<typeof createProgress>} state progreso actual
  * @param {object} track trazado
@@ -77,9 +99,7 @@ export function stepProgress(state, track, pose, offRoad) {
     }
   }
 
-  // Tope: sin salir, la meta; con la vuelta empezada, el siguiente checkpoint (o la meta, al final).
-  let cap = 0;
-  if (started) cap = checkpointIndex < checkpointCount ? track.checkpoints[checkpointIndex].distance : track.length;
+  const cap = validDistanceCap({ started, checkpointIndex }, track);
   // Lo que el coche está por delante de su recorrido válido. Se mide sobre el trazado, no con
   // `lapPosition`, que tras un atajo largo puede haber quedado una vuelta desplazada.
   const advance = signedDistance(track, along - lapDistance);

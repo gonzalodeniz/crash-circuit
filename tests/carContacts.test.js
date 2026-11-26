@@ -446,16 +446,18 @@ for (const definition of trackDefinitions(CONFIG)) {
 
   test(`${definition.id}: una carrera completa con semilla, con contactos, termina y la clasificación es coherente`, () => {
     for (const seed of [7, 8]) {
-      const race = createRaceFromSetup(NO_WRECKS, { carModelId: 'rayo', trackId: definition.id, laps: 3 }, createSeededRandom(seed));
+      const race = createRaceFromSetup(CONFIG, { carModelId: 'rayo', trackId: definition.id, laps: 3 }, createSeededRandom(seed));
       const rivals = race.participants.filter((p) => !p.isPlayer);
       let steps = 0;
       let bumps = 0;
       // El jugador no toca los controles: es un coche parado en la calzada al que los rivales deben superar.
       while (rivals.some((p) => !p.finished) && steps++ < 60 * 600) {
         const speeds = rivals.map((p) => p.speed);
-        stepRace(race, {}, DT, NO_WRECKS);
+        stepRace(race, {}, DT, CONFIG);
         rivals.forEach((p, i) => { if (!p.finished && speeds[i] - p.speed > 1) bumps++; });
-        if (steps % 10 === 0) assertNoOverlap(race.participants, `${definition.id}, semilla ${seed}, paso ${steps}`);
+        // Los restos de un coche destruido no son sólidos y pueden quedar solapados.
+        const solid = race.participants.filter((p) => p.status !== ParticipantStatus.DESTRUIDO);
+        if (steps % 10 === 0) assertNoOverlap(solid, `${definition.id}, semilla ${seed}, paso ${steps}`);
       }
       assert.ok(bumps > 0, 'ha habido contactos');
       assert.ok(rivals.every((p) => p.finished && p.progress.laps === 3), `semilla ${seed}: todos terminan`);

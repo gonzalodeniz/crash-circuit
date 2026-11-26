@@ -13,13 +13,12 @@ import { createGridEntries } from '../src/logic/startingGrid.js';
 import { buildTrack, nearestOnCenterline } from '../src/logic/track.js';
 import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCatalog.js';
 
-import { withoutDestruction } from './helpers/withoutDestruction.js';
 
 const DT = 1 / 60;
 const ORDERED_DIFFICULTIES = ['veryEasy', 'easy', 'medium', 'hard'];
 const MAX_STEPS = 60 * 600;
-// Aquí se prueba cómo conducen: sin destrucción, que dejaría rivales fuera hasta la reaparición (#92).
-const DRIVING = withoutDestruction();
+// Con la configuración real: un rival que se destruye reaparece y sigue.
+const DRIVING = CONFIG;
 
 function setupFor(trackId, laps = 1) {
   return { carModelId: 'rayo', trackId, laps };

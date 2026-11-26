@@ -295,7 +295,8 @@ test('un coche que ya ha terminado y rueda por inercia sigue siendo sólido y co
 });
 
 // Un empujón solo cambia la velocidad y el rumbo: el progreso sigue saliendo del recorrido real del coche,
-// con las reglas de siempre (RN-01).
+// con las reglas de siempre (RN-01). Lo que recorre empujado, hacia delante, sobre la calzada y en orden,
+// cuenta como lo conducido (decisión de producto en #83); hacia atrás o saltando checkpoints, no.
 
 /** `striker` embiste a toda velocidad a `struck`, parado, desde detrás en la dirección `heading`. */
 function ram(race, striker, struck, pose, seconds = 1.5) {
@@ -360,6 +361,80 @@ for (const definition of trackDefinitions(CONFIG)) {
     assert.ok(struck.progress.lapPosition > second, 'ha pasado la puerta');
     assert.equal(struck.progress.checkpointIndex, 0);
     assert.equal(struck.progress.lapDistance, lapDistance);
+  });
+
+  test(`${definition.id}: un coche empujado hacia atrás en la calzada no suma progreso ni vueltas (RN-01)`, () => {
+    const race = startedRace(definition.id, 3);
+    const [striker, struck] = race.participants;
+    parkOthers(race, [striker, struck]);
+    // Mira en el sentido de la carrera y le embisten de frente: retrocede.
+    const pose = poseAt(race.track, 40);
+    place(race, struck, pose);
+    struck.progress = { ...struck.progress, started: true };
+    const before = struck.progress;
+    place(race, striker, { ...poseAt(race.track, 40 + CAR.length + 0.2), heading: pose.heading + Math.PI }, P.maxSpeed);
+    for (let i = 0; i < 90; i++) {
+      step(race, { [striker.id]: GAS });
+      assert.equal(struck.progress.progress, before.progress, `paso ${i}`);
+    }
+    assert.ok(struck.progress.lapPosition < before.lapPosition - 3, `ha retrocedido: ${struck.progress.lapPosition}`);
+    assert.equal(struck.progress.laps, 0);
+    assert.equal(struck.progress.checkpointIndex, 0);
+  });
+
+  test(`${definition.id}: el avance real por un empujón cuenta para la clasificación (RF-012, RF-023)`, () => {
+    const race = startedRace(definition.id, 3);
+    const [striker, struck, ahead] = race.participants;
+    parkOthers(race, [striker, struck, ahead]);
+    // `ahead`, parado a un lado, va unos metros por delante del golpeado.
+    place(race, ahead, poseAt(race.track, 28, 3.5));
+    ahead.progress = { ...ahead.progress, started: true };
+    const pose = poseAt(race.track, 20, -1);
+    place(race, struck, pose);
+    struck.progress = { ...struck.progress, started: true };
+    step(race);
+    const position = (p) => race.standings.indexOf(p.id);
+    assert.ok(position(struck) > position(ahead), 'empieza por detrás');
+    const before = struck.progress.progress;
+
+    place(race, striker, poseAt(race.track, 20 - CAR.length - 0.2, -1), P.maxSpeed);
+    for (let i = 0; i < 90; i++) step(race);
+    assert.ok(struck.progress.progress > before + 8, `${struck.progress.progress}`);
+    assert.ok(struck.progress.progress <= struck.progress.lapPosition + 1e-9, 'nunca por delante del coche');
+    assert.ok(position(struck) < position(ahead), 'le ha ganado la posición');
+  });
+
+  test(`${definition.id}: un empujón sobre la meta completa la vuelta solo con todos los checkpoints (RN-01, RF-023)`, () => {
+    for (const missing of [0, 1]) {
+      const race = startedRace(definition.id, 1);
+      const [striker, struck] = [race.participants.find((p) => !p.isPlayer), race.player];
+      parkOthers(race, [striker, struck]);
+      const { checkpoints, length } = race.track;
+      const pose = poseAt(race.track, -3);
+      place(race, struck, pose);
+      // Última vuelta a 3 m de la meta; con `missing`, sin haber cruzado el último checkpoint.
+      const checkpointIndex = checkpoints.length - missing;
+      const reached = missing ? checkpoints[checkpointIndex].distance - 1 : length - 3;
+      struck.progress = {
+        ...struck.progress, started: true, checkpointIndex, lapPosition: length - 3, lapDistance: reached, progress: reached,
+      };
+      const forward = { x: Math.sin(pose.heading), z: Math.cos(pose.heading) };
+      const gap = CAR.length + 0.2;
+      place(race, striker, { ...pose, x: pose.x - forward.x * gap, z: pose.z - forward.z * gap }, P.maxSpeed);
+      for (let i = 0; i < 60; i++) step(race);
+      assert.ok(Math.hypot(struck.x - pose.x, struck.z - pose.z) > 3, 'ha sido empujado sobre la meta');
+      if (missing) {
+        assert.equal(struck.progress.laps, 0);
+        assert.equal(struck.progress.progress, reached);
+        assert.equal(struck.finished, false);
+        assert.equal(race.winner, null);
+      } else {
+        assert.equal(struck.progress.laps, 1);
+        assert.equal(struck.finished, true);
+        assert.equal(race.winner.id, struck.id);
+        assert.equal(race.standings[0], struck.id);
+      }
+    }
   });
 
   test(`${definition.id}: una carrera completa con semilla, con contactos, termina y la clasificación es coherente`, () => {

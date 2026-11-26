@@ -72,7 +72,7 @@ Cada carrera tiene diez participantes: tú y nueve pilotos controlados por el ju
 - Todos reciben la señal de salida a la vez. Antes de la señal nadie se mueve ni suma progreso.
 - Si repites la carrera o empiezas otra, la parrilla se monta de nuevo con los diez coches.
 
-Tampoco hay choques, así que tu coche puede atravesar a los rivales y ellos a ti.
+Todavía no hay choques entre coches, así que tu coche puede atravesar a los rivales y ellos a ti.
 
 ### Cómo conducen los rivales
 
@@ -81,6 +81,7 @@ Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completa
 - Cada circuito tiene su propia trayectoria. Los rivales frenan antes de las curvas y aceleran en las rectas.
 - No van todos en fila. Cada rival se desplaza un poco hacia un lado o hacia otro de la calzada, y cada uno lleva un ritmo algo distinto. Por eso dos carreras con la misma configuración no son idénticas.
 - Los rivales intentan no salirse de la calzada. Si alguno se sale, pierde velocidad igual que tú (ver «Salirse de la calzada»). Tampoco reaccionan a otros coches: no te esquivan ni te bloquean.
+- Los rivales chocan con el muro y los obstáculos igual que tú (ver «Muro y obstáculos»). Si uno se queda casi parado contra algo, da marcha atrás, lo rodea y sigue.
 - Sus vueltas cuentan con las mismas reglas que las tuyas: tienen que pasar por todos los puntos de control, en orden, antes de la meta.
 - Conducen con las mismas limitaciones que tú, y los cuatro modelos de coche rinden igual. Un rival no corre más por llevar un coche u otro.
 - Cuanto más difícil es el circuito, más exigentes son: en Abismo van más rápidos y frenan más tarde en las curvas que en Llanura. Con Ribera, Sierra y Abismo la exigencia sube por pasos.
@@ -108,7 +109,7 @@ Cómo se conduce:
 - Si pulsas arriba y abajo a la vez, gana el freno.
 - La cámara acompaña al coche y se mantiene detrás al girar.
 
-No puedes conducir hasta la señal de salida. Por ahora no hay choques. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
+No puedes conducir hasta la señal de salida. Puedes chocar con el muro y los obstáculos (ver «Muro y obstáculos»), pero todavía no con otros coches. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
 
 ## Salirse de la calzada
 
@@ -128,6 +129,29 @@ Además, mientras estás fuera no avanzas en la carrera:
 - Este avance decide tu posición frente a los demás. Todavía no se ve en pantalla durante la carrera.
 
 Todos estos valores son iniciales y pueden cambiar tras probar el juego.
+
+## Muro y obstáculos
+
+Los cuatro circuitos tienen cosas contra las que chocar, siempre fuera de la calzada:
+
+- Un muro exterior que rodea todo el circuito.
+- Pilas de neumáticos, a menudo en fila formando una barrera.
+- Rocas.
+
+Los encontrarás sobre todo por fuera de las curvas. Ninguno invade la calzada, la parrilla ni la meta. Cuanto más difícil es el circuito, más obstáculos hay.
+
+No se pueden atravesar, por muy rápido que vayas:
+
+- **De frente:** el coche rebota hacia atrás con poca velocidad. Si ibas marcha atrás, rebota hacia delante.
+- **De refilón:** pierdes algo de velocidad y el coche se desvía para seguir a lo largo del obstáculo.
+
+Para volver a la pista, gira y sigue. Si te quedas atascado de frente, suelta la flecha arriba y, con el coche parado, pulsa abajo para dar marcha atrás.
+
+- Las mismas reglas valen para ti y para los rivales, con cualquier coche.
+- Rebotar no te hace avanzar en la carrera ni sumar vueltas.
+- Por ahora los golpes no dañan ni destruyen el coche, no restan puntos y no tienen sonido.
+
+La forma de los obstáculos, su posición y la fuerza del rebote son iniciales y pueden cambiar tras probar el juego.
 
 ## Salida y cronómetro
 
@@ -183,6 +207,6 @@ El juego no guarda nada: si recargas la página, vuelves al menú y no queda nin
 
 ## Qué falta
 
-Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, choques, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
+Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, choques entre coches, destrucción, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

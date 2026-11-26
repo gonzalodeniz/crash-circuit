@@ -5,6 +5,7 @@ Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más 
 ## E4 — Colisiones y obstáculos
 
 - **#81 E4 · Perder velocidad al salirse de la carretera** (PR #85, 2026-11-26): fuera de la calzada, el coche del jugador y los de los rivales aceleran menos, tienen menos velocidad máxima y frenan hasta ella; al volver al asfalto recuperan lo normal. Atajar por fuera no suma progreso ni posiciones: tras una salida larga, el avance queda parado hasta volver a donde se dejó o pasar por el punto de control pendiente. Los valores son iniciales. Requisitos: RF-013, RF-032 (parcial). Reglas de negocio: RN-01.
+- **#82 E4 · Límites y obstáculos junto a la pista que no se pueden atravesar** (PR #86, 2026-11-26): los cuatro circuitos tienen un muro exterior y obstáculos (pilas de neumáticos y rocas) fuera de la calzada, que ningún coche atraviesa: de frente rebota y de refilón pierde velocidad y se desvía. Los rivales que se quedan parados contra algo dan marcha atrás y siguen; aún no hay choques entre coches y los valores son iniciales. Requisitos: RF-015, RF-033 (parcial), RF-032 (parcial). Reglas de negocio: RN-01.
 
 ## E3 — Competición contra rivales
 

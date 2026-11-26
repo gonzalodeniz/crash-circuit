@@ -20,8 +20,10 @@ import {
   SRGBColorSpace,
 } from 'three';
 import { rightOf } from '../logic/track.js';
+import { ParticipantStatus } from '../logic/race.js';
 import { createCarMesh } from './carMesh.js';
 import { createDamageVisuals } from './damageVisuals.js';
+import { createDestructionEffects } from './destructionEffects.js';
 
 export class SceneRenderer {
   #config;
@@ -34,6 +36,7 @@ export class SceneRenderer {
   #raceDisposables = [];
   #carMeshes = new Map();
   #carDamage = new Map();
+  #destructionEffects = null;
   // Vista previa de la selección: plataforma fija y coche giratorio, con recursos aparte (RNF-04).
   #previewGroup = null;
   #previewDisposables = [];
@@ -83,9 +86,13 @@ export class SceneRenderer {
     return resource;
   }
 
+  #appearanceOf(carModelId) {
+    return this.#carModels.find((model) => model.id === carModelId).appearance;
+  }
+
   /**
-   * Crea la escena de la carrera: suelo, calzada, meta, límites, obstáculos y un coche por participante,
-   * con su daño visual.
+   * Crea la escena de la carrera: suelo, calzada, meta, límites, obstáculos, un coche por participante,
+   * con su daño visual, y la reserva de los efectos de destrucción.
    * Si ya había una, la libera antes.
    * @param {{track: object, scenery: object, participants: object[], car: {length: number, width: number}}} race
    *   estado de la carrera (lógica)
@@ -108,8 +115,20 @@ export class SceneRenderer {
     this.#addFinishLine(race.track);
     this.#addScenery(race.scenery);
 
+    this.#addDestructionEffects(race.car);
     for (const participant of race.participants) this.#addCar(participant, race);
     this.#scene.add(this.#raceGroup);
+  }
+
+  // Efectos de destrucción (RF-037), compartidos por todos los coches y liberados con la carrera.
+  #addDestructionEffects(dimensions) {
+    const { destructionEffect, car, layers } = this.#config;
+    this.#destructionEffects = createDestructionEffects(dimensions, destructionEffect, {
+      wheelColor: car.wheelColor,
+      ground: layers.road,
+    });
+    this.#raceDisposables.push(...this.#destructionEffects.disposables);
+    this.#raceGroup.add(this.#destructionEffects.group);
   }
 
   // Cinta plana siguiendo la línea central, con la anchura indicada y a la altura `y`.
@@ -223,7 +242,7 @@ export class SceneRenderer {
   // Coche del participante con el aspecto de su modelo (RF-002) y su daño visual (RF-034); sus recursos
   // se liberan con la carrera.
   #addCar(participant, race) {
-    const appearance = this.#carModels.find((model) => model.id === participant.carModelId).appearance;
+    const appearance = this.#appearanceOf(participant.carModelId);
     const { group, disposables, body } = createCarMesh(race.car, this.#config.car, appearance);
     const damage = createDamageVisuals(race.car, this.#config.damage, body);
     group.add(damage.group);
@@ -234,13 +253,24 @@ export class SceneRenderer {
     this.updateCar(participant);
   }
 
-  /** Coloca el coche de un participante en su pose (x, z, rumbo) y muestra su daño. */
+  /**
+   * Coloca el coche de un participante en su pose (x, z, rumbo), muestra su daño, si está destruido lo
+   * aplasta y anota su efecto de destrucción (RF-037) y, mientras está protegido tras reaparecer, lo hace
+   * parpadear (RF-042).
+   */
   updateCar(participant) {
     const group = this.#carMeshes.get(participant.id);
     if (!group) return;
+    // El parpadeo sale del tiempo que le queda de protección, así que se detiene con la simulación.
+    const { blinkPeriod, visibleFraction } = this.#config.protection;
+    const { protection } = participant;
+    group.visible = !protection || (protection.timeLeft / blinkPeriod) % 1 < visibleFraction;
     group.position.set(participant.x, 0, participant.z);
     group.rotation.y = participant.heading;
-    this.#carDamage.get(participant.id).update(participant.damage);
+    const destroyed = participant.status === ParticipantStatus.DESTRUIDO;
+    group.scale.y = destroyed ? this.#config.damage.wreck.heightScale : 1;
+    this.#carDamage.get(participant.id).update(participant.damage, destroyed);
+    this.#destructionEffects.track(participant, this.#appearanceOf(participant.carModelId));
   }
 
   /**
@@ -269,8 +299,7 @@ export class SceneRenderer {
       this.#scene.add(this.#previewGroup);
     }
     this.#disposePreviewCar();
-    const appearance = this.#carModels.find((model) => model.id === modelId).appearance;
-    const { group, disposables } = createCarMesh(dimensions, this.#config.car, appearance);
+    const { group, disposables } = createCarMesh(dimensions, this.#config.car, this.#appearanceOf(modelId));
     this.#previewCarDisposables = disposables;
     this.#previewCar = group;
     this.#previewGroup.add(group);
@@ -319,6 +348,7 @@ export class SceneRenderer {
   }
 
   render() {
+    this.#destructionEffects?.draw();
     this.#renderer.render(this.#scene, this.#camera);
   }
 
@@ -329,6 +359,7 @@ export class SceneRenderer {
     this.#raceDisposables = [];
     this.#carMeshes.clear();
     this.#carDamage.clear();
+    this.#destructionEffects = null;
     this.#raceGroup = null;
   }
 

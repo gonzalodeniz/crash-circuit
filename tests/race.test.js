@@ -8,7 +8,7 @@ import { forwardOf, gridSlot, isOnRoad } from '../src/logic/track.js';
 
 test('el estado de participante es propio y no se mezcla con los estados del juego', () => {
   assert.ok(Object.isFrozen(ParticipantStatus));
-  assert.deepEqual(Object.keys(ParticipantStatus), ['PARRILLA', 'EN_CARRERA']);
+  assert.deepEqual(Object.keys(ParticipantStatus), ['PARRILLA', 'EN_CARRERA', 'DESTRUIDO']);
   assert.equal(createRace(CONFIG).player.status, ParticipantStatus.PARRILLA);
   assert.equal(Object.keys(GameState).length, 7);
   assert.ok(!('DESTRUIDO' in GameState));

@@ -13,16 +13,19 @@ import { createGridEntries } from '../src/logic/startingGrid.js';
 import { buildTrack, nearestOnCenterline } from '../src/logic/track.js';
 import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCatalog.js';
 
+
 const DT = 1 / 60;
 const ORDERED_DIFFICULTIES = ['veryEasy', 'easy', 'medium', 'hard'];
 const MAX_STEPS = 60 * 600;
+// Con la configuración real: un rival que se destruye reaparece y sigue.
+const DRIVING = CONFIG;
 
 function setupFor(trackId, laps = 1) {
   return { carModelId: 'rayo', trackId, laps };
 }
 
 /** Carrera completa con semilla, con el jugador quieto, hasta que los nueve rivales terminan. */
-function runRivals(trackId, seed, { laps = 1, config = CONFIG, onStep } = {}) {
+function runRivals(trackId, seed, { laps = 1, config = DRIVING, onStep } = {}) {
   const race = createRaceFromSetup(config, setupFor(trackId, laps), createSeededRandom(seed));
   const rivals = race.participants.filter((p) => !p.isPlayer);
   let steps = 0;
@@ -46,7 +49,7 @@ function leaveAlone(race, rivalId) {
  * Como `runRivals`, pero cada rival corre solo (con su mismo piloto de esa semilla), para medir cómo
  * conduce sin los contactos entre coches.
  */
-function runSolo(trackId, seed, { config = CONFIG, onStep } = {}) {
+function runSolo(trackId, seed, { config = DRIVING, onStep } = {}) {
   return config.race.aiDrivers.map(({ id }) => {
     const race = createRaceFromSetup(config, setupFor(trackId), createSeededRandom(seed));
     const rival = leaveAlone(race, id);
@@ -64,10 +67,10 @@ function overRoad(race, participant) {
   return nearestOnCenterline(race.track, participant.x, participant.z).distance - race.track.width / 2;
 }
 
-/** Copia de CONFIG en la que el circuito indicado tiene otra dificultad (para comparar niveles en el mismo trazado). */
+/** Copia de la configuración de conducción en la que el circuito indicado tiene otra dificultad (para comparar niveles en el mismo trazado). */
 function withDifficulty(trackId, difficulty) {
   return {
-    ...CONFIG,
+    ...DRIVING,
     tracks: {
       ...CONFIG.tracks,
       circuits: CONFIG.tracks.circuits.map((circuit) => (circuit.id === trackId ? { ...circuit, difficulty } : circuit)),

@@ -18,7 +18,7 @@
 - `src/index.html`: página de arranque con el lienzo `#game-canvas`.
 - `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
 - `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
-- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales, los de los choques, los del contacto entre coches y los de la intensidad de los golpes y el daño).
+- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales, los de los choques, los del contacto entre coches, los de la intensidad de los golpes y el daño, los de la destrucción y los de la reaparición).
 - `src/logic/gameState.js`: estados del juego y máquina de estados, con el flujo `MENU -> SELECCION -> PARRILLA` (sin Three.js ni DOM).
 - `src/logic/trackCatalog.js`: consulta del catálogo de circuitos de la configuración (`trackDefinitions`, `findTrackDefinition`, `requireTrackDefinition`) y datos básicos para la selección (`trackSummary`, `trackSummaries`, `countCurves`) (sin Three.js ni DOM).
 - `src/logic/carModels.js`: consulta del catálogo de modelos de coche de la configuración (`carModels`, `findCarModel`, `requireCarModel`) (sin Three.js ni DOM).
@@ -37,6 +37,8 @@
 - `src/logic/collisions.js`: colisiones de un coche con el límite y los obstáculos (`resolveSceneryCollision`, `touchesScenery`): detección continua y respuesta al golpe (rebote o desvío con pérdida de velocidad) (sin Three.js ni DOM).
 - `src/logic/carContacts.js`: contacto entre coches (`resolveCarContacts`, `applySlide`, `carsOverlap`): detección continua, separación sin solapes y respuesta al golpe (intercambio de velocidad, deslizamiento y cambio de rumbo) (sin Three.js ni DOM).
 - `src/logic/impact.js`: intensidad de los golpes y daño de un coche (`ImpactSeverity`, `classifyImpact`, `applyImpact`, `createDamage`, `stepDamage`): leve o fuerte según la velocidad de impacto, pérdida de velocidad del golpe fuerte y estado del daño visual (sin Three.js ni DOM).
+- `src/logic/destruction.js`: bloqueo del coche destruido (`createWreck`, `stepWreck`): temporizador en tiempo de simulación hasta quedar listo para reaparecer (sin Three.js ni DOM).
+- `src/logic/respawn.js`: reaparición y protección (`findRespawnSpot`, `createProtection`, `stepProtection`): sitio libre sobre la calzada junto al último avance válido, fuera del paso de los coches que llegan (al borde para quien ya ha terminado), sin buscar hacia delante, y temporizador de la protección (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
 - `src/logic/driving.js`: modelo de conducción arcade (`createCarState`, `stepCar`, `inputFromKeys`); recibe entradas y un paso de tiempo (sin Three.js ni DOM).
@@ -50,7 +52,8 @@
 - `src/ui/mainMenu.js`: menú principal (DOM); muestra el título y la opción «Empezar» y avisa con una función de retorno.
 - `src/render/sceneRenderer.js`: escena y cámara de Three.js (recibe el renderizador y la ventana desde `main.js`, así se prueba sin WebGL); dibuja el circuito, la meta, el muro exterior, los obstáculos y los coches de la carrera, muestra la vista previa giratoria del coche en la selección y libera sus recursos.
 - `src/render/carMesh.js`: construye la malla de un coche a partir del aspecto de su modelo y devuelve los recursos que hay que liberar (no necesita WebGL).
-- `src/render/damageVisuals.js`: daño visual de un coche (marcas, carrocería ennegrecida, chispas y humo) a partir del daño que decide la lógica (no necesita WebGL).
+- `src/render/damageVisuals.js`: daño visual de un coche (marcas, carrocería ennegrecida, chispas, humo y aspecto de destruido) a partir del daño que decide la lógica (no necesita WebGL).
+- `src/render/destructionEffects.js`: efecto de destrucción (`createDestructionEffects`, `effectShare`): piezas, chispas y humo de los coches destruidos, con una reserva fija por carrera y máximos por destrucción y totales (no necesita WebGL).
 
 ## `tests/` (pruebas automáticas, sin navegador)
 
@@ -68,8 +71,15 @@
 - `tests/raceWinner.test.js`: pruebas del ganador (un rival gana y el jugador sigue hasta su meta, tiempos reales de los llegados sin cambios, ganador jugador, puesto coherente, repetir sin restos), de los textos de resultados desde la configuración y de la carrera completa de CA-01.
 - `tests/collisions.test.js`: pruebas de límites y obstáculos en los cuatro circuitos: colocación fuera de la calzada y de la parrilla, nada se atraviesa a velocidad máxima, rebote, desvío y pérdida de velocidad, salida del choque (jugador y rivales), mismas reglas para los diez y sin progreso por rebotar (RF-015, RF-033, RN-01).
 - `tests/carContacts.test.js`: pruebas del contacto entre coches: sin solapes ni atravesarse a velocidad máxima, alcance, frente y costado, mismas reglas para los diez, montonera contra el muro, empujones (hacia atrás o saltando checkpoints no suman; el avance real cuenta para clasificación y vueltas), carreras completas con semilla y rivales que no se bloquean (RF-033, RF-032, RN-01).
-- `tests/impact.test.js`: pruebas de la intensidad de los golpes: leve o fuerte según el umbral de la configuración contra coches, muro y obstáculos, consecuencias distintas e iguales para los diez, toque suave sin destrucción (CA-03), daño acotado y sin efecto en el rendimiento, y carreras nuevas sin daños.
+- `tests/impact.test.js`: pruebas de la intensidad de los golpes: leve o fuerte según el umbral de la configuración contra coches, muro y obstáculos, consecuencias distintas e iguales para los diez, toques leves sin destrucción (CA-03), daño acotado y sin efecto en el rendimiento, y carreras nuevas sin daños.
+- `tests/destruction.test.js`: pruebas de la destrucción por golpe fuerte y del bloqueo: umbral, sin control ni progreso, temporizador en tiempo de simulación, clasificación con diez participantes, restos no sólidos y mismas reglas para los diez (RF-035, RF-036, RF-038, RN-04).
+- `tests/respawn.test.js`: pruebas de la reaparición y la protección: a los tres segundos, sitio seguro en los cuatro circuitos (también con el preferido ocupado), vueltas, checkpoints y llegada conservados, vuelta completa después, protección frente a golpes fuertes y mismas reglas para los diez (RF-039, RF-040, RF-042, RN-01, RN-04).
+- `tests/rivalAccidents.test.js`: pruebas de los accidentes de los diez: rivales que vuelven y terminan, varias destrucciones a la vez sin solapes, reaparición fuera del paso de coches lanzados, quien ha terminado al borde y carreras completas con semilla y accidentes forzados en los cuatro circuitos (RF-032, RF-041, RF-027, RN-02, RN-04, CA-05).
+- `tests/helpers/accidents.js`: utilidades compartidas de las pruebas de reaparición y accidentes (colocar coches, destruirlos, esperar la reaparición y comprobar el sitio). No es una prueba.
+- `tests/helpers/playerPilot.js`: piloto IA que conduce al jugador en las carreras completas de las pruebas. No es una prueba.
+- `tests/helpers/withoutDestruction.js`: configuración sin golpes fuertes para las pruebas de la respuesta física de rebotes y contactos. No es una prueba.
 - `tests/damageVisuals.test.js`: pruebas, sin WebGL, de lo que se muestra con cada daño y de que sus recursos se pueden liberar.
+- `tests/destructionEffects.test.js`: pruebas, sin WebGL, del efecto de destrucción: cuándo aparece y desaparece, colores por modelo, máximos de piezas y partículas, pausa, que no cambia la carrera y liberación de sus recursos (RF-037, RNF-04, RNF-05).
 - `tests/offRoad.test.js`: pruebas de la salida de calzada: detección dentro/fuera en los cuatro circuitos, menor velocidad fuera sin saltos, recuperación al volver, misma regla para los diez participantes y recortes sin vueltas, progreso ni posiciones (RN-01), con recuperación al cruzar el checkpoint pendiente.
 - `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.
 - `tests/sceneRenderer.test.js`: pruebas de la liberación de recursos del renderizado (RNF-04) con un renderizador falso: `dispose()` de todas las geometrías, materiales y texturas de la carrera anterior y de la vista previa, y grupos fuera de la escena; y que el muro y los obstáculos se dibujan donde dice la lógica.

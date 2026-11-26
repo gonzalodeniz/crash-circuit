@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Texture } from 'three';
 import { CONFIG } from '../src/config/config.js';
 import { createDamage, stepDamage } from '../src/logic/impact.js';
+import { ParticipantStatus } from '../src/logic/race.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { SceneRenderer } from '../src/render/sceneRenderer.js';
@@ -81,8 +82,9 @@ test('reconstruir y liberar la carrera llama a dispose() en todos los recursos d
   const first = trackDisposals(resourcesOf(firstGroup));
   assert.ok(first.size > 10, 'la carrera tiene geometrías, materiales y texturas');
   assert.ok([...first.keys()].some((resource) => resource instanceof Texture), 'incluye la textura de la meta');
-  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas).
-  assert.equal(firstGroup.children.length, 5 + 10);
+  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas)
+  // y los efectos de destrucción.
+  assert.equal(firstGroup.children.length, 5 + 10 + 1);
   assert.ok(noneDisposed(first), 'nada se libera mientras la carrera está en escena');
 
   sceneRenderer.buildRace(race);
@@ -205,4 +207,51 @@ test('el coche dibujado muestra el daño de su participante y una carrera nueva 
 
   sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
   assert.deepEqual(strongMarks(), Array(10).fill(false));
+});
+
+test('el coche protegido tras reaparecer parpadea y al acabar la protección vuelve a verse siempre (RF-042)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const { blinkPeriod, visibleFraction } = CONFIG.render.protection;
+  const shown = () => {
+    const visible = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'damage') visible.push(object.parent.visible); });
+    return visible;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  const car = race.participants[3];
+  // `phase`: punto del ciclo de parpadeo, de 0 a 1.
+  for (const [phase, visible] of [[visibleFraction / 2, true], [(1 + visibleFraction) / 2, false]]) {
+    car.protection = { timeLeft: blinkPeriod * (3 + phase) };
+    sceneRenderer.updateCar(car);
+    assert.deepEqual(shown(), race.participants.map((_, i) => i !== 3 || visible));
+  }
+  car.protection = null;
+  sceneRenderer.updateCar(car);
+  assert.deepEqual(shown(), Array(10).fill(true));
+});
+
+test('el coche destruido se dibuja aplastado y distinto de los demás; una carrera nueva sale intacta (RF-035)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  // Los grupos de los coches son los que contienen el grupo del daño, en el orden de los participantes.
+  const heights = () => {
+    const scales = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'damage') scales.push(object.parent.scale.y); });
+    return scales;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  assert.deepEqual(heights(), Array(10).fill(1));
+  race.participants[3].status = ParticipantStatus.DESTRUIDO;
+  sceneRenderer.updateCar(race.participants[3]);
+  const wrecked = CONFIG.render.damage.wreck.heightScale;
+  assert.ok(wrecked < 0.8);
+  assert.deepEqual(heights(), race.participants.map((_, i) => (i === 3 ? wrecked : 1)));
+
+  race.participants[3].status = ParticipantStatus.EN_CARRERA;
+  sceneRenderer.updateCar(race.participants[3]);
+  assert.deepEqual(heights(), Array(10).fill(1));
+
+  sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
+  assert.deepEqual(heights(), Array(10).fill(1));
 });

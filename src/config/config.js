@@ -100,16 +100,40 @@ export const CONFIG = deepFreeze({
   // La intensidad es la velocidad de impacto: la de acercamiento en la dirección del choque. Valores
   // iniciales (propuestas), pendientes de calibrar jugando.
   impact: {
-    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte. En E5 será el que
-    // destruya el coche (RF-035).
+    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte y destruye el coche
+    // (RF-035, RF-036).
     strongSpeed: 20, // m/s
     minSpeed: 2, // m/s: por debajo es un simple contacto (coches apoyados en el pelotón), sin daño
     // Consecuencias de cada clase de golpe. `damage` es el daño visual que suma (de 0 a 1) sin pasar de
     // `maxDamage`, y `effectDuration`, los segundos que dura la reacción (chispas, humo). La pérdida de
-    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte, además, solo conserva la
-    // fracción `speedKeep` de la velocidad que le quedaría.
+    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte destruye el coche, que se
+    // queda parado donde ha chocado (véase `destruction`).
     light: { damage: 0.1, maxDamage: 0.3, effectDuration: 0.25 },
-    strong: { speedKeep: 0.2, damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+    strong: { damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+  },
+
+  // Coche destruido (RF-038, RN-04): vale igual para los diez.
+  destruction: {
+    lockDuration: 3, // s de tiempo activo de simulación sin poder conducirlo
+  },
+
+  // Reaparición tras la destrucción (RF-039, RF-042, RN-04): vale igual para los diez. Valores iniciales
+  // (propuestas), pendientes de calibrar jugando.
+  respawn: {
+    exitSpeed: 0, // m/s hacia delante con los que sale el coche nuevo
+    // Protección tras la reaparición (propuesta de la sección 4 de los requisitos): s de tiempo activo en
+    // los que ningún golpe destruye el coche.
+    protectionDuration: 2,
+    // Búsqueda del sitio: se parte del último avance válido y, si está ocupado, se prueba a los lados y más
+    // atrás, nunca más adelante.
+    searchStep: 2, // m entre dos intentos hacia atrás
+    maxSearchDistance: 150, // m que como mucho se retrocede; si no hay sitio, se reintenta en el paso siguiente
+    lateralStep: 3, // m entre dos intentos hacia los lados, sin sacar el coche de la calzada
+    clearance: 1, // m libres que como mínimo quedan hasta otro coche o un objeto
+    // s hacia delante en los que se mira por dónde pasarán los coches en marcha, para no reaparecer delante de
+    // uno que llega lanzado. Con 1 s, quien venga de más lejos alcanza al coche ya en marcha sin golpe fuerte.
+    approachTime: 1,
+    gateClearance: 3, // m que como mínimo queda por detrás del checkpoint o la meta que tiene pendiente
   },
 
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
@@ -513,7 +537,31 @@ export const CONFIG = deepFreeze({
       },
       // Bocanadas de humo de un golpe fuerte: crecen y suben mientras dura la reacción.
       smoke: { color: 0x4a4a4a, opacity: 0.55, count: 4, radius: 0.45, rise: 2.4, growth: 1.6 },
+      // Coche destruido: aplastado a esta fracción de su altura y con la carrocería casi negra (fracción de
+      // 0 a 1 hacia `sootColor`), para distinguirlo a simple vista de los dañados.
+      wreck: { heightScale: 0.5, darkening: 0.95 },
     },
+    // Efecto de destrucción (RF-037): piezas que salen despedidas, chispas y humo, solo visual. Valores
+    // iniciales, pendientes de calibrar jugando. `duration` son los segundos de tiempo activo que dura; se
+    // retira antes si el coche reaparece (`destruction.lockDuration`). En cada clase, `perWreck` es el máximo
+    // de elementos por destrucción y `maxTotal`, el máximo entre todas: cuando no hay para todas, se reparten
+    // a partes iguales (`maxTotal` no debe ser menor que `race.maxParticipants`). Distancias en metros,
+    // velocidades en m/s y giros en rad/s.
+    destructionEffect: {
+      duration: 3,
+      gravity: 14, // m/s² con la que caen las piezas y las chispas
+      // Piezas con los colores del modelo: lados entre `minSize` y `maxSize`, con `thickness` de grosor;
+      // salen con hasta `speed` hacia fuera y `lift` hacia arriba, girando, y se quedan en el suelo.
+      fragments: { perWreck: 16, maxTotal: 80, minSize: 0.3, maxSize: 0.9, thickness: 0.18, speed: 7, lift: 8, spin: 9 },
+      // Estallido de chispas que se apagan a los `life` segundos.
+      sparks: { perWreck: 40, maxTotal: 200, color: 0xffa21f, size: 0.18, speed: 11, lift: 8, life: 0.9 },
+      // Columna de humo: cada bocanada sube `rise`, se abre `drift` y crece `growth` veces su `radius` en
+      // `period` segundos, y vuelve a salir mientras dura el efecto.
+      smoke: { perWreck: 8, maxTotal: 48, color: 0x333333, opacity: 0.5, radius: 0.5, rise: 4.5, drift: 0.9, growth: 2.2, period: 1.6 },
+    },
+    // Coche protegido tras reaparecer (RF-042): parpadea. `blinkPeriod` son los segundos de cada ciclo y
+    // `visibleFraction`, la parte del ciclo (de 0 a 1) en la que se ve.
+    protection: { blinkPeriod: 0.2, visibleFraction: 0.6 },
     // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
     carPreview: {
       cameraPosition: [0, 2.6, 8],

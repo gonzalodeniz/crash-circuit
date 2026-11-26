@@ -5,18 +5,21 @@ import { aiDrive, aiInput, createAiRecovery } from '../src/logic/aiDriver.js';
 import { resolveSceneryCollision, touchesScenery } from '../src/logic/collisions.js';
 import { createCarState, stepCar } from '../src/logic/driving.js';
 import { createProgress } from '../src/logic/progress.js';
-import { createRace, stepRace } from '../src/logic/race.js';
+import { ParticipantStatus, createRace, stepRace } from '../src/logic/race.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { buildScenery } from '../src/logic/scenery.js';
 import { buildTrack, gridSlot, nearestOnCenterline, pointAtDistance } from '../src/logic/track.js';
 import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCatalog.js';
+import { withoutDestruction } from './helpers/withoutDestruction.js';
 
 const P = CONFIG.carPerformance;
 const CAR = CONFIG.race.car;
 const PARAMS = CONFIG.collision;
 const IMPACT = CONFIG.impact;
 const DT = 1 / 60;
+// Para las pruebas de rebotes y de salir del choque: sin destrucción, que no deja seguir hasta #92.
+const NO_WRECKS = withoutDestruction();
 const NONE = { accelerate: false, brake: false, left: false, right: false };
 const GAS = { ...NONE, accelerate: true };
 const BRAKE = { ...NONE, brake: true };
@@ -47,13 +50,15 @@ function startedRace(trackId, { rivals = false } = {}) {
 
 /** Coloca un participante en una pose, con su progreso partiendo de ella. */
 function place(race, participant, pose, speed = 0) {
-  Object.assign(participant, createCarState(pose), { speed, surfaceSample: null, progress: createProgress(race.track, pose) });
+  Object.assign(participant, createCarState(pose), {
+    speed, surfaceSample: null, progress: createProgress(race.track, pose), status: ParticipantStatus.EN_CARRERA, wreck: null,
+  });
 }
 
 /** Avanza la carrera moviendo solo a quien está en `inputs`; los demás quedan quietos. */
-function step(race, inputs, dt = DT) {
+function step(race, inputs, dt = DT, config = CONFIG) {
   const held = Object.fromEntries(race.participants.map((p) => [p.id, NONE]));
-  return stepRace(race, { ...held, ...inputs }, dt, CONFIG);
+  return stepRace(race, { ...held, ...inputs }, dt, config);
 }
 
 /**
@@ -211,7 +216,7 @@ for (const definition of trackDefinitions(CONFIG)) {
             accelerate: random() < 0.6, brake: random() < 0.25, left: random() < 0.4, right: random() < 0.4,
           };
         }
-        step(race, { player: input }, random() < 0.5 ? DT : P.maxStep);
+        step(race, { player: input }, random() < 0.5 ? DT : P.maxStep, NO_WRECKS);
         assert.equal(touchesScenery(race.player, CAR, race.scenery), false, `paso ${i}`);
       }
     }
@@ -261,7 +266,7 @@ for (const definition of trackDefinitions(CONFIG)) {
         place(race, race.player, pose, speed);
         const before = race.player.progress;
         for (let i = 0; i < 20; i++) {
-          step(race, { player: speed > 0 ? GAS : BRAKE });
+          step(race, { player: speed > 0 ? GAS : BRAKE }, DT, NO_WRECKS);
           if (!race.player.offRoad) break;
           assert.equal(race.player.progress.progress, before.progress);
           assert.equal(race.player.progress.laps, 0);
@@ -282,7 +287,7 @@ test('un desplazamiento enorme en un solo paso tampoco atraviesa un obstáculo n
   const car = carAt(0, 0, 0, 45);
   const hit = resolveSceneryCollision(car, { ...car, z: 25 }, CAR, scenery, PARAMS, IMPACT);
   assert.ok(hit.z < 10 - 0.5 - CAR.length / 2 + 1e-3, `z ${hit.z}`);
-  assert.ok(hit.speed < 0);
+  assert.equal(hit.speed, 0, 'golpe fuerte: se queda donde ha chocado');
   const out = resolveSceneryCollision(
     carAt(20, 0, Math.PI / 2, 45), { ...car, x: 200, z: 0, heading: Math.PI / 2 }, CAR, sceneryWith([], 30), PARAMS, IMPACT,
   );

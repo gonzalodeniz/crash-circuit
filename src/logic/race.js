@@ -10,6 +10,7 @@ import { aiDrive, aiLevel, createAiDriver, createAiRecovery } from './aiDriver.j
 import { rankParticipants, standingsOf } from './standings.js';
 import { buildScenery } from './scenery.js';
 import { resolveSceneryCollision } from './collisions.js';
+import { applySlide, resolveCarContacts } from './carContacts.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -173,33 +174,38 @@ function updateSurface(race, participant, offRoad) {
 }
 
 /**
- * Mueve un participante `drivingTime` segundos, resuelve sus choques con el escenario y actualiza su
- * progreso.
+ * Mueve un participante `drivingTime` segundos por sí solo (conducción, deslizamiento de un golpe anterior
+ * y choques con el escenario), sin aplicarlo todavía: los contactos entre coches se resuelven con los
+ * movimientos de todos.
  * Antes de moverlo se mira sobre qué superficie está (`participant.offRoad`): fuera de la calzada rinde
  * menos, con la misma regla para el jugador y los rivales (RF-013, RF-032, RN-07). Tampoco distinguen
  * entre ellos los choques con límites y obstáculos (RF-033), que no se atraviesan.
- * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
- * @returns {boolean} verdadero si termina en este paso
+ * @returns {{previous: object, next: object}} el participante y el estado que propone para él
  */
-function stepParticipant(race, participant, inputs, drivingTime, config) {
+function moveParticipant(race, participant, inputs, drivingTime, config) {
   const input = participantInput(race, participant, inputs, drivingTime, config);
   updateSurface(race, participant, config.offRoad);
   const surface = participant.offRoad ? config.offRoad : null;
-  const moved = stepCar(participant, input, drivingTime, config.carPerformance, surface);
-  Object.assign(participant, resolveSceneryCollision(participant, moved, race.car, race.scenery, config.collision));
-  if (participant.finished) return false;
-  return updateProgress(race, participant, config.offRoad);
+  const driven = stepCar(participant, input, drivingTime, config.carPerformance, surface);
+  const moved = applySlide(driven, drivingTime, config.carContact);
+  return { previous: participant, next: resolveSceneryCollision(participant, moved, race.car, race.scenery, config.collision) };
 }
 
-/** Avanza a los participantes que ya están en carrera. @returns {string[]} los que terminan en este paso */
+/**
+ * Avanza a los participantes que ya están en carrera: mueve a todos, resuelve los contactos entre coches
+ * (RF-033), también los de quienes ya han terminado, y actualiza el progreso con la posición resultante.
+ * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
+ * @returns {string[]} los que terminan en este paso
+ */
 function stepParticipants(race, inputs, drivingTime, config) {
-  const finished = [];
-  if (drivingTime <= 0) return finished;
-  for (const participant of race.participants) {
-    if (participant.status !== ParticipantStatus.EN_CARRERA) continue;
-    if (stepParticipant(race, participant, inputs, drivingTime, config)) finished.push(participant.id);
-  }
-  return finished;
+  if (drivingTime <= 0) return [];
+  const racing = race.participants.filter((participant) => participant.status === ParticipantStatus.EN_CARRERA);
+  const moves = racing.map((participant) => moveParticipant(race, participant, inputs, drivingTime, config));
+  const states = resolveCarContacts(moves, race, drivingTime, config);
+  racing.forEach((participant, index) => Object.assign(participant, states[index]));
+  return racing
+    .filter((participant) => !participant.finished && updateProgress(race, participant, config.offRoad))
+    .map((participant) => participant.id);
 }
 
 /**
@@ -215,13 +221,13 @@ function recordWinner(race, finished) {
 
 /**
  * Avanza la carrera `dt` segundos de simulación; modifica `race` en el sitio.
- * Encadena: reloj y salida, paso de cada participante (movimiento, progreso y llegada), ganador y
- * clasificación en vivo (`race.standings`, véase `standings.js`).
+ * Encadena: reloj y salida, paso de los participantes (movimiento, contactos entre coches, progreso y
+ * llegada), ganador y clasificación en vivo (`race.standings`, véase `standings.js`).
  * @param {ReturnType<typeof createRace>} race
  * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante;
  *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
- * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance`, `offRoad` y `collision`)
+ * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance`, `offRoad`, `collision` y `carContact`)
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): su tiempo de llegada
  * y su progreso quedan congelados, sus controles dejan de actuar y su coche rueda por inercia hasta
  * detenerse. El reloj de la carrera no se detiene.

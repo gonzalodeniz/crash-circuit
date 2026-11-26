@@ -13,6 +13,8 @@ export function createCarState(pose) {
     heading: pose.heading,
     speed: 0, // m/s con signo: negativo = marcha atrás
     steer: 0, // dirección suavizada, de -1 (derecha) a 1 (izquierda)
+    slideX: 0, // m/s de deslizamiento que deja un golpe de otro coche (véase `carContacts.js`)
+    slideZ: 0,
     brakeHeld: false, // el freno estaba pulsado en la actualización anterior
     reverseAllowed: false, // este pulso del freno puede dar marcha atrás (empezó con el coche parado)
   };

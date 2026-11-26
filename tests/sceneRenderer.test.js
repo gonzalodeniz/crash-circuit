@@ -82,8 +82,9 @@ test('reconstruir y liberar la carrera llama a dispose() en todos los recursos d
   const first = trackDisposals(resourcesOf(firstGroup));
   assert.ok(first.size > 10, 'la carrera tiene geometrías, materiales y texturas');
   assert.ok([...first.keys()].some((resource) => resource instanceof Texture), 'incluye la textura de la meta');
-  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas).
-  assert.equal(firstGroup.children.length, 5 + 10);
+  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas)
+  // y los efectos de destrucción.
+  assert.equal(firstGroup.children.length, 5 + 10 + 1);
   assert.ok(noneDisposed(first), 'nada se libera mientras la carrera está en escena');
 
   sceneRenderer.buildRace(race);

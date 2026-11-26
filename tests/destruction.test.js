@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config/config.js';
-import { createWreck, stepWreck } from '../src/logic/destruction.js';
+import { createWreck, stepWreck, wreckElapsed } from '../src/logic/destruction.js';
 import { createCarState } from '../src/logic/driving.js';
 import { GameState, GameStateMachine } from '../src/logic/gameState.js';
 import { createProgress } from '../src/logic/progress.js';
@@ -98,14 +98,17 @@ test('el bloqueo dura tres segundos y está en la configuración, congelado (RF-
 
 test('el temporizador solo avanza con el tiempo que recibe y termina en el tiempo configurado', () => {
   const wreck = createWreck(CONFIG.destruction);
-  assert.deepEqual(wreck, { timeLeft: LOCK, readyToRespawn: false });
+  assert.deepEqual(wreck, { duration: LOCK, timeLeft: LOCK, readyToRespawn: false });
+  assert.equal(wreckElapsed(wreck), 0);
   assert.equal(stepWreck(wreck, 0), wreck, 'sin tiempo de simulación no avanza');
   assert.equal(stepWreck(wreck, -1), wreck);
   const half = stepWreck(wreck, LOCK / 2);
-  assert.deepEqual(half, { timeLeft: LOCK / 2, readyToRespawn: false });
+  assert.deepEqual(half, { duration: LOCK, timeLeft: LOCK / 2, readyToRespawn: false });
+  assert.equal(wreckElapsed(half), LOCK / 2);
   assert.equal(wreck.timeLeft, LOCK, 'no se modifica el anterior');
   const done = stepWreck(half, LOCK);
-  assert.deepEqual(done, { timeLeft: 0, readyToRespawn: true });
+  assert.deepEqual(done, { duration: LOCK, timeLeft: 0, readyToRespawn: true });
+  assert.equal(wreckElapsed(done), LOCK, 'no pasa de la duración del bloqueo');
   assert.equal(stepWreck(done, 1), done);
 });
 

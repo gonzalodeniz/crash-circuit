@@ -10,12 +10,23 @@ export const TIME_EPSILON = 1e-9;
 
 /**
  * Bloqueo de un coche recién destruido.
+ * - `duration`: segundos de tiempo activo que dura el bloqueo.
  * - `timeLeft`: segundos de tiempo activo que le quedan fuera de juego.
  * - `readyToRespawn`: el bloqueo ha terminado y el coche puede reaparecer.
  * @param {{lockDuration: number}} params sección `destruction` de CONFIG
  */
 export function createWreck(params) {
-  return Object.freeze({ timeLeft: params.lockDuration, readyToRespawn: false });
+  return Object.freeze({ duration: params.lockDuration, timeLeft: params.lockDuration, readyToRespawn: false });
+}
+
+/**
+ * Segundos de tiempo activo que han pasado desde la destrucción (cero en el paso en que ocurre). Como sale
+ * del temporizador, no avanza si la simulación no avanza: de aquí lee el renderizado en qué punto va el
+ * efecto de destrucción (RF-037).
+ * @param {ReturnType<typeof createWreck>} wreck
+ */
+export function wreckElapsed(wreck) {
+  return wreck.duration - wreck.timeLeft;
 }
 
 /**
@@ -28,5 +39,5 @@ export function stepWreck(wreck, dt) {
   if (wreck.readyToRespawn || dt <= 0) return wreck;
   const left = wreck.timeLeft - dt;
   const ready = left <= TIME_EPSILON;
-  return Object.freeze({ timeLeft: ready ? 0 : left, readyToRespawn: ready });
+  return Object.freeze({ duration: wreck.duration, timeLeft: ready ? 0 : left, readyToRespawn: ready });
 }

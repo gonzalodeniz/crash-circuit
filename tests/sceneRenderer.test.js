@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Texture } from 'three';
 import { CONFIG } from '../src/config/config.js';
+import { createDamage, stepDamage } from '../src/logic/impact.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { SceneRenderer } from '../src/render/sceneRenderer.js';
@@ -80,8 +81,8 @@ test('reconstruir y liberar la carrera llama a dispose() en todos los recursos d
   const first = trackDisposals(resourcesOf(firstGroup));
   assert.ok(first.size > 10, 'la carrera tiene geometrías, materiales y texturas');
   assert.ok([...first.keys()].some((resource) => resource instanceof Texture), 'incluye la textura de la meta');
-  // Suelo, borde, calzada y meta, más los diez coches (cada uno es un grupo de piezas).
-  assert.equal(firstGroup.children.length, 4 + 10);
+  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas).
+  assert.equal(firstGroup.children.length, 5 + 10);
   assert.ok(noneDisposed(first), 'nada se libera mientras la carrera está en escena');
 
   sceneRenderer.buildRace(race);
@@ -154,4 +155,54 @@ test('dispose() libera la carrera, la vista previa y el renderizador, y deja de 
   assert.equal(raceGroups(scene).length, 0);
   // Las luces no tienen recursos propios; los grupos de carrera y vista previa se liberan sin dejar nada.
   assert.ok(allDisposed(calls));
+});
+
+test('cada circuito dibuja su muro exterior y sus obstáculos donde dice la lógica, sin salirse de su radio (RF-015)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const { limits, obstacles: looks } = CONFIG.render;
+  for (const { id } of CONFIG.tracks.circuits) {
+    const race = newRace(id);
+    sceneRenderer.buildRace(race);
+    const scenery = raceGroups(scene)[0].getObjectByName('scenery');
+    const { bounds, obstacles } = race.scenery;
+    const walls = scenery.children.filter((mesh) => mesh.geometry.type === 'BoxGeometry');
+    assert.equal(walls.length, 4);
+    // La cara interior de cada muro coincide con el límite.
+    for (const wall of walls) {
+      const { width, depth } = wall.geometry.parameters;
+      const horizontal = width > depth;
+      const [center, low, high] = horizontal
+        ? [wall.position.z, bounds.minZ, bounds.maxZ]
+        : [wall.position.x, bounds.minX, bounds.maxX];
+      const inner = center < (low + high) / 2 ? center + limits.thickness / 2 : center - limits.thickness / 2;
+      assert.ok(Math.abs(inner - (center < (low + high) / 2 ? low : high)) < 1e-9, id);
+    }
+    const solids = scenery.children.filter((mesh) => !walls.includes(mesh));
+    const rocks = obstacles.filter((obstacle) => obstacle.type === 'rock').length;
+    assert.equal(solids.length, rocks + (obstacles.length - rocks) * looks.tyres.layers, id);
+    for (const mesh of solids) {
+      const obstacle = obstacles.find((o) => o.x === mesh.position.x && o.z === mesh.position.z);
+      assert.ok(obstacle, `${id}: una pieza dibujada donde no hay obstáculo`);
+      assert.equal(mesh.scale.x, obstacle.radius);
+      assert.equal(mesh.scale.z, obstacle.radius);
+    }
+  }
+});
+
+test('el coche dibujado muestra el daño de su participante y una carrera nueva sale sin daños (RF-034)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const strongMarks = () => {
+    const marks = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'marks-strong') marks.push(object.visible); });
+    return marks;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  assert.deepEqual(strongMarks(), Array(10).fill(false));
+  race.participants[3].damage = stepDamage(createDamage(), CONFIG.impact.strongSpeed, 1 / 60, CONFIG.impact);
+  sceneRenderer.updateCar(race.participants[3]);
+  assert.deepEqual(strongMarks(), race.participants.map((_, i) => i === 3));
+
+  sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
+  assert.deepEqual(strongMarks(), Array(10).fill(false));
 });

@@ -8,7 +8,9 @@ import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial } from
  * @param {{length: number, width: number}} dimensions dimensiones del coche en metros (`race.car`)
  * @param {object} carConfig sección `render.car` de CONFIG
  * @param {object} appearance `appearance` del modelo (colores, proporciones y adornos)
- * @returns {{group: Group, disposables: Array<{dispose: () => void}>}} la malla y los recursos a liberar
+ * @returns {{group: Group, disposables: Array<{dispose: () => void}>,
+ *   body: {material: MeshStandardMaterial, bottom: number, height: number}}} la malla, los recursos a
+ *   liberar y los datos de la carrocería (material y metros desde el suelo), que usa el daño visual
  */
 export function createCarMesh({ length, width }, carConfig, appearance) {
   const disposables = [];
@@ -68,5 +70,5 @@ export function createCarMesh({ length, width }, carConfig, appearance) {
     }
   }
 
-  return { group, disposables };
+  return { group, disposables, body: { material: bodyMaterial, bottom: carConfig.wheelRadius, height: bodyHeight } };
 }

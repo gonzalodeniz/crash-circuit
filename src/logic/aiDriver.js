@@ -151,3 +151,82 @@ export function aiInput(driver, participant, aiConfig) {
     right: error < -aiConfig.steerDeadZone,
   };
 }
+
+/** Memoria con la que un piloto detecta que no avanza y sale del atasco. */
+export function createAiRecovery() {
+  return Object.freeze({ stuckTime: 0, reverseTime: 0, detourTime: 0, attempts: 0 });
+}
+
+// Error de rumbo (rad) respecto a la dirección de la trayectoria donde está el piloto (paralelo a la pista).
+function alignError(driver, participant) {
+  const { line } = driver;
+  const position = wrapDistance(line, participant.progress.lapPosition);
+  const dx = sampleLine(line, line.x, position + line.spacing) - sampleLine(line, line.x, position);
+  const dz = sampleLine(line, line.z, position + line.spacing) - sampleLine(line, line.z, position);
+  return wrapAngle(Math.atan2(dx, dz) - participant.heading);
+}
+
+// Marcha atrás girando para dejar el morro paralelo a la pista o, si ya lo está, hacia un lado alterno.
+function reverseInput(driver, participant, aiConfig, attempts) {
+  const error = alignError(driver, participant);
+  let side = Math.sign(error);
+  if (Math.abs(error) < aiConfig.recovery.alignedError) side = attempts % 2 === 0 ? 1 : -1;
+  return {
+    accelerate: false,
+    // La marcha atrás solo entra al pisar el freno con el coche parado: si este pulso no la admite, se suelta.
+    brake: !(participant.brakeHeld && !participant.reverseAllowed),
+    // Marcha atrás el giro se invierte.
+    left: side < 0,
+    right: side > 0,
+  };
+}
+
+// Avance despacio para rebasar el objeto antes de volver a apuntar a la trayectoria: en paralelo a la pista
+// y, si con eso no basta, en los intentos siguientes algo inclinado hacia un lado y hacia el otro.
+function detourInput(driver, participant, aiConfig, attempts) {
+  const tilt = [0, 1, -1][(attempts - 1) % 3] * aiConfig.recovery.detourAngle;
+  const error = wrapAngle(alignError(driver, participant) + tilt);
+  return {
+    accelerate: participant.speed < aiConfig.minTargetSpeed,
+    brake: false,
+    left: error > aiConfig.steerDeadZone,
+    right: error < -aiConfig.steerDeadZone,
+  };
+}
+
+/**
+ * Entradas del piloto teniendo en cuenta los atascos: si lleva `stuckAfter` segundos casi parado (p. ej.
+ * contra un obstáculo), da marcha atrás `reverseDuration` segundos, avanza `detourDuration` segundos
+ * rodeando el objeto y vuelve a conducir como `aiInput`. Usa las mismas cuatro entradas que el jugador.
+ * @param {ReturnType<typeof createAiRecovery>} recovery memoria del paso anterior (no se modifica)
+ * @param {ReturnType<typeof createAiDriver>} driver
+ * @param {object} participant como en `aiInput`, más `brakeHeld` y `reverseAllowed` del coche
+ * @param {object} aiConfig sección `ai` de CONFIG
+ * @param {number} dt segundos de este paso
+ * @returns {{input: ReturnType<typeof aiInput>, recovery: ReturnType<typeof createAiRecovery>}}
+ */
+export function aiDrive(recovery, driver, participant, aiConfig, dt) {
+  const settings = aiConfig.recovery;
+  let { stuckTime, reverseTime, detourTime, attempts } = recovery;
+  if (reverseTime <= 0) {
+    stuckTime = Math.abs(participant.speed) < settings.stuckSpeed ? stuckTime + dt : 0;
+    if (stuckTime >= settings.stuckAfter) {
+      stuckTime = 0;
+      reverseTime = settings.reverseDuration;
+      detourTime = settings.detourDuration;
+      attempts += 1;
+    }
+  }
+
+  let input;
+  if (reverseTime > 0) {
+    input = reverseInput(driver, participant, aiConfig, attempts);
+    reverseTime -= dt;
+  } else if (detourTime > 0) {
+    input = detourInput(driver, participant, aiConfig, attempts);
+    detourTime -= dt;
+  } else {
+    input = aiInput(driver, participant, aiConfig);
+  }
+  return { input, recovery: Object.freeze({ stuckTime, reverseTime, detourTime, attempts }) };
+}

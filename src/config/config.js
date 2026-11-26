@@ -54,6 +54,64 @@ export const CONFIG = deepFreeze({
     maxStep: 1 / 30, // s: paso de tiempo máximo por actualización, para evitar saltos
   },
 
+  // Circular fuera de la calzada (RF-013): vale igual para los diez coches y para cualquier modelo (RN-07).
+  // Reduce la velocidad y no suma progreso. Valores iniciales (propuestas), pendientes de calibrar jugando.
+  offRoad: {
+    margin: 0, // metros que el centro del coche puede rebasar el borde de la calzada sin penalización
+    maxSpeedFactor: 0.4, // fracción de la velocidad máxima (hacia delante y marcha atrás) alcanzable fuera
+    accelerationFactor: 0.5, // fracción de la aceleración (hacia delante y marcha atrás) disponible fuera
+    deceleration: 25, // m/s²: ritmo mínimo al que pierde velocidad quien va por encima del máximo de fuera
+    // Metros de trazado que se reconocen de golpe al volver a la calzada (RN-01): perdona pisar fuera un
+    // momento. Con un salto mayor, el progreso no avanza hasta regresar o cruzar el checkpoint pendiente.
+    // Debe superar de sobra lo que avanza un coche en un paso (`maxSpeed * maxStep`, 1,5 m).
+    maxRejoinAdvance: 10,
+  },
+
+  // Golpes contra los límites y obstáculos del escenario (RF-015, RF-033): valen igual para los diez
+  // coches. Valores iniciales (propuestas), pendientes de calibrar jugando.
+  collision: {
+    headOnCos: 0.8, // coseno del ángulo con la perpendicular desde el que el golpe es de frente (unos 37 grados)
+    bounce: 0.25, // fracción de la velocidad con la que se sale rebotado tras un golpe de frente
+    scrapeSpeedLoss: 0.25, // fracción de velocidad que quita un golpe de refilón, ponderada por su ángulo
+    deflectionStep: 0.2, // rad que como mucho se desvía el rumbo en cada contacto de refilón
+    // Precisión de la detección: el movimiento de un paso se comprueba en tramos de como mucho estos
+    // metros (menos que la anchura de un coche), así nada se atraviesa a ninguna velocidad.
+    maxSweepStep: 0.5,
+    maxPushIterations: 4, // pasadas para separar un coche que toca varios objetos a la vez
+  },
+
+  // Contacto entre coches (RF-033): los diez son sólidos entre sí y reaccionan igual, con cualquier modelo
+  // (RN-07). El tamaño con el que chocan es el rectángulo de `race.car`. Valores iniciales (propuestas),
+  // pendientes de calibrar jugando.
+  carContact: {
+    // Rebote: con 0 salen a la misma velocidad y con 1 la intercambian por completo. Es también la fracción
+    // de velocidad que conserva un coche encajonado que no puede avanzar.
+    restitution: 0.3,
+    speedLoss: 0.2, // fracción de velocidad que además pierden los dos, ponderada por la violencia del golpe
+    spinFactor: 0.01, // rad que gira un coche por cada m/s de golpe y metro de descentrado
+    maxSpin: 0.12, // rad: giro máximo que provoca un contacto
+    slideDeceleration: 20, // m/s²: ritmo al que se apaga el deslizamiento lateral de un golpe
+    maxSlideSpeed: 12, // m/s: deslizamiento lateral máximo
+    maxSweepStep: 0.5, // m: precisión de la detección (menos que medio coche), para que no se atraviesen
+    maxPushIterations: 4, // pasadas para separar varios coches amontonados
+  },
+
+  // Intensidad de los golpes (RF-034) contra coches, límites y obstáculos: valen igual para los diez coches.
+  // La intensidad es la velocidad de impacto: la de acercamiento en la dirección del choque. Valores
+  // iniciales (propuestas), pendientes de calibrar jugando.
+  impact: {
+    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte. En E5 será el que
+    // destruya el coche (RF-035).
+    strongSpeed: 20, // m/s
+    minSpeed: 2, // m/s: por debajo es un simple contacto (coches apoyados en el pelotón), sin daño
+    // Consecuencias de cada clase de golpe. `damage` es el daño visual que suma (de 0 a 1) sin pasar de
+    // `maxDamage`, y `effectDuration`, los segundos que dura la reacción (chispas, humo). La pérdida de
+    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte, además, solo conserva la
+    // fracción `speedKeep` de la velocidad que le quedaría.
+    light: { damage: 0.1, maxDamage: 0.3, effectDuration: 0.25 },
+    strong: { speedKeep: 0.2, damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+  },
+
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
   // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
   // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.
@@ -207,12 +265,25 @@ export const CONFIG = deepFreeze({
       // Los checkpoints invisibles intermedios (RF-022) se reparten a igual distancia a lo largo de
       // la vuelta; la meta es el punto de inicio. Cada uno es una puerta que cruza toda la calzada.
       checkpointMargin: 6, // metros que la puerta sobresale a cada lado de la calzada
+      // Límite exterior (RF-015): un muro rectangular que rodea el circuito, a estos metros del borde de la
+      // calzada en sus puntos extremos.
+      limitMargin: 35,
+      // Obstáculos (RF-015): cada tipo es un círculo sólido de este radio en metros. Su aspecto está en
+      // `render.obstacles`.
+      obstacleTypes: { tyres: { radius: 0.9 }, rock: { radius: 1.6 } },
+      // Metros libres que, como mínimo, deja cualquier obstáculo hasta el borde de la calzada (las pruebas lo
+      // comprueban en los cuatro circuitos).
+      minObstacleGap: 4,
     },
     // Qué cuenta como «curva» en los datos básicos de la selección (RF-004): tramo seguido de la línea
     // central que gira hacia el mismo lado con un radio de, como mucho, `1 / minTurnRate` metros y que
     // acumula al menos `minAngle` radianes.
     curveDetection: { minTurnRate: 0.01, minAngle: 0.6 },
     // `difficulty` es el identificador de la etiqueta (`ui.trackSelection.difficultyLabels`).
+    // `obstacles` (véase `logic/scenery.js`): `type` (`obstacleTypes`), `at` (fracción de la vuelta desde
+    // la meta), `side` (1 a la derecha del sentido de la carrera, -1 a la izquierda), `gap` (metros libres
+    // hasta el borde de la calzada) y `count` (elementos seguidos que forman una barrera; 1 por defecto).
+    // Se sitúan donde una salida de pista es probable, sobre todo en el exterior de las curvas.
     circuits: [
       {
         id: 'llanura',
@@ -223,6 +294,13 @@ export const CONFIG = deepFreeze({
         controlPoints: [
           [0, -70], [60, -70], [110, -50], [130, 0], [110, 50], [60, 70],
           [0, 70], [-60, 70], [-110, 50], [-130, 0], [-110, -50], [-60, -70],
+        ],
+        obstacles: [
+          { type: 'tyres', at: 0.22, side: -1, gap: 8, count: 10 },
+          { type: 'rock', at: 0.4, side: -1, gap: 6 },
+          { type: 'rock', at: 0.52, side: 1, gap: 7 },
+          { type: 'tyres', at: 0.72, side: -1, gap: 8, count: 10 },
+          { type: 'rock', at: 0.94, side: -1, gap: 7 },
         ],
       },
       {
@@ -236,6 +314,15 @@ export const CONFIG = deepFreeze({
           [0, -100], [60, -100], [130, -80], [170, -20], [150, 50], [90, 80], [40, 50],
           [0, 70], [-60, 100], [-130, 70], [-150, 0], [-120, -60], [-60, -100],
         ],
+        obstacles: [
+          { type: 'rock', at: 0.14, side: 1, gap: 6 },
+          { type: 'tyres', at: 0.23, side: -1, gap: 7, count: 8 },
+          { type: 'tyres', at: 0.39, side: -1, gap: 6, count: 8 },
+          { type: 'tyres', at: 0.46, side: 1, gap: 6, count: 8 },
+          { type: 'rock', at: 0.54, side: -1, gap: 6 },
+          { type: 'tyres', at: 0.68, side: -1, gap: 6, count: 8 },
+          { type: 'rock', at: 0.82, side: 1, gap: 6 },
+        ],
       },
       {
         id: 'sierra',
@@ -247,6 +334,19 @@ export const CONFIG = deepFreeze({
           [0, -120], [80, -120], [160, -110], [210, -70], [220, -10], [190, 40], [130, 60],
           [90, 100], [100, 150], [60, 190], [-10, 190], [-60, 150], [-50, 100], [-90, 60],
           [-150, 70], [-200, 30], [-210, -30], [-180, -80], [-120, -100], [-60, -120],
+        ],
+        obstacles: [
+          { type: 'rock', at: 0.08, side: -1, gap: 6 },
+          { type: 'tyres', at: 0.17, side: -1, gap: 6, count: 8 },
+          { type: 'tyres', at: 0.25, side: -1, gap: 6, count: 10 },
+          { type: 'tyres', at: 0.36, side: 1, gap: 5, count: 8 },
+          { type: 'tyres', at: 0.43, side: -1, gap: 6, count: 10 },
+          { type: 'rock', at: 0.52, side: 1, gap: 5 },
+          { type: 'tyres', at: 0.56, side: -1, gap: 5, count: 8 },
+          { type: 'tyres', at: 0.63, side: 1, gap: 5, count: 10 },
+          { type: 'rock', at: 0.75, side: -1, gap: 5 },
+          { type: 'tyres', at: 0.82, side: -1, gap: 5, count: 10 },
+          { type: 'rock', at: 0.94, side: 1, gap: 6 },
         ],
       },
       {
@@ -261,6 +361,25 @@ export const CONFIG = deepFreeze({
           [100, 230], [60, 180], [0, 200], [-60, 250], [-110, 215], [-170, 250], [-230, 215],
           [-220, 150], [-180, 110], [-120, 70], [-170, 30], [-240, 20], [-280, -30], [-260, -90],
           [-200, -130], [-120, -150], [-60, -150],
+        ],
+        obstacles: [
+          { type: 'rock', at: 0.04, side: 1, gap: 5 },
+          { type: 'tyres', at: 0.07, side: -1, gap: 5, count: 6 },
+          { type: 'rock', at: 0.105, side: 1, gap: 4.5 },
+          { type: 'tyres', at: 0.16, side: -1, gap: 4.5, count: 10 },
+          { type: 'tyres', at: 0.26, side: 1, gap: 4.5, count: 10 },
+          { type: 'rock', at: 0.31, side: -1, gap: 4.5 },
+          { type: 'tyres', at: 0.35, side: -1, gap: 4.5, count: 8 },
+          { type: 'rock', at: 0.43, side: 1, gap: 4.5 },
+          { type: 'tyres', at: 0.485, side: 1, gap: 4.5, count: 6 },
+          { type: 'tyres', at: 0.55, side: -1, gap: 4.5, count: 6 },
+          { type: 'rock', at: 0.585, side: 1, gap: 4.5 },
+          { type: 'tyres', at: 0.645, side: -1, gap: 4.5, count: 8 },
+          { type: 'rock', at: 0.7, side: 1, gap: 4.5 },
+          { type: 'tyres', at: 0.745, side: 1, gap: 4.5, count: 6 },
+          { type: 'tyres', at: 0.825, side: -1, gap: 4.5, count: 10 },
+          { type: 'rock', at: 0.9, side: 1, gap: 4.5 },
+          { type: 'rock', at: 0.97, side: -1, gap: 5 },
         ],
       },
     ],
@@ -297,6 +416,16 @@ export const CONFIG = deepFreeze({
     // Margen de comprobación de las pruebas: metros que el centro de un rival puede rebasar el borde de
     // la calzada sin que se considere una salida de pista (RF-029).
     offRoadTolerance: 1,
+    // Un rival que se queda parado contra un obstáculo o un límite da marcha atrás, avanza un trecho en
+    // paralelo a la pista para rebasarlo y sigue, con las mismas entradas que el jugador.
+    recovery: {
+      stuckSpeed: 2, // m/s: por debajo se considera que no avanza
+      stuckAfter: 0.8, // s seguidos sin avanzar antes de dar marcha atrás
+      reverseDuration: 1.2, // s que mantiene el freno para ir marcha atrás
+      detourDuration: 3, // s que después avanza en paralelo a la pista antes de volver a su trayectoria
+      detourAngle: 0.7, // rad que se inclina ese avance, a un lado y a otro, si en paralelo no ha salido
+      alignedError: 0.3, // rad: si ya está casi paralelo a la pista, retrocede girando a un lado alterno
+    },
     // Un nivel por dificultad del circuito (`tracks.circuits[].difficulty`), de menor a mayor exigencia:
     // - cornerGrip: fracción del giro máximo del coche que usa en las curvas (marca la velocidad en curva).
     // - topSpeedFraction: fracción de la velocidad máxima que se permite en las rectas.
@@ -333,6 +462,13 @@ export const CONFIG = deepFreeze({
         darkShade: 20, // tono de las casillas oscuras (0-255)
       },
     },
+    // Aspecto de los obstáculos por tipo (su radio es `tracks.common.obstacleTypes`) y del límite exterior.
+    obstacles: {
+      // Pila de neumáticos: `layers` discos con una junta entre ellos y colores alternos por pila.
+      tyres: { colors: [0x1b1b1b, 0xc62828], height: 1.4, layers: 3, layerGapRatio: 0.15, segments: 16 },
+      rock: { color: 0x8d8a84, heightRatio: 0.8 }, // alto respecto al radio
+    },
+    limits: { color: 0xb8b8bd, height: 1.8, thickness: 1 }, // muro exterior (metros)
     car: {
       wheelColor: 0x111111,
       height: 1.1, // metros: altura total de referencia (carrocería + cabina)
@@ -344,6 +480,39 @@ export const CONFIG = deepFreeze({
       stripe: { widthRatio: 0.2, thickness: 0.03 }, // proporción del ancho del coche; metros
       // Alerón trasero (`appearance.spoiler`): ala sobre un soporte central.
       spoiler: { widthRatio: 0.95, depth: 0.7, thickness: 0.1, lift: 0.45, postWidth: 0.15 }, // metros salvo la proporción
+    },
+    // Aspecto del daño (RF-034). La carrocería se oscurece hacia `sootColor` según el nivel de daño (hasta la
+    // fracción `maxDarkening`). Las marcas `light` aparecen con cualquier golpe y las `strong`, con uno
+    // fuerte; en cada una, `at` es [x en anchos, y en alturas de carrocería desde su base, z en largos],
+    // `size` son metros [ancho, alto, fondo] y `turn` su giro en rad respecto a la vertical.
+    damage: {
+      sootColor: 0x151515,
+      maxDarkening: 0.65,
+      markColor: 0x0d0d0d,
+      marks: {
+        light: [
+          { at: [0.18, 0.55, -0.505], size: [0.55, 0.07, 0.04], turn: 0 },
+          { at: [-0.51, 0.65, -0.05], size: [0.04, 0.07, 0.9], turn: 0 },
+          { at: [0.51, 0.5, 0.08], size: [0.04, 0.07, 0.9], turn: 0 },
+          { at: [-0.2, 1.04, 0.32], size: [0.07, 0.04, 0.8], turn: 0.5 },
+        ],
+        strong: [
+          { at: [-0.22, 1.05, -0.38], size: [0.8, 0.07, 0.8], turn: 0.4 },
+          { at: [0.24, 1.05, 0.34], size: [0.75, 0.07, 0.9], turn: -0.6 },
+          { at: [-0.52, 0.6, 0.18], size: [0.08, 0.35, 1.1], turn: 0.08 },
+          { at: [0.52, 0.5, -0.2], size: [0.08, 0.35, 1.1], turn: -0.08 },
+          { at: [0.08, 0.2, -0.54], size: [1.9, 0.2, 0.2], turn: 0.22 }, // parachoques suelto
+        ],
+      },
+      // Chispas de la reacción: cuántas, su tamaño (m) y hasta dónde se alejan del coche (m) según el golpe.
+      sparks: {
+        color: 0xffd23f,
+        rise: 1.4, // m: altura que alcanzan
+        light: { count: 6, size: 0.12, spread: 0.7 },
+        strong: { count: 20, size: 0.26, spread: 2.6 },
+      },
+      // Bocanadas de humo de un golpe fuerte: crecen y suben mientras dura la reacción.
+      smoke: { color: 0x4a4a4a, opacity: 0.55, count: 4, radius: 0.45, rise: 2.4, growth: 1.6 },
     },
     // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
     carPreview: {

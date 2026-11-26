@@ -33,6 +33,32 @@ function runRivals(trackId, seed, { laps = 1, config = CONFIG, onStep } = {}) {
   return { race, rivals, steps };
 }
 
+/** Deja en la carrera a un solo rival y al jugador, apartado en un rincón: nadie le estorba. */
+function leaveAlone(race, rivalId) {
+  const rival = race.participants.find((p) => p.id === rivalId);
+  const { player } = race;
+  Object.assign(player, { x: race.scenery.bounds.minX + 5, z: race.scenery.bounds.minZ + 5 });
+  race.participants.splice(0, race.participants.length, player, rival);
+  return rival;
+}
+
+/**
+ * Como `runRivals`, pero cada rival corre solo (con su mismo piloto de esa semilla), para medir cómo
+ * conduce sin los contactos entre coches.
+ */
+function runSolo(trackId, seed, { config = CONFIG, onStep } = {}) {
+  return config.race.aiDrivers.map(({ id }) => {
+    const race = createRaceFromSetup(config, setupFor(trackId), createSeededRandom(seed));
+    const rival = leaveAlone(race, id);
+    let steps = 0;
+    while (!rival.finished && steps++ < MAX_STEPS) {
+      stepRace(race, {}, DT, config);
+      onStep?.(race, [rival]);
+    }
+    return rival;
+  });
+}
+
 /** Distancia (m) a la que el centro de un coche queda fuera de la calzada (negativa: dentro). */
 function overRoad(race, participant) {
   return nearestOnCenterline(race.track, participant.x, participant.z).distance - race.track.width / 2;
@@ -80,16 +106,15 @@ for (const definition of trackDefinitions(CONFIG)) {
       assert.equal(rival.progress.laps, 1, rival.name);
       assert.ok(rival.finishTime > 0, rival.name);
     }
-    // El jugador no ha recibido órdenes: sigue parado en la parrilla.
+    // El jugador no ha recibido órdenes: no completa ninguna vuelta, aunque los rivales lo empujen.
     assert.equal(race.player.progress.laps, 0);
-    assert.equal(race.player.speed, 0);
   });
 
   test(`${definition.id}: en una muestra de carreras ningún rival sale de la calzada más que el margen configurado (RF-029)`, () => {
     for (const seed of [1, 2, 3]) {
       let worst = -Infinity;
       let reversed = false;
-      const { rivals } = runRivals(definition.id, seed, {
+      const rivals = runSolo(definition.id, seed, {
         onStep: (race, drivers) => {
           for (const rival of drivers) {
             if (rival.finished) continue;
@@ -169,7 +194,7 @@ test('el perfil de velocidades frena antes de las curvas con la frenada que perm
 
 test('en el mismo trazado, cada nivel es más rápido que el anterior (RF-031)', () => {
   const meanTimes = ORDERED_DIFFICULTIES.map((difficulty) => {
-    const { rivals } = runRivals('ribera', 21, { config: withDifficulty('ribera', difficulty) });
+    const rivals = runSolo('ribera', 21, { config: withDifficulty('ribera', difficulty) });
     assert.ok(rivals.every((p) => p.finished), difficulty);
     return rivals.reduce((sum, p) => sum + p.finishTime, 0) / rivals.length;
   });
@@ -178,16 +203,16 @@ test('en el mismo trazado, cada nivel es más rápido que el anterior (RF-031)',
 
 test('los circuitos más difíciles son más exigentes: los rivales pasan a más velocidad media (RF-031)', () => {
   const speeds = trackDefinitions(CONFIG).map((definition) => {
-    const { race, rivals } = runRivals(definition.id, 31);
+    const rivals = runSolo(definition.id, 31);
     const meanTime = rivals.reduce((sum, p) => sum + p.finishTime, 0) / rivals.length;
-    return race.track.length / meanTime;
+    return buildTrack(definition).length / meanTime;
   });
   speeds.slice(1).forEach((speed, i) => assert.ok(speed > speeds[i], `velocidades medias por circuito: ${speeds}`));
 });
 
 test('los rivales conducen con las mismas entradas, el mismo modelo de conducción y el mismo rendimiento que el jugador (RF-003, RN-07)', () => {
   const race = createRaceFromSetup(CONFIG, setupFor('abismo'), createSeededRandom(9));
-  const rival = race.participants.find((p) => p.id === 'ai-5');
+  const rival = leaveAlone(race, 'ai-5');
   // Hasta la señal de salida: sin movimiento.
   let result;
   do result = stepRace(race, {}, DT, CONFIG);
@@ -224,7 +249,7 @@ test('el progreso de un rival se calcula con la misma lógica de checkpoints y m
     while (!rival.finished && steps++ < MAX_STEPS) {
       const before = { x: rival.x, z: rival.z };
       stepRace(race, {}, DT, CONFIG);
-      if (rival.x !== before.x || rival.z !== before.z) shadow = rival.finished ? shadow : stepProgress(shadow, race.track, rival);
+      if (rival.x !== before.x || rival.z !== before.z) shadow = rival.finished ? shadow : stepProgress(shadow, race.track, rival, CONFIG.offRoad);
       if (!rival.finished) assert.deepEqual(rival.progress, shadow, `${trackId}: progreso distinto en el paso ${steps}`);
     }
     assert.ok(rival.finished, trackId);

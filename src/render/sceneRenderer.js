@@ -4,9 +4,11 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  BoxGeometry,
   CylinderGeometry,
   DataTexture,
   DirectionalLight,
+  DodecahedronGeometry,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -80,9 +82,10 @@ export class SceneRenderer {
   }
 
   /**
-   * Crea la escena de la carrera: suelo, calzada, meta y un coche por participante.
+   * Crea la escena de la carrera: suelo, calzada, meta, límites, obstáculos y un coche por participante.
    * Si ya había una, la libera antes.
-   * @param {{track: object, participants: object[], car: {length: number, width: number}}} race estado de la carrera (lógica)
+   * @param {{track: object, scenery: object, participants: object[], car: {length: number, width: number}}} race
+   *   estado de la carrera (lógica)
    */
   buildRace(race) {
     this.disposeRace();
@@ -100,6 +103,7 @@ export class SceneRenderer {
     this.#addRibbon(race.track, race.track.width + road.borderExtra * 2, layers.border, road.borderColor);
     this.#addRibbon(race.track, race.track.width, layers.road, road.color);
     this.#addFinishLine(race.track);
+    this.#addScenery(race.scenery);
 
     for (const participant of race.participants) this.#addCar(participant, race);
     this.#scene.add(this.#raceGroup);
@@ -159,6 +163,58 @@ export class SceneRenderer {
     mesh.rotation.y = track.finish.heading;
     mesh.position.set(track.finish.x, this.#config.layers.finishLine, track.finish.z);
     this.#raceGroup.add(mesh);
+  }
+
+  // Límite exterior y obstáculos (RF-015), tal y como los da la lógica; comparten geometrías y materiales.
+  #addScenery({ bounds, obstacles }) {
+    const group = new Group();
+    group.name = 'scenery';
+    this.#addLimits(group, bounds);
+
+    const { tyres, rock } = this.#config.obstacles;
+    const layerHeight = tyres.height / tyres.layers;
+    const layerGeometry = this.#disposable(
+      new CylinderGeometry(1, 1, layerHeight * (1 - tyres.layerGapRatio), tyres.segments),
+    );
+    const tyreMaterials = tyres.colors.map((color) => this.#disposable(new MeshStandardMaterial({ color })));
+    const rockGeometry = this.#disposable(new DodecahedronGeometry(1));
+    const rockMaterial = this.#disposable(new MeshStandardMaterial({ color: rock.color, flatShading: true }));
+
+    obstacles.forEach((obstacle, index) => {
+      if (obstacle.type === 'rock') {
+        const mesh = new Mesh(rockGeometry, rockMaterial);
+        mesh.scale.set(obstacle.radius, obstacle.radius * rock.heightRatio, obstacle.radius);
+        mesh.position.set(obstacle.x, (obstacle.radius * rock.heightRatio) / 2, obstacle.z);
+        mesh.rotation.y = index; // giro distinto en cada roca para que no parezcan iguales
+        group.add(mesh);
+        return;
+      }
+      for (let layer = 0; layer < tyres.layers; layer++) {
+        const mesh = new Mesh(layerGeometry, tyreMaterials[index % tyreMaterials.length]);
+        mesh.scale.set(obstacle.radius, 1, obstacle.radius);
+        mesh.position.set(obstacle.x, layerHeight * (layer + 0.5), obstacle.z);
+        group.add(mesh);
+      }
+    });
+    this.#raceGroup.add(group);
+  }
+
+  // Muro exterior: cuatro tramos con la cara interior justo en el límite.
+  #addLimits(group, { minX, maxX, minZ, maxZ }) {
+    const { color, height, thickness } = this.#config.limits;
+    const material = this.#disposable(new MeshStandardMaterial({ color }));
+    const wall = (width, depth, x, z) => {
+      const mesh = new Mesh(this.#disposable(new BoxGeometry(width, height, depth)), material);
+      mesh.position.set(x, height / 2, z);
+      group.add(mesh);
+    };
+    const centerX = (minX + maxX) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+    const spanX = maxX - minX + 2 * thickness;
+    wall(spanX, thickness, centerX, minZ - thickness / 2);
+    wall(spanX, thickness, centerX, maxZ + thickness / 2);
+    wall(thickness, maxZ - minZ, minX - thickness / 2, centerZ);
+    wall(thickness, maxZ - minZ, maxX + thickness / 2, centerZ);
   }
 
   // Coche del participante con el aspecto de su modelo (RF-002); sus recursos se liberan con la carrera.

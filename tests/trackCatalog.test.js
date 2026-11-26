@@ -51,7 +51,7 @@ test('los circuitos solo tienen datos de trazado: la dificultad no depende del c
   for (const circuit of CONFIG.tracks.circuits) {
     assert.deepEqual(
       Object.keys(circuit).sort(),
-      ['checkpointCount', 'controlPoints', 'difficulty', 'id', 'name', 'width'],
+      ['checkpointCount', 'controlPoints', 'difficulty', 'id', 'name', 'obstacles', 'width'],
     );
   }
   for (const key of Object.keys(CONFIG.tracks.common)) assert.doesNotMatch(key, /speed|accel|steer|brake|grip/i);

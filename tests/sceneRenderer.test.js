@@ -80,8 +80,8 @@ test('reconstruir y liberar la carrera llama a dispose() en todos los recursos d
   const first = trackDisposals(resourcesOf(firstGroup));
   assert.ok(first.size > 10, 'la carrera tiene geometrías, materiales y texturas');
   assert.ok([...first.keys()].some((resource) => resource instanceof Texture), 'incluye la textura de la meta');
-  // Suelo, borde, calzada y meta, más los diez coches (cada uno es un grupo de piezas).
-  assert.equal(firstGroup.children.length, 4 + 10);
+  // Suelo, borde, calzada, meta y escenario (límites y obstáculos), más los diez coches (grupos de piezas).
+  assert.equal(firstGroup.children.length, 5 + 10);
   assert.ok(noneDisposed(first), 'nada se libera mientras la carrera está en escena');
 
   sceneRenderer.buildRace(race);
@@ -154,4 +154,36 @@ test('dispose() libera la carrera, la vista previa y el renderizador, y deja de 
   assert.equal(raceGroups(scene).length, 0);
   // Las luces no tienen recursos propios; los grupos de carrera y vista previa se liberan sin dejar nada.
   assert.ok(allDisposed(calls));
+});
+
+test('cada circuito dibuja su muro exterior y sus obstáculos donde dice la lógica, sin salirse de su radio (RF-015)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const { limits, obstacles: looks } = CONFIG.render;
+  for (const { id } of CONFIG.tracks.circuits) {
+    const race = newRace(id);
+    sceneRenderer.buildRace(race);
+    const scenery = raceGroups(scene)[0].getObjectByName('scenery');
+    const { bounds, obstacles } = race.scenery;
+    const walls = scenery.children.filter((mesh) => mesh.geometry.type === 'BoxGeometry');
+    assert.equal(walls.length, 4);
+    // La cara interior de cada muro coincide con el límite.
+    for (const wall of walls) {
+      const { width, depth } = wall.geometry.parameters;
+      const horizontal = width > depth;
+      const [center, low, high] = horizontal
+        ? [wall.position.z, bounds.minZ, bounds.maxZ]
+        : [wall.position.x, bounds.minX, bounds.maxX];
+      const inner = center < (low + high) / 2 ? center + limits.thickness / 2 : center - limits.thickness / 2;
+      assert.ok(Math.abs(inner - (center < (low + high) / 2 ? low : high)) < 1e-9, id);
+    }
+    const solids = scenery.children.filter((mesh) => !walls.includes(mesh));
+    const rocks = obstacles.filter((obstacle) => obstacle.type === 'rock').length;
+    assert.equal(solids.length, rocks + (obstacles.length - rocks) * looks.tyres.layers, id);
+    for (const mesh of solids) {
+      const obstacle = obstacles.find((o) => o.x === mesh.position.x && o.z === mesh.position.z);
+      assert.ok(obstacle, `${id}: una pieza dibujada donde no hay obstáculo`);
+      assert.equal(mesh.scale.x, obstacle.radius);
+      assert.equal(mesh.scale.z, obstacle.radius);
+    }
+  }
 });

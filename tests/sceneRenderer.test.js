@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Texture } from 'three';
 import { CONFIG } from '../src/config/config.js';
 import { createDamage, stepDamage } from '../src/logic/impact.js';
+import { ParticipantStatus } from '../src/logic/race.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { SceneRenderer } from '../src/render/sceneRenderer.js';
@@ -205,4 +206,29 @@ test('el coche dibujado muestra el daño de su participante y una carrera nueva 
 
   sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
   assert.deepEqual(strongMarks(), Array(10).fill(false));
+});
+
+test('el coche destruido se dibuja aplastado y distinto de los demás; una carrera nueva sale intacta (RF-035)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  // Los grupos de los coches son los que contienen el grupo del daño, en el orden de los participantes.
+  const heights = () => {
+    const scales = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'damage') scales.push(object.parent.scale.y); });
+    return scales;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  assert.deepEqual(heights(), Array(10).fill(1));
+  race.participants[3].status = ParticipantStatus.DESTRUIDO;
+  sceneRenderer.updateCar(race.participants[3]);
+  const wrecked = CONFIG.render.damage.wreck.heightScale;
+  assert.ok(wrecked < 0.8);
+  assert.deepEqual(heights(), race.participants.map((_, i) => (i === 3 ? wrecked : 1)));
+
+  race.participants[3].status = ParticipantStatus.EN_CARRERA;
+  sceneRenderer.updateCar(race.participants[3]);
+  assert.deepEqual(heights(), Array(10).fill(1));
+
+  sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
+  assert.deepEqual(heights(), Array(10).fill(1));
 });

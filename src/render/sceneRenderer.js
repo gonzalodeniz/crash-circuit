@@ -20,6 +20,7 @@ import {
   SRGBColorSpace,
 } from 'three';
 import { rightOf } from '../logic/track.js';
+import { ParticipantStatus } from '../logic/race.js';
 import { createCarMesh } from './carMesh.js';
 import { createDamageVisuals } from './damageVisuals.js';
 
@@ -234,13 +235,15 @@ export class SceneRenderer {
     this.updateCar(participant);
   }
 
-  /** Coloca el coche de un participante en su pose (x, z, rumbo) y muestra su daño. */
+  /** Coloca el coche de un participante en su pose (x, z, rumbo), muestra su daño y, si está destruido, lo aplasta. */
   updateCar(participant) {
     const group = this.#carMeshes.get(participant.id);
     if (!group) return;
     group.position.set(participant.x, 0, participant.z);
     group.rotation.y = participant.heading;
-    this.#carDamage.get(participant.id).update(participant.damage);
+    const destroyed = participant.status === ParticipantStatus.DESTRUIDO;
+    group.scale.y = destroyed ? this.#config.damage.wreck.heightScale : 1;
+    this.#carDamage.get(participant.id).update(participant.damage, destroyed);
   }
 
   /**

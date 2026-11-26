@@ -76,3 +76,15 @@ test('todas las geometrías y materiales del daño quedan registrados para liber
   assert.ok(meshes > 0);
   assert.equal(new Set(visuals.disposables).size, visuals.disposables.length, 'sin recursos repetidos');
 });
+
+test('el coche destruido se ve casi negro, aunque el daño no haya cambiado, y se puede volver a mostrar intacto', () => {
+  const { visuals, shown, model } = build();
+  const brightness = (hex) => (hex >> 16) + ((hex >> 8) & 255) + (hex & 255);
+  visuals.update(STRONG);
+  const damaged = shown().color;
+  visuals.update(STRONG, true);
+  const wrecked = shown().color;
+  assert.ok(brightness(wrecked) < brightness(damaged) / 2, `${wrecked.toString(16)} frente a ${damaged.toString(16)}`);
+  visuals.update(createDamage(), false);
+  assert.equal(shown().color, model.appearance.bodyColor);
+});

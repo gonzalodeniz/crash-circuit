@@ -100,16 +100,21 @@ export const CONFIG = deepFreeze({
   // La intensidad es la velocidad de impacto: la de acercamiento en la dirección del choque. Valores
   // iniciales (propuestas), pendientes de calibrar jugando.
   impact: {
-    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte. En E5 será el que
-    // destruya el coche (RF-035).
+    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte y destruye el coche
+    // (RF-035, RF-036).
     strongSpeed: 20, // m/s
     minSpeed: 2, // m/s: por debajo es un simple contacto (coches apoyados en el pelotón), sin daño
     // Consecuencias de cada clase de golpe. `damage` es el daño visual que suma (de 0 a 1) sin pasar de
     // `maxDamage`, y `effectDuration`, los segundos que dura la reacción (chispas, humo). La pérdida de
-    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte, además, solo conserva la
-    // fracción `speedKeep` de la velocidad que le quedaría.
+    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte destruye el coche, que se
+    // queda parado donde ha chocado (véase `destruction`).
     light: { damage: 0.1, maxDamage: 0.3, effectDuration: 0.25 },
-    strong: { speedKeep: 0.2, damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+    strong: { damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+  },
+
+  // Coche destruido (RF-038, RN-04): vale igual para los diez.
+  destruction: {
+    lockDuration: 3, // s de tiempo activo de simulación sin poder conducirlo
   },
 
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
@@ -513,6 +518,9 @@ export const CONFIG = deepFreeze({
       },
       // Bocanadas de humo de un golpe fuerte: crecen y suben mientras dura la reacción.
       smoke: { color: 0x4a4a4a, opacity: 0.55, count: 4, radius: 0.45, rise: 2.4, growth: 1.6 },
+      // Coche destruido: aplastado a esta fracción de su altura y con la carrocería casi negra (fracción de
+      // 0 a 1 hacia `sootColor`), para distinguirlo a simple vista de los dañados.
+      wreck: { heightScale: 0.5, darkening: 0.95 },
     },
     // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
     carPreview: {

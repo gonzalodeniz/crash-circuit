@@ -1,6 +1,7 @@
 // Daño visual de un coche (RF-034). Solo dibuja el daño que decide la lógica (`logic/impact.js`): marcas
 // y carrocería ennegrecida, que se quedan hasta el final de la carrera, y chispas y humo que duran lo que
-// la reacción al golpe. No necesita WebGL, así que se puede probar en Node.
+// la reacción al golpe. El coche destruido queda además casi negro. No necesita WebGL, así que se puede
+// probar en Node.
 import { BoxGeometry, Color, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, SphereGeometry } from 'three';
 import { ImpactSeverity } from '../logic/impact.js';
 
@@ -12,8 +13,9 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
  * @param {{length: number, width: number}} dimensions dimensiones del coche en metros (`race.car`)
  * @param {object} config sección `render.damage` de CONFIG
  * @param {{material: {color: Color}, bottom: number, height: number}} body carrocería (`createCarMesh`)
- * @returns {{group: Group, disposables: Array<{dispose: () => void}>, update: (damage: object) => void}}
- *   `group` se añade a la malla del coche; `update` recibe el `damage` del participante
+ * @returns {{group: Group, disposables: Array<{dispose: () => void}>,
+ *   update: (damage: object, destroyed?: boolean) => void}} `group` se añade a la malla del coche; `update`
+ *   recibe el `damage` del participante y si está destruido
  */
 export function createDamageVisuals({ length, width }, config, body) {
   const disposables = [];
@@ -88,12 +90,16 @@ export function createDamageVisuals({ length, width }, config, body) {
   }
 
   let shown = null;
-  function update(damage) {
-    if (damage === shown) return; // el estado de daño es inmutable: si es el mismo, no hay nada que cambiar
+  let shownDestroyed = false;
+  function update(damage, destroyed = false) {
+    // El estado de daño es inmutable: si es el mismo y sigue igual de destruido, no hay nada que cambiar.
+    if (damage === shown && destroyed === shownDestroyed) return;
     shown = damage;
+    shownDestroyed = destroyed;
     marks[ImpactSeverity.LIGHT].visible = damage.worst !== null;
     marks[ImpactSeverity.STRONG].visible = damage.worst === ImpactSeverity.STRONG;
-    body.material.color.copy(cleanColor).lerp(sootColor, damage.level * config.maxDarkening);
+    const darkening = destroyed ? config.wreck.darkening : damage.level * config.maxDarkening;
+    body.material.color.copy(cleanColor).lerp(sootColor, darkening);
 
     sparkGroup.visible = damage.effect !== null;
     smokeGroup.visible = damage.effect === ImpactSeverity.STRONG;

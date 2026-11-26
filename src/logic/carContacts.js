@@ -9,9 +9,10 @@
 // - intercambian velocidad como dos masas iguales: quien golpea la pierde y el golpeado la gana;
 // - lo que empuja de costado queda como deslizamiento (`slideX`, `slideZ`) que se apaga solo, y un golpe
 //   descentrado cambia el rumbo;
-// - si se acercaban deprisa, el golpe es fuerte para los dos, que además pierden casi toda su velocidad
+// - si se acercaban deprisa, el golpe es fuerte para los dos, que se paran y quedan destruidos
 //   (`impact.js`).
-// El resto del paso continúa con las velocidades nuevas.
+// El resto del paso continúa con las velocidades nuevas. Los coches ya destruidos no llegan aquí: no son
+// sólidos para los demás (véase `race.js`).
 import { resolveSceneryCollision } from './collisions.js';
 import { applyImpact } from './impact.js';
 import { forwardOf } from './track.js';

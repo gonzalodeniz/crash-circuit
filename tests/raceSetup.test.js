@@ -11,6 +11,7 @@ import { raceTimeOf } from '../src/logic/race.js';
 import { RaceSession, SelectionStep } from '../src/logic/raceSession.js';
 import { createRaceFromSetup, createRaceSetup, defaultRaceSetup, raceSetupSummary } from '../src/logic/raceSetup.js';
 import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCatalog.js';
+import { withoutDestruction } from './helpers/withoutDestruction.js';
 
 const DT = 1 / 60;
 const MAX_STEPS = 60 * 1800;
@@ -18,9 +19,9 @@ const MAX_STEPS = 60 * 1800;
 const SEED = 65;
 const VALID = { carModelId: 'bruma', trackId: 'sierra', laps: 3 };
 
-function createSession(seed = SEED) {
+function createSession(seed = SEED, config = CONFIG) {
   const machine = new GameStateMachine();
-  return { machine, session: new RaceSession(machine, CONFIG, { random: createSeededRandom(seed) }) };
+  return { machine, session: new RaceSession(machine, config, { random: createSeededRandom(seed) }) };
 }
 
 /** Recorre la selección completa: coche, circuito con vueltas, resumen y confirmación. */
@@ -204,7 +205,7 @@ function playerPilot(race, seed) {
 
 // CA-10 (parcial): las 64 combinaciones, con los rivales conduciendo, hasta los resultados. El jugador lo
 // conduce un piloto automático con la lógica de progreso real; la jugabilidad con teclado queda en la
-// verificación manual.
+// verificación manual. Va sin destrucción: un coche destruido no vuelve hasta la reaparición (#92).
 // La semilla de cada combinación es su índice (0..63), así cada caso se repite por separado.
 const MODELS = carModels(CONFIG);
 const TRACKS = trackDefinitions(CONFIG);
@@ -215,7 +216,7 @@ for (const [modelIndex, model] of MODELS.entries()) {
       for (const [lapIndex, laps] of LAP_OPTIONS.entries()) {
         const seed = (modelIndex * TRACKS.length + trackIndex) * LAP_OPTIONS.length + lapIndex;
         const label = `${model.id} en ${definition.id} a ${laps} vuelta(s) (semilla ${seed})`;
-        const ctx = createSession(seed);
+        const ctx = createSession(seed, withoutDestruction());
         const { machine, session } = ctx;
         confirmSetup(ctx, { carModelId: model.id, trackId: definition.id, laps });
         const { race } = session;

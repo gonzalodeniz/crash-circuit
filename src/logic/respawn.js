@@ -10,11 +10,9 @@
 // reaparecer no regala distancia ni salta checkpoints (RN-01).
 import { carsOverlap } from './carContacts.js';
 import { touchesScenery } from './collisions.js';
+import { TIME_EPSILON } from './destruction.js';
 import { NEAREST_SEARCH_SPAN, validDistanceCap } from './progress.js';
 import { nearestOnCenterline, pointAtDistance, rightOf, signedDistance, wrapDistance } from './track.js';
-
-/** Margen (s) para dar por cumplida la protección: la suma de pasos en coma flotante no llega justa a cero. */
-const TIME_EPSILON = 1e-9;
 
 /** Margen (m) de redondeo al comprobar que un sitio no queda por delante de la distancia válida. */
 const DISTANCE_EPSILON = 0.01;

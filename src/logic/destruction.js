@@ -1,12 +1,12 @@
 // Destrucción de un coche y bloqueo posterior (RF-035, RF-038, RN-04). Lógica pura, sin Three.js ni DOM
 // (RNF-05). Vale igual para los diez participantes y para cualquier modelo (RN-07).
 //
-// Qué golpe destruye lo decide `impact.js` (golpe fuerte) y cuándo se aplica, `race.js`; la reaparición
-// posterior, `respawn.js`. Aquí solo está el temporizador del coche destruido, que se avanza con el paso de la simulación y nunca con el reloj de
-// pared: si la simulación no avanza (pausa), el temporizador tampoco.
+// Qué golpe destruye lo decide `impact.js` (golpe fuerte), cuándo se aplica, `race.js`, y la reaparición
+// posterior, `respawn.js`. Aquí solo está el temporizador del coche destruido, que se avanza con el paso de
+// la simulación y nunca con el reloj de pared: si la simulación no avanza (pausa), el temporizador tampoco.
 
 /** Resto (s) que se da por cumplido: la suma de pasos en coma flotante no llega exactamente a cero. */
-const TIME_EPSILON = 1e-9;
+export const TIME_EPSILON = 1e-9;
 
 /**
  * Bloqueo de un coche recién destruido.

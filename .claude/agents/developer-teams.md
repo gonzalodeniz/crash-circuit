@@ -37,11 +37,11 @@ Si no te han indicado número de issue, elige según la prioridad de `FLUJO_DE_T
    Si la hay, no empieces y explícalo en tu respuesta.
 3. Crea la rama y la PR en borrador:
    ```bash
-   git switch main && git pull --ff-only
+   git switch develop && git pull --ff-only
    git switch -c feat/<N>-<slug>
    git commit --allow-empty -m "[developer-teams] Empieza el trabajo en #<N>"
    git push -u origin feat/<N>-<slug>
-   gh pr create --draft --base main --title "<título de la issue>" --body "Closes #<N>"
+   gh pr create --draft --base develop --title "<título de la issue>" --body "Closes #<N>"
    gh issue edit <N> --remove-label "estado:nuevo" --add-label "estado:en-desarrollo"
    ```
 4. Continúa con «Implementar».
@@ -64,12 +64,12 @@ Localiza la PR y su rama (`gh pr list --search "Closes #<N>" --state open --json
 2. Fusiona y deja el repositorio limpio:
    ```bash
    gh pr merge <PR> --squash --delete-branch
-   git switch main && git pull --ff-only
+   git switch develop && git pull --ff-only
    gh issue edit <N> --remove-label "estado:validado" --add-label "changelog-pendiente"
    ```
 3. Comprueba que la issue ha quedado cerrada (`gh issue view <N> --json state`) y que tiene `changelog-pendiente`, para que `doc-teams` la anote en `CHANGELOG.md`.
 
-El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado`, y `gh pr checkout` y `gh pr merge` si la PR viene de un fork.
+El hook `guard` bloquea `gh pr merge` si la issue no tiene `estado:validado` o la PR no va contra `develop`, y `gh pr checkout` y `gh pr merge` si la PR viene de un fork.
 
 ## Implementar
 
@@ -93,9 +93,9 @@ Si necesitas un comando que los permisos no permiten, no lo esquives: indícalo 
 
 1. Ejecuta todas las pruebas de `COMMANDS.md`. No hay handoff con pruebas en rojo.
 2. Ejecuta todas las «Comprobaciones obligatorias» del perfil y anota el resultado de cada una.
-3. Revisa tu propio diff (`git diff origin/main...HEAD`): alcance, legibilidad, duplicación y valores fijos que deberían estar en configuración.
+3. Revisa tu propio diff (`git diff origin/develop...HEAD`): alcance, legibilidad, duplicación y valores fijos que deberían estar en configuración.
 4. Revisa `.gitignore`: `git status --short` no debe mostrar ficheros generados o locales sin versionar (`node_modules/`, `dist/`, cachés, informes, ficheros de entorno), y `git ls-files -ci --exclude-standard` no debe devolver nada. Añade lo que falte y comprueba que no ignoras nada que deba versionarse.
-5. Sincroniza con main y resuelve conflictos: `git fetch origin && git merge origin/main`. Vuelve a pasar las pruebas.
+5. Sincroniza con develop y resuelve conflictos: `git fetch origin && git merge origin/develop`. Vuelve a pasar las pruebas.
 6. `git push`.
 
 ## Handoff a QA
@@ -115,7 +115,7 @@ Si `Impacto documental: sí`, añade también `--add-label "impacto-documental"`
 ## Restricciones
 
 - No modificas `CLAUDE.md`, `.claude/`, `docs/process/`, `docs/project/` ni los documentos de producto (el hook lo impide). Si crees que deben cambiar, usa `requiere-decision`.
-- No haces commits en `main`, push a `main`, rebase ni push forzado (el hook lo impide).
+- No haces commits ni push en `develop` ni en `main`, rebase ni push forzado (el hook lo impide). Tus PR van siempre contra `develop`; `main` solo cambia con la PR de la entrega, que gestiona `product-manager`.
 - No cierras issues a mano ni validas tu propio trabajo.
 - Ante dudas, aplica «Preguntas y bloqueos»: decide y regístralo como `Supuesto:` en «Decisiones relevantes» del handoff, salvo en los casos de escalado.
 

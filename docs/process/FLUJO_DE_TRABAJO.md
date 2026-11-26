@@ -7,8 +7,8 @@ Reglas comunes a todos los roles. Forman parte del kit de agentes y son iguales 
 | Rol | Responsabilidad | Nunca hace |
 |---|---|---|
 | `orquestador` | Lee el estado de las issues y delega en el rol que corresponda. | Implementar, validar, documentar ni decidir producto. |
-| `product-manager` | Convierte los documentos de producto en issues ejecutables, entrega a entrega, según el roadmap. | Escribir código. Cambiar los documentos de producto sin autorización del usuario. |
-| `developer-teams` | Implementa una issue, abre la PR, corrige tras QA y fusiona cuando está validada. | Fusionar sin `estado:validado`. Trabajar en dos issues a la vez. |
+| `product-manager` | Convierte los documentos de producto en issues ejecutables, entrega a entrega, según el roadmap. Abre la PR de la entrega (`develop` → `main`) y la fusiona cuando el usuario acepta la entrega. | Escribir código. Cambiar los documentos de producto sin autorización del usuario. Fusionar en `main` sin la aceptación explícita del usuario. |
+| `developer-teams` | Implementa una issue, abre la PR contra `develop`, corrige tras QA y la fusiona en `develop` cuando está validada. | Fusionar sin `estado:validado`. Trabajar en dos issues a la vez. Tocar `main`. |
 | `qa-teams` | Valida la PR contra los criterios de aceptación y los identificadores de requisitos referenciados. | Modificar código, fusionar ni cerrar issues. |
 | `doc-teams` | Actualiza la documentación de usuario tras una fusión con impacto documental y anota cada issue terminada en `CHANGELOG.md`. | Modificar código, los documentos de producto ni `docs/technical/`. |
 | `quality-auditor`, `security-auditor` | Auditorías periódicas, lanzadas por cron o manualmente, fuera del ciclo del orquestador. Sus hallazgos se convierten en issues `tipo:tecnica` (ver «Auditorías»). | Implementar correcciones, validar, priorizar ni cerrar issues. |
@@ -20,6 +20,7 @@ Reglas comunes a todos los roles. Forman parte del kit de agentes y son iguales 
 - La **entrega en curso** es la primera entrega, en el orden del roadmap, cuyo milestone está abierto.
 - **Cobertura de una entrega:** los IDs de su línea `**Requisitos:**` menos los IDs citados en las issues de su milestone, abiertas o cerradas. Si el resultado no está vacío, quedan requisitos sin issue y `product-manager` las crea. El cálculo es idempotente: repetirlo no duplica issues.
 - Una entrega **aceptada** (milestone cerrado) no se reabre. Los cambios sobre algo ya entregado van en una entrega nueva.
+- Una entrega solo llega a `main` cuando el usuario la acepta de forma explícita: entonces se fusiona `develop` en `main` con la entrega completa (ver «Ramas, commits y PR»).
 
 ### Funcionalidades nuevas
 
@@ -41,16 +42,16 @@ gh issue edit <N> --remove-label "estado:<actual>" --add-label "estado:<nuevo>"
 
 | Estado | Siguiente rol | Transición que produce |
 |---|---|---|
-| (sin trabajo en curso ni issues `estado:nuevo` disponibles) | `product-manager` | Crea los milestones y las issues que falten por cobertura, con `estado:nuevo`, o prepara la aceptación de la entrega. |
+| (sin trabajo en curso ni issues `estado:nuevo` disponibles) | `product-manager` | Crea los milestones y las issues que falten por cobertura, con `estado:nuevo`, o prepara la aceptación de la entrega (issue de aceptación y PR de la entrega). |
 | `estado:nuevo` | `developer-teams` | → `estado:en-desarrollo` (crea rama y PR en borrador). |
 | `estado:en-desarrollo` | `developer-teams` | Continúa → `estado:listo-para-qa` (PR lista para revisión). |
 | `estado:listo-para-qa` | `qa-teams` | → `estado:validado` o `estado:no-validado`. |
 | `estado:no-validado` | `developer-teams` | Corrige en la misma rama y PR → `estado:listo-para-qa`. |
-| `estado:validado` | `developer-teams` | Fusiona la PR (squash) y borra la rama; la issue se cierra sola. Le añade `changelog-pendiente`. |
+| `estado:validado` | `developer-teams` | Fusiona la PR en `develop` (squash) y borra la rama; la issue se cierra sola. Le añade `changelog-pendiente`. |
 | Issue cerrada con `impacto-documental` | `doc-teams` | Documenta y retira la etiqueta `impacto-documental`. |
 | Issue cerrada con `changelog-pendiente` | `doc-teams` | Añade su entrada a `CHANGELOG.md` y retira la etiqueta `changelog-pendiente`. |
 | `requiere-decision` (cualquier estado) | Usuario | El orquestador salta esa issue (y las que dependen de ella) y sigue con el resto; se detiene solo si bloquea la issue en curso, una aceptación de entrega o todo el trabajo restante. |
-| `Aceptación de la entrega <ID>` respondida (sin `requiere-decision`) | `product-manager` | Cierra el milestone o crea issues para lo que falta. |
+| `Aceptación de la entrega <ID>` respondida (sin `requiere-decision`) | `product-manager` | Si el usuario acepta: fusiona la PR de la entrega en `main` y cierra el milestone. Si no: crea issues para lo que falta. |
 | `Decisión de producto: …` respondida (sin `requiere-decision`) | `product-manager` | Aplica la decisión a las issues afectadas. |
 
 Prioridad del orquestador, de mayor a menor: `requiere-decision` → decisiones respondidas → `validado` → `no-validado` → `listo-para-qa` → `en-desarrollo` → documentación pendiente (`impacto-documental` o `changelog-pendiente`) → `nuevo` → `product-manager` (cobertura y aceptación).
@@ -90,12 +91,27 @@ Cada issue se asigna al milestone de su entrega.
 
 ## Ramas, commits y PR
 
-- Rama por issue: `feat/<N>-<slug>` (o `fix/<N>-<slug>`), creada desde `main` actualizado.
+Hay dos ramas permanentes:
+
+| Rama | Contenido | Cómo cambia |
+|---|---|---|
+| `develop` | Integración: todo lo fusionado de la entrega en curso. Es la **rama por defecto** de GitHub, para que `Closes #<N>` cierre las issues al fusionar. | PR de issue (squash) y commits de `doc-teams`. |
+| `main` | Solo entregas aceptadas por el usuario. | Únicamente con la PR de la entrega, tras la aceptación explícita del usuario. |
+
+**Issues:**
+
+- Rama por issue: `feat/<N>-<slug>` (o `fix/<N>-<slug>`), creada desde `develop` actualizado.
 - Commits con prefijo del rol y referencia a la issue, en el idioma del perfil: `[developer-teams] <verbo en 3.ª persona> … (#12)`.
-- Una PR por issue, con `Closes #<N>` en la descripción. Se abre en borrador al empezar y se marca lista al pasar a QA.
-- La PR se sincroniza con `main` antes de cada paso a QA.
-- Fusión siempre con *squash* y borrado de la rama: `gh pr merge <PR> --squash --delete-branch`.
-- `main` no recibe commits directos, salvo los de `doc-teams` sobre documentación.
+- Una PR por issue, contra `develop`, con `Closes #<N>` en la descripción. Se abre en borrador al empezar y se marca lista al pasar a QA.
+- La PR se sincroniza con `develop` antes de cada paso a QA.
+- Fusión en `develop` siempre con *squash* y borrado de la rama: `gh pr merge <PR> --squash --delete-branch`.
+- `develop` no recibe commits directos, salvo los de `doc-teams` sobre documentación.
+
+**Entregas:**
+
+- Cuando todas las issues de la entrega están cerradas, `product-manager` abre la **PR de la entrega**, de `develop` a `main`, con el título `<ID> · Entrega` y un enlace a la issue `Aceptación de la entrega <ID>`.
+- Solo se fusiona cuando el usuario ha aceptado la entrega de forma explícita (respuesta del dueño del repositorio en la issue de aceptación, sin `requiere-decision`). Se fusiona con *merge commit*, sin *squash* y sin borrar `develop`, para conservar en `main` un commit por issue: `gh pr merge <PR> --merge`.
+- `main` no recibe commits directos ni ninguna otra PR.
 
 ## Comentarios estructurados
 

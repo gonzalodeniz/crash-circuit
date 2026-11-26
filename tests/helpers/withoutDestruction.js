@@ -2,9 +2,8 @@ import { CONFIG } from '../../src/config/config.js';
 
 /**
  * Copia de la configuración en la que ningún golpe es fuerte, así que nadie se destruye. Es para las pruebas
- * de otra cosa (conducción de los rivales, matriz de circuitos, rebotes) que necesitan que los coches sigan
- * rodando. Un coche destruido no vuelve hasta que exista la reaparición (#92): con ella, las carreras
- * completas deben volver a probarse con la configuración real (#94).
+ * de otra cosa (respuesta física de los rebotes y contactos) que necesitan que el golpe no saque al coche de
+ * la prueba. Las carreras completas se prueban con la configuración real.
  * @param {object} [config] configuración de partida
  */
 export function withoutDestruction(config = CONFIG) {

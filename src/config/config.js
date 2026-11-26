@@ -117,6 +117,22 @@ export const CONFIG = deepFreeze({
     lockDuration: 3, // s de tiempo activo de simulación sin poder conducirlo
   },
 
+  // Reaparición tras la destrucción (RF-039, RF-042, RN-04): vale igual para los diez. Valores iniciales
+  // (propuestas), pendientes de calibrar jugando.
+  respawn: {
+    exitSpeed: 0, // m/s hacia delante con los que sale el coche nuevo
+    // Protección tras la reaparición (propuesta de la sección 4 de los requisitos): s de tiempo activo en
+    // los que ningún golpe destruye el coche.
+    protectionDuration: 2,
+    // Búsqueda del sitio: se parte del último avance válido y, si está ocupado, se prueba a los lados y más
+    // atrás, nunca más adelante.
+    searchStep: 2, // m entre dos intentos hacia atrás
+    maxSearchDistance: 150, // m que como mucho se retrocede; si no hay sitio, se reintenta en el paso siguiente
+    lateralStep: 3, // m entre dos intentos hacia los lados, sin sacar el coche de la calzada
+    clearance: 1, // m libres que como mínimo quedan hasta otro coche o un objeto
+    gateClearance: 3, // m que como mínimo queda por detrás del checkpoint o la meta que tiene pendiente
+  },
+
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
   // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
   // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.
@@ -522,6 +538,9 @@ export const CONFIG = deepFreeze({
       // 0 a 1 hacia `sootColor`), para distinguirlo a simple vista de los dañados.
       wreck: { heightScale: 0.5, darkening: 0.95 },
     },
+    // Coche protegido tras reaparecer (RF-042): parpadea. `blinkPeriod` son los segundos de cada ciclo y
+    // `visibleFraction`, la parte del ciclo (de 0 a 1) en la que se ve.
+    protection: { blinkPeriod: 0.2, visibleFraction: 0.6 },
     // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
     carPreview: {
       cameraPosition: [0, 2.6, 8],

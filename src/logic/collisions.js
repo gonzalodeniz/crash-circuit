@@ -68,7 +68,7 @@ function separate(pose, car, bounds, obstacles, iterations) {
     return true;
   };
   let free = false;
-  // La última pasada solo comprueba que no queda ningún contacto.
+  // Separar de un objeto puede meterlo en otro: se repite hasta que una pasada no encuentra contactos.
   for (let i = 0; i <= iterations && !free; i++) {
     free = !apply(boundsPush(x, z, sin, cos, car, bounds));
     for (const obstacle of obstacles) {

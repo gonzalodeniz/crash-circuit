@@ -72,7 +72,7 @@ function facing(race, obstacle, from, distance) {
   };
 }
 
-/** El primero, el central y el último obstáculo de cada tipo y los de los extremos de la lista. */
+/** Muestra de obstáculos repartida por todo el circuito: uno de cada cinco y el último. */
 function sample(obstacles) {
   return obstacles.filter((_, i) => i % 5 === 0 || i === obstacles.length - 1);
 }
@@ -154,7 +154,7 @@ for (const definition of trackDefinitions(CONFIG)) {
         assert.equal(touchesScenery(race.player, CAR, race.scenery), false, 'nunca queda dentro de un objeto');
         const beyond = (race.player.x - obstacle.x) * forward.x + (race.player.z - obstacle.z) * forward.z;
         assert.ok(beyond < 0, 'no pasa al otro lado');
-        // Los obstáculos aislados de refilón desvían; aquí basta con que el golpe quite velocidad.
+        // El golpe se reconoce porque quita de golpe bastante más que lo que cambia un paso sin chocar.
         hit = Math.abs(race.player.speed) < Math.abs(before) - 1;
       }
       assert.ok(hit, `no choca con el obstáculo en ${obstacle.x.toFixed(0)}, ${obstacle.z.toFixed(0)}`);

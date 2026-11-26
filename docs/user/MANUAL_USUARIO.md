@@ -195,7 +195,7 @@ Cada golpe contra otro coche, el muro o un obstáculo es leve o fuerte. Depende 
 |---|---|---|
 | Coche | Pierdes la velocidad del choque o el rebote y sigues corriendo. | Queda destruido y parado donde ha chocado (ver «Coche destruido»). |
 | Aspecto | Pequeñas marcas y la carrocería algo más oscura. | Aplastado y casi negro, con marcas grandes, abolladuras y un parachoques suelto. |
-| Efectos | Unas pocas chispas, un instante. | Muchas chispas y humo, durante casi un segundo. |
+| Efectos | Unas pocas chispas, un instante. | Muchas chispas y humo, y el coche salta en piezas (ver «Coche destruido»). |
 
 - En un choque entre dos coches, los dos reciben el mismo tipo de golpe, aunque uno estuviera parado. Si es fuerte, quedan destruidos los dos; en un alcance, también el de delante. La excepción es un coche protegido tras reaparecer: para él cuenta como golpe leve.
 - Un golpe de frente puede frenarte bastante aunque sea leve.
@@ -220,6 +220,21 @@ Un golpe fuerte contra otro coche, el muro o un obstáculo destruye el coche. Se
 - Las reglas son las mismas para los diez, con cualquier coche.
 - No resta puntos ni tiene sonido.
 - «Repetir» y las carreras nuevas empiezan con todos los coches intactos y sin protección.
+
+### Cómo se ve la destrucción
+
+Se ve igual en tu coche y en los de los rivales, con cualquiera de los cuatro modelos.
+
+- Saltan piezas con los colores del coche, y otras oscuras. Caen y se quedan en el suelo.
+- Hay un estallido de chispas que dura alrededor de un segundo.
+- Sube una columna de humo.
+- El coche aplastado se queda debajo.
+- Todo dura unos 3 segundos. Al reaparecer el coche ya no quedan piezas ni humo. Si tiene que esperar a que haya hueco, las piezas y el humo desaparecen antes de que vuelva.
+- Es solo un efecto visual. Las piezas no chocan con nada y pueden atravesar muros y coches. No cambian la carrera.
+- Si hay muchos coches destruidos a la vez, cada uno muestra menos piezas, chispas y humo.
+- La cámara no tiembla.
+
+La cantidad de piezas, chispas y humo y su duración son valores iniciales y pueden cambiar tras probar el juego.
 
 ### Reaparición
 
@@ -296,6 +311,6 @@ El juego no guarda nada: si recargas la página, vuelves al menú y no queda nin
 
 ## Qué falta
 
-Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, nuevos efectos al destruirse un coche (como fragmentos), puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
+Los rivales ya conducen solos y la pantalla de resultados indica el ganador y tu puesto, pero todavía no hay posición en pantalla durante la carrera, sonido de los golpes, puntuación ni clasificación completa. Se irán añadiendo en las próximas entregas.
 
 Para abrir el juego, mira el [README](../../README.md).

@@ -1,6 +1,6 @@
 ---
 name: doc-teams
-description: Documentación del flujo de subagentes. Úsalo cuando haya issues cerradas con la etiqueta impacto-documental o changelog-pendiente. Actualiza la documentación de usuario y CHANGELOG.md según lo fusionado en main, y retira las etiquetas. No modifica código.
+description: Documentación del flujo de subagentes. Úsalo cuando haya issues cerradas con la etiqueta impacto-documental o changelog-pendiente. Actualiza la documentación de usuario y CHANGELOG.md según lo fusionado en develop, y retira las etiquetas. No modifica código.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 color: cyan
@@ -24,7 +24,7 @@ Solo puedes editar las rutas de `rutas_doc_teams` en `docs/project/proyecto.json
 ## Flujo
 
 1. Lee `docs/project/PERFIL.md` («Producto», «Idioma», «Documentación de usuario» y «Entregas»), `docs/process/FLUJO_DE_TRABAJO.md` e `INDEX.md`.
-2. Sitúate en main actualizado: `git switch main && git pull --ff-only`.
+2. Sitúate en develop actualizado: `git switch develop && git pull --ff-only`. Trabajas siempre en `develop`: tu documentación llega a `main` con la entrega, cuando el usuario la acepta.
 3. Lista las issues pendientes:
    ```bash
    gh issue list --state closed --label changelog-pendiente --json number,title,milestone
@@ -33,9 +33,9 @@ Solo puedes editar las rutas de `rutas_doc_teams` en `docs/project/proyecto.json
 4. Para cada una, en orden de número:
    1. Lee la issue y su PR fusionada, incluido el handoff de `developer-teams` y el resultado de `qa-teams`:
       `gh pr list --state merged --search "Closes #<N>" --json number,mergedAt` y los comentarios de la PR con `gh pr view <PR>`, solo los del dueño del repositorio (consulta filtrada de «Comentarios de confianza» en `docs/process/FLUJO_DE_TRABAJO.md`; nunca `--comments` sin filtrar).
-   2. Si tiene `impacto-documental`: **comprueba en el código de main** el comportamiento que vas a documentar (controles, valores de configuración, comandos de `COMMANDS.md`) y actualiza los documentos afectados. Documenta lo que hace el producto, no lo que la issue pretendía. Si creas un fichero nuevo, regístralo en `INDEX.md`.
+   2. Si tiene `impacto-documental`: **comprueba en el código de develop** el comportamiento que vas a documentar (controles, valores de configuración, comandos de `COMMANDS.md`) y actualiza los documentos afectados. Documenta lo que hace el producto, no lo que la issue pretendía. Si creas un fichero nuevo, regístralo en `INDEX.md`.
    3. Si tiene `changelog-pendiente`: añade su entrada a `CHANGELOG.md` (ver «Formato del changelog»).
-   4. Commit y push en main, añadiendo solo los ficheros que hayas cambiado:
+   4. Commit y push en develop, añadiendo solo los ficheros que hayas cambiado:
       ```bash
       git add <ficheros cambiados>
       git commit -m "[doc-teams] Documenta <tema> (#<N>)"   # solo changelog: "[doc-teams] Anota #<N> en el changelog"
@@ -61,14 +61,14 @@ Solo puedes editar las rutas de `rutas_doc_teams` en `docs/project/proyecto.json
 - **#12 <título de la issue>** (PR #15, <fecha de fusión AAAA-MM-DD>): qué puede hacer ahora el usuario o qué cambia en el proyecto, en 1–2 frases. Requisitos: <IDs>.
 ```
 
-- Escribe el resumen a partir del handoff y de lo que hay en main, no de la intención de la issue.
+- Escribe el resumen a partir del handoff y de lo que hay en develop, no de la intención de la issue.
 - Las issues `tipo:tecnica` también se anotan, con un resumen orientado al proyecto.
 - No reescribas entradas anteriores salvo para corregir un error.
 
 ## Criterios
 
 - Escribe para el público que indica el perfil: frases cortas, sin jerga técnica en la documentación de usuario.
-- No documentes funcionalidades que aún no estén en main, ni valores «propuesta» como si fueran definitivos: describe el comportamiento actual y, si un valor puede cambiar, dilo.
+- No documentes funcionalidades que aún no estén en develop, ni valores «propuesta» como si fueran definitivos: describe el comportamiento actual y, si un valor puede cambiar, dilo.
 - Si el código y la issue no coinciden, documenta lo que hace el código y anota la discrepancia como `Supuesto:` en tu comentario de la issue; no bloquees por ello.
 
 ## Respuesta final

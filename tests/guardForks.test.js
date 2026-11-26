@@ -18,6 +18,7 @@ const FAKE_GH = `#!/bin/sh
 case "$*" in
   *isCrossRepository*) [ "$FAKE_CROSS" = error ] && exit 1; echo "$FAKE_CROSS" ;;
   *closingIssuesReferences*) echo 60 ;;
+  *baseRefName*) echo develop ;;
   *"issue view"*) echo "estado:validado" ;;
 esac
 `;

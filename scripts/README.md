@@ -35,6 +35,7 @@ por cobertura    abre PR, fusiona               fusionado
 - **GitHub es el estado compartido.** Cada issue abierta lleva una etiqueta `estado:*` que indica en qué punto está. Los subagentes no se hablan entre sí: se comunican mediante issues, PR y comentarios con plantillas fijas.
 - **El orquestador** aplica la primera regla que se cumple (decisiones pendientes → fusionar → corregir → validar → continuar → documentar → empezar → product-manager), delega en un subagente, comprueba que la transición se ha producido y repite.
 - **Una sola issue en curso** en todo el proyecto. El trabajo avanza en serie.
+- **Dos ramas permanentes.** Las issues se integran en `develop` (rama por defecto de GitHub). `main` solo recibe una entrega completa cuando tú la aceptas.
 - **Las entregas siguen el roadmap**, con un milestone de GitHub por entrega. `product-manager` crea los milestones y las issues que falten comparando el roadmap con las issues existentes (**cobertura**).
 - **Tú intervienes** cuando un agente necesita una decisión y al final de cada entrega, para aceptarla tras comprobarla.
 - **Los auditores van aparte.** `security-auditor` y `quality-auditor` no forman parte del ciclo: los lanzas tú o cron, y dejan cada hallazgo como una issue `tipo:tecnica` que `product-manager` prioriza por severidad (ver [Auditorías](#auditorías)).
@@ -104,7 +105,12 @@ Copia el kit y crea desde plantillas, solo si no existen, `docs/project/PERFIL.m
    ./scripts/setup/03-kit.sh --comprobar                                       # portabilidad
    git add -A && git commit -m "[setup] Instala el flujo de subagentes" && git push
    ```
-5. **Abre una sesión nueva** de Claude Code: las sesiones que ya estaban abiertas no detectan los agentes.
+5. Crea la rama `develop` desde `main` y hazla la rama por defecto de GitHub. Sin esto, `Closes #N` no cierra las issues al fusionar en `develop`:
+   ```bash
+   git switch -c develop main && git push -u origin develop
+   gh repo edit --default-branch develop
+   ```
+6. **Abre una sesión nueva** de Claude Code: las sesiones que ya estaban abiertas no detectan los agentes.
 
 Todos los scripts son **idempotentes**: puedes relanzarlos sin duplicar nada, y no sobrescriben ficheros que hayas editado salvo que uses `--force` (en ese caso guardan una copia `.bak`).
 
@@ -225,9 +231,11 @@ Los agentes no pueden comprobar lo que solo se ve usando el producto. Cuando se 
 - todas las *verificaciones manuales pendientes* que QA fue anotando,
 - todos los *supuestos* que tomaron los agentes.
 
-Comprueba la entrega siguiendo esa lista y responde:
+Además abre la **PR de la entrega** (`<ID> · Entrega`), de `develop` a `main`, con todo lo que se ha hecho en la entrega.
 
-- **Aceptada:** `product-manager` cierra el milestone y pasa a la entrega siguiente. Cierra tú la issue de aceptación.
+Comprueba la entrega en `develop` siguiendo esa lista y responde:
+
+- **Aceptada:** `product-manager` fusiona la PR de la entrega en `main` (con *merge commit*, conservando un commit por issue), cierra el milestone y pasa a la entrega siguiente. Cierra tú la issue de aceptación. Sin tu aceptación explícita, el hook impide fusionar en `main`.
 - **No aceptada:** indica qué falta; `product-manager` creará las issues correspondientes en esa misma entrega.
 
 ### Permisos de comandos nuevos
@@ -267,10 +275,10 @@ Las restricciones no dependen solo del prompt: el hook `.claude/hooks/guard.py` 
 | Rol | Modelo | Puede | El hook le impide |
 |---|---|---|---|
 | orquestador | sonnet | Leer GitHub, delegar, registrar tus decisiones | Tocar ficheros, PR o etiquetas de estado; crear o cerrar issues |
-| product-manager | opus | Crear y editar issues, crear y cerrar milestones | Modificar ficheros o git; gestionar PR; cerrar issues |
-| developer-teams | sonnet (effort high) | Código, ramas, PR, fusionar | Commit o push en `main`, rebase, push forzado, fusionar sin `estado:validado`, cerrar issues |
+| product-manager | opus | Crear y editar issues, crear y cerrar milestones, crear y fusionar (`--merge`) la PR de la entrega `develop` → `main` | Modificar ficheros o git; cualquier otra PR; fusionar la entrega si su aceptación tiene `requiere-decision`; cerrar issues |
+| developer-teams | sonnet (effort high) | Código, ramas, PR contra `develop`, fusionar en `develop` | Commit o push en `develop` o `main`, PR contra otra rama, rebase, push forzado, fusionar sin `estado:validado`, cerrar issues |
 | qa-teams | sonnet (effort high) | Descargar la PR, ejecutar pruebas, comentar | Modificar ficheros o git; fusionar; crear o cerrar issues |
-| doc-teams | sonnet | Editar las rutas de `rutas_doc_teams`; commit en `main` | Editar cualquier otro fichero; trabajar fuera de `main` |
+| doc-teams | sonnet | Editar las rutas de `rutas_doc_teams`; commit en `develop` | Editar cualquier otro fichero; trabajar fuera de `develop` |
 | security-auditor | opus (effort high) | Leer el repositorio y su historial, consultar dependencias (`npm audit`), crear issues y comentar en ellas | Modificar ficheros o git; instalar, actualizar o ejecutar paquetes; editar, cerrar o reabrir issues; actuar sobre PR |
 | quality-auditor | opus (effort high) | Leer el repositorio y su historial, ejecutar las pruebas (`npm test`, cobertura sin escribir ficheros), crear issues y comentar en ellas | Lo mismo que security-auditor, incluido el build |
 

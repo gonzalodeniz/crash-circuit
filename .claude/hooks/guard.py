@@ -6,7 +6,13 @@
   redirecciones) y aplica las reglas del rol a cada orden simple, incluidas las
   que van dentro de `bash -c`, `eval`, `$(…)` y `…`. Los cuerpos de heredocs y
   los comentarios se ignoran, para no bloquear por palabras de una issue o PR.
-- developer-teams: no hace commit ni push en main ni fusiona PR sin estado:validado.
+- Ramas: `develop` integra las issues y `main` solo recibe entregas aceptadas.
+- developer-teams: no hace commit ni push en develop ni en main, abre sus PR contra
+  develop y no fusiona PR sin estado:validado.
+- doc-teams: solo hace commit y push en develop.
+- product-manager: solo crea y fusiona (con merge commit) la PR de la entrega
+  develop → main, y solo si la issue «Aceptación de la entrega <ID>» no tiene
+  requiere-decision.
 - Todos los roles: ninguna orden puede tener como argumento ni redirección un fichero
   `.env` o `.env.*` (salvo `.env.example`): contienen secretos.
 - Todos los roles: `gh pr checkout` y `gh pr merge` se bloquean si la PR viene de un fork
@@ -49,6 +55,11 @@ HERRAMIENTA = DATOS.get("tool_name", "")
 ENTRADA = DATOS.get("tool_input") or {}
 PROYECTO = os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or DATOS.get("cwd") or os.getcwd())
 CWD = os.path.realpath(DATOS.get("cwd") or PROYECTO)
+
+
+RAMA_INTEGRACION = "develop"  # recibe las PR de las issues y los commits de doc-teams
+RAMA_ESTABLE = "main"         # solo recibe la PR de cada entrega aceptada
+RAMAS_PERMANENTES = (RAMA_INTEGRACION, RAMA_ESTABLE)
 
 
 def bloquear(motivo):
@@ -150,7 +161,7 @@ BLOQUEO_GIT = {
                          "stash", "cherry-pick", "revert", "am", "restore", "add", "rm", "mv", "apply", "clean"},
                         "product-manager no modifica el repositorio git: su trabajo vive en GitHub Issues."),
     "developer-teams": ({"rebase"},
-                        "no uses rebase (obligaría a push forzado): sincroniza con 'git merge origin/main'."),
+                        f"no uses rebase (obligaría a push forzado): sincroniza con 'git merge origin/{RAMA_INTEGRACION}'."),
     "qa-teams": ({"commit", "push", "merge", "rebase", "reset", "tag", "stash", "cherry-pick", "revert", "am",
                   "add", "rm", "mv", "apply"},
                  "qa-teams no modifica el repositorio: valida y deja el resultado en la PR."),
@@ -168,8 +179,9 @@ BLOQUEO_GIT = {
 # Acciones de gh prohibidas por rol: {grupo: (acciones, motivo)}.
 BLOQUEO_GH = {
     "product-manager": {
-        "pr": ({"create", "merge", "close", "edit", "ready"},
-               "product-manager no gestiona PR: eso corresponde a developer-teams."),
+        # create y merge se permiten solo para la PR de la entrega (ver comprobar_pr_entrega)
+        "pr": ({"close", "edit", "ready", "reopen", "checkout"},
+               "product-manager solo gestiona la PR de la entrega (develop → main); el resto corresponde a developer-teams."),
         "issue": ({"close", "delete", "transfer"},
                   "product-manager no cierra issues: se cierran al fusionar su PR. Si una issue sobra, usa requiere-decision."),
     },
@@ -487,8 +499,8 @@ def comprobar_git(args):
 
     if sub in ("switch", "checkout"):
         cambia, destino = rama_destino(sub, resto)
-        if ROL == "doc-teams" and not (cambia and destino == "main"):
-            bloquear("doc-teams trabaja siempre sobre main.")
+        if ROL == "doc-teams" and not (cambia and destino == RAMA_INTEGRACION):
+            bloquear(f"doc-teams trabaja siempre sobre {RAMA_INTEGRACION}.")
         if cambia:
             ESTADO["rama"] = destino
 
@@ -500,10 +512,14 @@ def comprobar_git(args):
         if ROL == "developer-teams":
             if rama is None:
                 bloquear("no se puede determinar la rama del commit: cambia de rama y haz el commit en comandos separados.")
-            if rama == "main":
-                bloquear("estás en main: crea o cambia a la rama de la issue (feat/<N>-<slug>) antes de hacer commit.")
-        if ROL == "doc-teams" and rama != "main":
-            bloquear("doc-teams solo hace commit y push sobre main: ejecuta antes 'git switch main && git pull --ff-only'.")
+            if rama in RAMAS_PERMANENTES:
+                bloquear(f"estás en {rama}: crea o cambia a la rama de la issue (feat/<N>-<slug>) antes de hacer commit.")
+        if ROL == "doc-teams" and rama != RAMA_INTEGRACION:
+            bloquear(MOTIVO_DOC_TEAMS_RAMA)
+
+
+MOTIVO_DOC_TEAMS_RAMA = (f"doc-teams solo hace commit y push sobre {RAMA_INTEGRACION}: ejecuta antes "
+                         f"'git switch {RAMA_INTEGRACION} && git pull --ff-only'.")
 
 
 def rama_destino(sub, args):
@@ -526,7 +542,7 @@ def rama_destino(sub, args):
     if sub == "switch":
         return True, destino
     # checkout: es un cambio de rama solo si el destino existe como rama local o remota
-    if (destino == "main"
+    if (destino in RAMAS_PERMANENTES
             or run("git", "rev-parse", "--verify", "--quiet", f"refs/heads/{destino}") is not None
             or run("git", "rev-parse", "--verify", "--quiet", f"refs/remotes/origin/{destino}") is not None):
         return True, destino
@@ -558,11 +574,12 @@ def comprobar_push(args):
             d = r.split(":")[-1] or r.split(":")[0]
             d = rama if d == "HEAD" else d
             destinos.append(None if d is None else re.sub(r"^refs/heads/", "", d))
-        if any(d is None or d == "main" for d in destinos):
-            bloquear("no se hace push directo a main: los cambios entran por PR con squash.")
+        if any(d is None or d in RAMAS_PERMANENTES for d in destinos):
+            bloquear(f"no se hace push directo a {RAMA_INTEGRACION} ni a {RAMA_ESTABLE}: "
+                     f"los cambios entran por PR contra {RAMA_INTEGRACION} con squash.")
 
-    if ROL == "doc-teams" and rama_actual() != "main":
-        bloquear("doc-teams solo hace commit y push sobre main: ejecuta antes 'git switch main && git pull --ff-only'.")
+    if ROL == "doc-teams" and rama_actual() != RAMA_INTEGRACION:
+        bloquear(MOTIVO_DOC_TEAMS_RAMA)
 
 
 # --- gh -----------------------------------------------------------------------
@@ -588,12 +605,19 @@ def comprobar_gh(args):
 
     if ROL == "orquestador" and grupo == "issue" and accion == "edit":
         comprobar_edicion_orquestador(resto)
+    if grupo == "pr" and accion == "create":
+        if ROL == "developer-teams":
+            comprobar_creacion_pr_issue(resto)
+        elif ROL == "product-manager":
+            comprobar_creacion_pr_entrega(resto)
     if grupo == "pr" and accion == "checkout":
         comprobar_pr_de_fork("checkout", resto, GH_CHECKOUT_CON_VALOR)
     if grupo == "pr" and accion == "merge":
         comprobar_pr_de_fork("merge", resto, GH_MERGE_CON_VALOR)
         if ROL == "developer-teams":
             comprobar_fusion(resto)
+        elif ROL == "product-manager":
+            comprobar_fusion_entrega(resto)
 
 
 GH_API_CON_VALOR = {"-X", "--method", "-f", "-F", "--field", "--raw-field", "--input", "-H", "--header",
@@ -703,6 +727,9 @@ def comprobar_fusion(args):
                  "--jq", ".closingIssuesReferences[].number")
     if salida is None:
         bloquear("no se pudo verificar la PR con gh; indica el número de PR explícitamente.")
+    base = run("gh", "pr", "view", objetivo, *repo, "--json", "baseRefName", "--jq", ".baseRefName")
+    if base != RAMA_INTEGRACION:
+        bloquear(f"la PR va contra '{base}': las PR de issue se fusionan solo en {RAMA_INTEGRACION}.")
     issues = salida.split()
     if not issues:
         bloquear("la PR no enlaza ninguna issue con 'Closes #N'; añádelo a la descripción antes de fusionar.")
@@ -712,6 +739,81 @@ def comprobar_fusion(args):
             bloquear(f"no se pudieron leer las etiquetas de la issue #{n}.")
         if "estado:validado" not in etiquetas.split("\n"):
             bloquear(f"la issue #{n} no tiene estado:validado: solo se fusiona tras la validación de qa-teams.")
+
+
+# --- PR de issue y PR de entrega ---------------------------------------------
+GH_CREATE_CON_VALOR = {"-B", "--base", "-H", "--head", "-t", "--title", "-b", "--body", "-F", "--body-file",
+                       "-l", "--label", "-a", "--assignee", "-r", "--reviewer", "-m", "--milestone",
+                       "-p", "--project", "-T", "--template", "-R", "--repo", "--recover"}
+TITULO_ENTREGA = re.compile(r"(\S+) · Entrega")
+
+
+def valor_opcion(args, nombres, con_valor):
+    """Devuelve el valor de la opción (cualquiera de sus nombres) o None si no aparece."""
+    valor, i = None, 0
+    while i < len(args):
+        a = args[i]
+        largo = next((n for n in nombres if n.startswith("--") and a.startswith(n + "=")), None)
+        if largo:
+            valor = a.split("=", 1)[1]
+        elif a in nombres:
+            valor = args[i + 1] if i + 1 < len(args) else ""
+            i += 1
+        elif a in con_valor:
+            i += 1
+        i += 1
+    return valor
+
+
+def comprobar_creacion_pr_issue(args):
+    base = valor_opcion(args, ("-B", "--base"), GH_CREATE_CON_VALOR)
+    if base != RAMA_INTEGRACION:
+        bloquear(f"las PR de issue van contra {RAMA_INTEGRACION}: usa '--base {RAMA_INTEGRACION}'.")
+
+
+def comprobar_creacion_pr_entrega(args):
+    base = valor_opcion(args, ("-B", "--base"), GH_CREATE_CON_VALOR)
+    cabeza = valor_opcion(args, ("-H", "--head"), GH_CREATE_CON_VALOR)
+    titulo = valor_opcion(args, ("-t", "--title"), GH_CREATE_CON_VALOR) or ""
+    if base != RAMA_ESTABLE or cabeza != RAMA_INTEGRACION or not TITULO_ENTREGA.fullmatch(titulo):
+        bloquear(f"product-manager solo crea la PR de la entrega: '--base {RAMA_ESTABLE} --head {RAMA_INTEGRACION} "
+                 "--title \"<ID> · Entrega\"'.")
+
+
+def comprobar_fusion_entrega(args):
+    """La PR de la entrega se fusiona con merge commit y solo si su aceptación no espera una decisión."""
+    opciones = [a for a in args if a.startswith("-")]
+    if not any(o in ("--merge", "-m") for o in opciones) or any(
+            o in ("--squash", "-s", "--rebase", "-r", "--delete-branch", "-d", "--admin") for o in opciones):
+        bloquear(f"la PR de la entrega se fusiona solo con 'gh pr merge <PR> --merge' "
+                 f"(sin squash, rebase, --admin ni borrar {RAMA_INTEGRACION}).")
+
+    objetivo, repo = objetivo_pr(args, GH_MERGE_CON_VALOR)
+    if objetivo is None:
+        bloquear("no se puede determinar la PR: indica su número explícitamente.")
+    datos = run("gh", "pr", "view", objetivo, *repo, "--json", "headRefName,baseRefName,title",
+                "--jq", '"\\(.headRefName)\\t\\(.baseRefName)\\t\\(.title)"')
+    if datos is None:
+        bloquear("no se pudo verificar la PR con gh; indica el número de PR explícitamente.")
+    cabeza, base, titulo = (datos.split("\t", 2) + ["", ""])[:3]
+    entrega = TITULO_ENTREGA.fullmatch(titulo)
+    if cabeza != RAMA_INTEGRACION or base != RAMA_ESTABLE or not entrega:
+        bloquear(f"product-manager solo fusiona la PR de la entrega ({RAMA_INTEGRACION} → {RAMA_ESTABLE}, "
+                 "título «<ID> · Entrega»).")
+
+    titulo_aceptacion = f"Aceptación de la entrega {entrega.group(1)}"
+    aceptaciones = run("gh", "issue", "list", *repo, "--state", "all", "--search", f'"{titulo_aceptacion}" in:title',
+                       "--json", "title,labels",
+                       "--jq", f'.[] | select(.title == "{titulo_aceptacion}") '
+                               '| "etiquetas=" + ([.labels[].name] | join(","))')
+    if aceptaciones is None:
+        bloquear("no se pudo leer la issue de aceptación de la entrega.")
+    # Una línea por issue con ese título; el prefijo distingue «sin etiquetas» de «no existe».
+    lineas = [l for l in aceptaciones.split("\n") if l.startswith("etiquetas=")]
+    if not lineas:
+        bloquear(f"no existe la issue «{titulo_aceptacion}»: la entrega no se fusiona en {RAMA_ESTABLE} sin aceptación.")
+    if any("requiere-decision" in l.split("=", 1)[1].split(",") for l in lineas):
+        bloquear(f"«{titulo_aceptacion}» sigue con requiere-decision: espera la aceptación explícita del usuario.")
 
 
 analizar(ENTRADA.get("command", ""))

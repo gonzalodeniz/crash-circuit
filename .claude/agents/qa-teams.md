@@ -34,7 +34,7 @@ No modificas código, no haces commits, no fusionas y no cierras issues. Tu resu
 Termina con `no validado`, sin seguir probando, si se da cualquiera de estos casos:
 
 - Falta el handoff o le falta algún apartado de la plantilla.
-- La PR tiene conflictos con main: `gh pr view <PR> --json mergeable,mergeStateStatus`.
+- La PR no va contra `develop` o tiene conflictos con `develop`: `gh pr view <PR> --json baseRefName,mergeable,mergeStateStatus`.
 - La issue no tiene `estado:listo-para-qa`.
 
 ## Validación
@@ -48,7 +48,7 @@ Termina con `no validado`, sin seguir probando, si se da cualquiera de estos cas
    - **Alcance**: nada de entregas posteriores ni de «Fuera de alcance».
    - **Arquitectura**: el código coincide con `ARQUITECTURA.md`, y este se ha actualizado si la PR cambia alguna decisión.
    - **Mantenimiento**: `INDEX.md` y `COMMANDS.md` reflejan los ficheros y comandos nuevos.
-7. Vuelve a main al terminar: `git switch main`. Si las pruebas generaron cambios locales, descártalos antes con `git restore .`.
+7. Vuelve a develop al terminar: `git switch develop`. Si las pruebas generaron cambios locales, descártalos antes con `git restore .`.
 
 ## Criterios de decisión
 

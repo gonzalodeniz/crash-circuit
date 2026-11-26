@@ -22,7 +22,7 @@ function drive(state, from, to, lateral = 0, step = 1) {
   const sign = Math.sign(to - from) || 1;
   let current = state;
   for (let d = from + sign * step; sign * d <= sign * to + 1e-9; d += sign * step) {
-    current = stepProgress(current, track, at(d, lateral));
+    current = stepProgress(current, track, at(d, lateral), CONFIG.offRoad);
   }
   return current;
 }
@@ -88,8 +88,8 @@ test('cruzar la meta saltándose un checkpoint no suma vuelta (CA-02)', () => {
     let state = drive(grid(), -8, gate - 5);
     // Rodea el checkpoint por fuera de la puerta y vuelve a la calzada.
     const outside = track.width / 2 + CONFIG.tracks.common.checkpointMargin + 30;
-    state = stepProgress(state, track, at(gate - 4, outside));
-    state = stepProgress(state, track, at(gate + 4, outside));
+    state = stepProgress(state, track, at(gate - 4, outside), CONFIG.offRoad);
+    state = stepProgress(state, track, at(gate + 4, outside), CONFIG.offRoad);
     state = drive(state, gate + 4, track.length + 20);
     assert.equal(state.laps, 0, `checkpoint ${skipped} omitido`);
     assert.equal(state.checkpointIndex, skipped);
@@ -100,8 +100,8 @@ test('el progreso no supera el siguiente checkpoint pendiente aunque se recorte'
   const gate = track.checkpoints[2].distance;
   const outside = track.width / 2 + CONFIG.tracks.common.checkpointMargin + 30;
   let state = drive(grid(), -8, gate - 5);
-  state = stepProgress(state, track, at(gate - 4, outside));
-  state = stepProgress(state, track, at(gate + 100, outside));
+  state = stepProgress(state, track, at(gate - 4, outside), CONFIG.offRoad);
+  state = stepProgress(state, track, at(gate + 100, outside), CONFIG.offRoad);
   assert.ok(state.lapDistance <= gate + 1e-9);
   assert.ok(state.progress <= gate + 1e-9);
 });
@@ -110,8 +110,8 @@ test('cruzar los checkpoints fuera de orden no los valida', () => {
   // Salta del checkpoint 0 al 2 por la calzada sin pasar por el 1 (teletransporte con cruce de la puerta 2).
   let state = drive(grid(), -8, track.checkpoints[0].distance + 1);
   assert.equal(state.checkpointIndex, 1);
-  state = stepProgress(state, track, at(track.checkpoints[2].distance - 1));
-  state = stepProgress(state, track, at(track.checkpoints[2].distance + 1));
+  state = stepProgress(state, track, at(track.checkpoints[2].distance - 1), CONFIG.offRoad);
+  state = stepProgress(state, track, at(track.checkpoints[2].distance + 1), CONFIG.offRoad);
   assert.equal(state.checkpointIndex, 1);
 });
 
@@ -172,7 +172,7 @@ test('el progreso crece de forma monótona al avanzar y es comparable entre vuel
   let previous = state.progress;
   const sample = [];
   for (let d = -7; d <= track.length * 2 + 10; d += 1) {
-    state = stepProgress(state, track, at(d));
+    state = stepProgress(state, track, at(d), CONFIG.offRoad);
     assert.ok(state.progress >= previous - 1e-9, `retrocede en ${d}`);
     previous = state.progress;
     sample.push(state.progress);

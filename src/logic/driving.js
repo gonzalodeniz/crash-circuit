@@ -40,14 +40,29 @@ function approach(value, target, maxDelta) {
 }
 
 /**
+ * Fuera de la calzada (RF-013): quien supera la velocidad máxima de esa superficie la pierde poco a poco,
+ * al menos a `surface.deceleration`, sin saltos (si el freno la reduce más deprisa, manda el freno).
+ * Quien está por debajo no puede superarla.
+ */
+function limitSpeed(speed, previousSpeed, step, params, surface) {
+  const limit = (speed < 0 ? params.maxReverseSpeed : params.maxSpeed) * surface.maxSpeedFactor;
+  if (Math.abs(speed) <= limit) return speed;
+  const slowed = Math.min(Math.abs(speed), Math.abs(previousSpeed) - surface.deceleration * step);
+  return Math.sign(speed) * Math.max(limit, slowed);
+}
+
+/**
  * Avanza el coche un paso de tiempo. No modifica el estado recibido.
  * Si se pulsan a la vez acelerar y frenar, gana el freno.
  * @param {ReturnType<typeof createCarState>} state estado actual
  * @param {{accelerate: boolean, brake: boolean, left: boolean, right: boolean}} input entradas
  * @param {number} dt segundos desde la actualización anterior (se limita a `params.maxStep`)
  * @param {object} params sección `carPerformance` de CONFIG
+ * @param {{maxSpeedFactor: number, accelerationFactor: number, deceleration: number}|null} [surface]
+ *   penalización de la superficie (sección `offRoad` de CONFIG) si el coche va fuera de la calzada;
+ *   `null` sobre el asfalto
  */
-export function stepCar(state, input, dt, params) {
+export function stepCar(state, input, dt, params, surface = null) {
   const step = Math.min(Math.max(dt, 0), params.maxStep);
   const next = { ...state };
   if (step === 0) return next;
@@ -58,22 +73,24 @@ export function stepCar(state, input, dt, params) {
   next.brakeHeld = input.brake;
 
   // Velocidad longitudinal.
+  const traction = surface?.accelerationFactor ?? 1;
   let speed = state.speed;
   if (input.brake) {
     if (speed > 0) {
       speed = Math.max(0, speed - params.brakeDeceleration * step);
     } else if (next.reverseAllowed) {
-      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * step);
+      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * traction * step);
     } else {
       speed = 0;
     }
   } else if (input.accelerate) {
     // Si el coche va marcha atrás, primero se detiene con la fuerza del freno.
-    const rate = speed < 0 ? params.brakeDeceleration : params.acceleration;
+    const rate = speed < 0 ? params.brakeDeceleration : params.acceleration * traction;
     speed = Math.min(params.maxSpeed, speed + rate * step);
   } else {
     speed = approach(speed, 0, params.coastDeceleration * step);
   }
+  if (surface) speed = limitSpeed(speed, state.speed, step, params, surface);
   next.speed = speed;
 
   // Dirección: el volante tarda un poco en responder y el giro depende de la velocidad.

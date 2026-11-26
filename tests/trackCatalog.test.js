@@ -25,7 +25,7 @@ function at(track, distance, lateral = 0) {
 /** Recorre la línea central de `from` a `to` (metros) en pasos de 1 m, con una desviación lateral opcional. */
 function drive(state, track, from, to, lateral = 0) {
   let current = state;
-  for (let d = from + 1; d <= to + 1e-9; d += 1) current = stepProgress(current, track, at(track, d, lateral));
+  for (let d = from + 1; d <= to + 1e-9; d += 1) current = stepProgress(current, track, at(track, d, lateral), CONFIG.offRoad);
   return current;
 }
 
@@ -170,8 +170,8 @@ for (const track of tracks) {
       const gate = track.checkpoints[skipped].distance;
       let state = drive(grid(), track, -8, gate - 5);
       // Rodea el checkpoint por fuera de su puerta y vuelve a la calzada.
-      state = stepProgress(state, track, at(track, gate - 4, outside));
-      state = stepProgress(state, track, at(track, gate + 4, outside));
+      state = stepProgress(state, track, at(track, gate - 4, outside), CONFIG.offRoad);
+      state = stepProgress(state, track, at(track, gate + 4, outside), CONFIG.offRoad);
       state = drive(state, track, gate + 4, track.length + 20);
       assert.equal(state.laps, 0, `checkpoint ${skipped} omitido`);
       assert.equal(state.checkpointIndex, skipped);

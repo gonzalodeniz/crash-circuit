@@ -538,6 +538,24 @@ export const CONFIG = deepFreeze({
       // 0 a 1 hacia `sootColor`), para distinguirlo a simple vista de los dañados.
       wreck: { heightScale: 0.5, darkening: 0.95 },
     },
+    // Efecto de destrucción (RF-037): piezas que salen despedidas, chispas y humo, solo visual. Valores
+    // iniciales, pendientes de calibrar jugando. `duration` son los segundos de tiempo activo que dura; se
+    // retira antes si el coche reaparece (`destruction.lockDuration`). En cada clase, `perWreck` es el máximo
+    // de elementos por destrucción y `maxTotal`, el máximo entre todas: cuando no hay para todas, se reparten
+    // a partes iguales (`maxTotal` no debe ser menor que `race.maxParticipants`). Distancias en metros,
+    // velocidades en m/s y giros en rad/s.
+    destructionEffect: {
+      duration: 3,
+      gravity: 14, // m/s² con la que caen las piezas y las chispas
+      // Piezas con los colores del modelo: lados entre `minSize` y `maxSize`, con `thickness` de grosor;
+      // salen con hasta `speed` hacia fuera y `lift` hacia arriba, girando, y se quedan en el suelo.
+      fragments: { perWreck: 16, maxTotal: 80, minSize: 0.3, maxSize: 0.9, thickness: 0.18, speed: 7, lift: 8, spin: 9 },
+      // Estallido de chispas que se apagan a los `life` segundos.
+      sparks: { perWreck: 40, maxTotal: 200, color: 0xffa21f, size: 0.18, speed: 11, lift: 8, life: 0.9 },
+      // Columna de humo: cada bocanada sube `rise`, se abre `drift` y crece `growth` veces su `radius` en
+      // `period` segundos, y vuelve a salir mientras dura el efecto.
+      smoke: { perWreck: 8, maxTotal: 48, color: 0x333333, opacity: 0.5, radius: 0.5, rise: 4.5, drift: 0.9, growth: 2.2, period: 1.6 },
+    },
     // Coche protegido tras reaparecer (RF-042): parpadea. `blinkPeriod` son los segundos de cada ciclo y
     // `visibleFraction`, la parte del ciclo (de 0 a 1) en la que se ve.
     protection: { blinkPeriod: 0.2, visibleFraction: 0.6 },

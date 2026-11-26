@@ -53,6 +53,7 @@
 - `src/render/sceneRenderer.js`: escena y cámara de Three.js (recibe el renderizador y la ventana desde `main.js`, así se prueba sin WebGL); dibuja el circuito, la meta, el muro exterior, los obstáculos y los coches de la carrera, muestra la vista previa giratoria del coche en la selección y libera sus recursos.
 - `src/render/carMesh.js`: construye la malla de un coche a partir del aspecto de su modelo y devuelve los recursos que hay que liberar (no necesita WebGL).
 - `src/render/damageVisuals.js`: daño visual de un coche (marcas, carrocería ennegrecida, chispas, humo y aspecto de destruido) a partir del daño que decide la lógica (no necesita WebGL).
+- `src/render/destructionEffects.js`: efecto de destrucción (`createDestructionEffects`, `effectShare`): piezas, chispas y humo de los coches destruidos, con una reserva fija por carrera y máximos por destrucción y totales (no necesita WebGL).
 
 ## `tests/` (pruebas automáticas, sin navegador)
 
@@ -75,6 +76,7 @@
 - `tests/respawn.test.js`: pruebas de la reaparición y la protección: a los tres segundos, sitio seguro en los cuatro circuitos (también con el preferido ocupado), vueltas, checkpoints y llegada conservados, vuelta completa después, protección frente a golpes fuertes y mismas reglas para los diez (RF-039, RF-040, RF-042, RN-01, RN-04).
 - `tests/helpers/withoutDestruction.js`: configuración sin golpes fuertes para las pruebas de la respuesta física de rebotes y contactos. No es una prueba.
 - `tests/damageVisuals.test.js`: pruebas, sin WebGL, de lo que se muestra con cada daño y de que sus recursos se pueden liberar.
+- `tests/destructionEffects.test.js`: pruebas, sin WebGL, del efecto de destrucción: cuándo aparece y desaparece, colores por modelo, máximos de piezas y partículas, pausa, que no cambia la carrera y liberación de sus recursos (RF-037, RNF-04, RNF-05).
 - `tests/offRoad.test.js`: pruebas de la salida de calzada: detección dentro/fuera en los cuatro circuitos, menor velocidad fuera sin saltos, recuperación al volver, misma regla para los diez participantes y recortes sin vueltas, progreso ni posiciones (RN-01), con recuperación al cruzar el checkpoint pendiente.
 - `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.
 - `tests/sceneRenderer.test.js`: pruebas de la liberación de recursos del renderizado (RNF-04) con un renderizador falso: `dispose()` de todas las geometrías, materiales y texturas de la carrera anterior y de la vista previa, y grupos fuera de la escena; y que el muro y los obstáculos se dibujan donde dice la lógica.

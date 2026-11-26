@@ -78,12 +78,16 @@ export function stepCar(state, input, dt, params, surface = null) {
   const traction = surface?.accelerationFactor ?? 1;
   let speed = state.speed;
   if (input.brake) {
+    // Un golpe de otro coche puede dejarlo retrocediendo más deprisa que la marcha atrás: el freno no
+    // cambia esa velocidad de golpe, se pierde poco a poco.
     if (speed > 0) {
       speed = Math.max(0, speed - params.brakeDeceleration * step);
-    } else if (next.reverseAllowed) {
-      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * traction * step);
+    } else if (!next.reverseAllowed) {
+      speed = Math.min(0, speed + params.brakeDeceleration * step);
+    } else if (speed < -params.maxReverseSpeed) {
+      speed = Math.min(-params.maxReverseSpeed, speed + params.coastDeceleration * step);
     } else {
-      speed = 0;
+      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * traction * step);
     }
   } else if (input.accelerate) {
     // Si el coche va marcha atrás, primero se detiene con la fuerza del freno.

@@ -81,6 +81,23 @@ test('con el coche en marcha un pulso nuevo del freno tampoco da marcha atrás',
   assert.equal(s.speed, 0);
 });
 
+test('retrocediendo más deprisa que la marcha atrás (por un golpe), el freno no cambia la velocidad de golpe', () => {
+  const knocked = -2 * P.maxReverseSpeed;
+  // Pulso nuevo (hay marcha atrás): el exceso se pierde como al soltar el acelerador, hasta el máximo.
+  let car = moving(knocked);
+  car = stepCar(car, BRAKE, DT, P);
+  assert.ok(Math.abs(car.speed - (knocked + P.coastDeceleration * DT)) < 1e-9, `${car.speed}`);
+  for (let i = 0; i < 600; i++) car = stepCar(car, BRAKE, DT, P);
+  assert.equal(car.speed, -P.maxReverseSpeed);
+
+  // Freno ya pulsado desde antes (sin marcha atrás): frena hasta pararse, sin saltos.
+  car = { ...moving(knocked), brakeHeld: true, reverseAllowed: false };
+  car = stepCar(car, BRAKE, DT, P);
+  assert.ok(Math.abs(car.speed - (knocked + P.brakeDeceleration * DT)) < 1e-9, `${car.speed}`);
+  for (let i = 0; i < 120; i++) car = stepCar(car, BRAKE, DT, P);
+  assert.equal(car.speed, 0);
+});
+
 test('acelerar en marcha atrás primero detiene el coche y luego avanza', () => {
   let s = { ...moving(-8), brakeHeld: false };
   s = stepCar(s, GAS, DT, P);

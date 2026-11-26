@@ -18,7 +18,7 @@
 - `src/index.html`: página de arranque con el lienzo `#game-canvas`.
 - `src/styles.css`: estilos; el lienzo ocupa toda la ventana.
 - `src/main.js`: punto de entrada; traduce eventos del DOM y dibuja, sin decidir el flujo de la partida (de eso se encarga `raceSession.js`); arranca el bucle.
-- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales y los de los choques).
+- `src/config/config.js`: módulo único de configuración (valores «propuesta» incluidos, también los de la IA de los rivales, los de los choques y los del contacto entre coches).
 - `src/logic/gameState.js`: estados del juego y máquina de estados, con el flujo `MENU -> SELECCION -> PARRILLA` (sin Three.js ni DOM).
 - `src/logic/trackCatalog.js`: consulta del catálogo de circuitos de la configuración (`trackDefinitions`, `findTrackDefinition`, `requireTrackDefinition`) y datos básicos para la selección (`trackSummary`, `trackSummaries`, `countCurves`) (sin Three.js ni DOM).
 - `src/logic/carModels.js`: consulta del catálogo de modelos de coche de la configuración (`carModels`, `findCarModel`, `requireCarModel`) (sin Three.js ni DOM).
@@ -35,6 +35,7 @@
 - `src/logic/raceClock.js`: cuenta atrás «3, 2, 1», señal de salida y cronómetro de carrera, avanzados con el paso de tiempo simulado (sin Three.js ni DOM).
 - `src/logic/scenery.js`: límite exterior y obstáculos sólidos de cada circuito (`buildScenery`): rectángulo que rodea el trazado y círculos colocados fuera de la calzada según la definición del circuito (sin Three.js ni DOM).
 - `src/logic/collisions.js`: colisiones de un coche con el límite y los obstáculos (`resolveSceneryCollision`, `touchesScenery`): detección continua y respuesta al golpe (rebote o desvío con pérdida de velocidad) (sin Three.js ni DOM).
+- `src/logic/carContacts.js`: contacto entre coches (`resolveCarContacts`, `applySlide`, `carsOverlap`): detección continua, separación sin solapes y respuesta al golpe (intercambio de velocidad, deslizamiento y cambio de rumbo) (sin Three.js ni DOM).
 - `src/logic/progress.js`: progreso de carrera de un participante (RN-01): vueltas válidas, checkpoints en orden, distancia válida y contador «Vuelta X/Y» (sin Three.js ni DOM).
 - `src/logic/chaseCamera.js`: posición y punto de mira de la cámara de seguimiento a partir de la pose del coche (sin Three.js ni DOM).
 - `src/logic/driving.js`: modelo de conducción arcade (`createCarState`, `stepCar`, `inputFromKeys`); recibe entradas y un paso de tiempo (sin Three.js ni DOM).
@@ -64,12 +65,13 @@
 - `tests/standings.test.js`: pruebas de la clasificación: orden por progreso, adelantamiento (intercambio de progreso y adelantar o ser adelantado en pista), checkpoint omitido y marcha atrás sin mejorar posición, llegados por delante y por instante de llegada, desempate estable y diez entradas únicas.
 - `tests/raceWinner.test.js`: pruebas del ganador (un rival gana y el jugador sigue hasta su meta, tiempos reales de los llegados sin cambios, ganador jugador, puesto coherente, repetir sin restos), de los textos de resultados desde la configuración y de la carrera completa de CA-01.
 - `tests/collisions.test.js`: pruebas de límites y obstáculos en los cuatro circuitos: colocación fuera de la calzada y de la parrilla, nada se atraviesa a velocidad máxima, rebote, desvío y pérdida de velocidad, salida del choque (jugador y rivales), mismas reglas para los diez y sin progreso por rebotar (RF-015, RF-033, RN-01).
+- `tests/carContacts.test.js`: pruebas del contacto entre coches: sin solapes ni atravesarse a velocidad máxima, alcance, frente y costado, mismas reglas para los diez, montonera contra el muro, empujones (hacia atrás o saltando checkpoints no suman; el avance real cuenta para clasificación y vueltas), carreras completas con semilla y rivales que no se bloquean (RF-033, RF-032, RN-01).
 - `tests/offRoad.test.js`: pruebas de la salida de calzada: detección dentro/fuera en los cuatro circuitos, menor velocidad fuera sin saltos, recuperación al volver, misma regla para los diez participantes y recortes sin vueltas, progreso ni posiciones (RN-01), con recuperación al cruzar el checkpoint pendiente.
 - `tests/random.test.js`: pruebas de la fuente de aleatoriedad con semilla.
 - `tests/sceneRenderer.test.js`: pruebas de la liberación de recursos del renderizado (RNF-04) con un renderizador falso: `dispose()` de todas las geometrías, materiales y texturas de la carrera anterior y de la vista previa, y grupos fuera de la escena; y que el muro y los obstáculos se dibujan donde dice la lógica.
 - `tests/carMesh.test.js`: pruebas de la malla de cada modelo (aspecto distinto, mismas dimensiones, recursos liberados).
 - `tests/race.test.js`: pruebas de la lista de participantes y la cámara de seguimiento.
-- `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
+- `tests/driving.test.js`: pruebas de la conducción (aceleración, frenado, marcha atrás, también tras un golpe, giro, determinismo, paso de tiempo máximo) y del rendimiento compartido.
 - `tests/raceClock.test.js`: pruebas de la cuenta atrás, la señal de salida simultánea, la inmovilidad previa a la salida y el cronómetro.
 - `tests/progress.test.js`: pruebas de checkpoints y meta, vueltas válidas (CA-02), retroceso y zigzag sobre la meta, progreso monótono, contador de vueltas del HUD y una vuelta completa conduciendo con `stepRace` (con progreso exactamente quieto durante la cuenta atrás).
 - `tests/raceFinish.test.js`: pruebas de la llegada del jugador (RF-025: tiempo y progreso congelados, vueltas sin pasar del total), de los estados de resultados, repetir y menú de la máquina de estados, y de que no hay persistencia.

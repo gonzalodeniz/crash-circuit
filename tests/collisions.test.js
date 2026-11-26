@@ -331,7 +331,8 @@ test('rivales y jugador chocan igual, con cualquier modelo de coche (RF-032, RN-
   const obstacle = race.scenery.obstacles[0];
   const pose = facing(race, obstacle, 'road', 0.1);
   const results = race.participants.map((participant) => {
-    // Cada uno solo, en la misma pose: la carrera no tiene aún choques entre coches.
+    // Cada uno solo en la misma pose: los demás se apartan, porque los coches son sólidos entre sí.
+    race.participants.forEach((other, i) => place(race, other, { x: i * 8 - 40, z: 0, heading: 0 }));
     place(race, participant, pose, 20);
     step(race, { [participant.id]: GAS });
     return [participant.x, participant.z, participant.heading, participant.speed];

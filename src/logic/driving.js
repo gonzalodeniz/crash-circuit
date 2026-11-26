@@ -13,6 +13,8 @@ export function createCarState(pose) {
     heading: pose.heading,
     speed: 0, // m/s con signo: negativo = marcha atrás
     steer: 0, // dirección suavizada, de -1 (derecha) a 1 (izquierda)
+    slideX: 0, // m/s de deslizamiento que deja un golpe de otro coche (véase `carContacts.js`)
+    slideZ: 0,
     brakeHeld: false, // el freno estaba pulsado en la actualización anterior
     reverseAllowed: false, // este pulso del freno puede dar marcha atrás (empezó con el coche parado)
   };
@@ -76,12 +78,16 @@ export function stepCar(state, input, dt, params, surface = null) {
   const traction = surface?.accelerationFactor ?? 1;
   let speed = state.speed;
   if (input.brake) {
+    // Un golpe de otro coche puede dejarlo retrocediendo más deprisa que la marcha atrás: el freno no
+    // cambia esa velocidad de golpe, se pierde poco a poco.
     if (speed > 0) {
       speed = Math.max(0, speed - params.brakeDeceleration * step);
-    } else if (next.reverseAllowed) {
-      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * traction * step);
+    } else if (!next.reverseAllowed) {
+      speed = Math.min(0, speed + params.brakeDeceleration * step);
+    } else if (speed < -params.maxReverseSpeed) {
+      speed = Math.min(-params.maxReverseSpeed, speed + params.coastDeceleration * step);
     } else {
-      speed = 0;
+      speed = Math.max(-params.maxReverseSpeed, speed - params.reverseAcceleration * traction * step);
     }
   } else if (input.accelerate) {
     // Si el coche va marcha atrás, primero se detiene con la fuerza del freno.

@@ -80,6 +80,22 @@ export const CONFIG = deepFreeze({
     maxPushIterations: 4, // pasadas para separar un coche que toca varios objetos a la vez
   },
 
+  // Contacto entre coches (RF-033): los diez son sólidos entre sí y reaccionan igual, con cualquier modelo
+  // (RN-07). El tamaño con el que chocan es el rectángulo de `race.car`. Valores iniciales (propuestas),
+  // pendientes de calibrar jugando.
+  carContact: {
+    // Rebote: con 0 salen a la misma velocidad y con 1 la intercambian por completo. Es también la fracción
+    // de velocidad que conserva un coche encajonado que no puede avanzar.
+    restitution: 0.3,
+    speedLoss: 0.2, // fracción de velocidad que además pierden los dos, ponderada por la violencia del golpe
+    spinFactor: 0.01, // rad que gira un coche por cada m/s de golpe y metro de descentrado
+    maxSpin: 0.12, // rad: giro máximo que provoca un contacto
+    slideDeceleration: 20, // m/s²: ritmo al que se apaga el deslizamiento lateral de un golpe
+    maxSlideSpeed: 12, // m/s: deslizamiento lateral máximo
+    maxSweepStep: 0.5, // m: precisión de la detección (menos que medio coche), para que no se atraviesen
+    maxPushIterations: 4, // pasadas para separar varios coches amontonados
+  },
+
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
   // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
   // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.

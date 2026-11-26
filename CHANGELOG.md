@@ -2,6 +2,10 @@
 
 Resumen de las issues terminadas, agrupadas por entrega del roadmap (de la más reciente a la más antigua). Lo mantiene `doc-teams` tras cada fusión.
 
+## E4 — Colisiones y obstáculos
+
+- **#81 E4 · Perder velocidad al salirse de la carretera** (PR #85, 2026-11-26): fuera de la calzada, el coche del jugador y los de los rivales aceleran menos, tienen menos velocidad máxima y frenan hasta ella; al volver al asfalto recuperan lo normal. Atajar por fuera no suma progreso ni posiciones: tras una salida larga, el avance queda parado hasta volver a donde se dejó o pasar por el punto de control pendiente. Los valores son iniciales. Requisitos: RF-013, RF-032 (parcial). Reglas de negocio: RN-01.
+
 ## E3 — Competición contra rivales
 
 - **#51 E3 · Salir desde la parrilla junto a nueve rivales con nombre propio** (PR #55, 2026-11-23): cada carrera tiene ahora diez participantes: el jugador, que sale el último, y nueve pilotos controlados por el juego con nombre y modelo de coche fijos (los nombres son provisionales). Los diez coches se colocan en la calzada, sin solaparse, en los cuatro circuitos, y reciben la señal de salida a la vez. Los rivales todavía no conducen y se quedan parados; tampoco hay choques. «Repetir» monta la parrilla de nuevo. Requisitos: RF-016, RF-017, RF-018, RF-019, RF-021 (parcial), RF-003, RN-07. Casos de aceptación: CA-01 (parcial).

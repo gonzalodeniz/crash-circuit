@@ -80,7 +80,7 @@ Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completa
 
 - Cada circuito tiene su propia trayectoria. Los rivales frenan antes de las curvas y aceleran en las rectas.
 - No van todos en fila. Cada rival se desplaza un poco hacia un lado o hacia otro de la calzada, y cada uno lleva un ritmo algo distinto. Por eso dos carreras con la misma configuración no son idénticas.
-- Los rivales intentan no salirse de la calzada, pero no reaccionan a otros coches: no te esquivan ni te bloquean.
+- Los rivales intentan no salirse de la calzada. Si alguno se sale, pierde velocidad igual que tú (ver «Salirse de la calzada»). Tampoco reaccionan a otros coches: no te esquivan ni te bloquean.
 - Sus vueltas cuentan con las mismas reglas que las tuyas: tienen que pasar por todos los puntos de control, en orden, antes de la meta.
 - Conducen con las mismas limitaciones que tú, y los cuatro modelos de coche rinden igual. Un rival no corre más por llevar un coche u otro.
 - Cuanto más difícil es el circuito, más exigentes son: en Abismo van más rápidos y frenan más tarde en las curvas que en Llanura. Con Ribera, Sierra y Abismo la exigencia sube por pasos.
@@ -101,14 +101,33 @@ Se juega solo con las flechas del teclado. Mientras estás en la carrera, las fl
 
 Cómo se conduce:
 
-- La conducción es arcade: el coche acelera hasta una velocidad máxima y no la supera.
+- La conducción es arcade: el coche acelera hasta una velocidad máxima y no la supera. Fuera de la calzada esa velocidad es mucho menor (ver «Salirse de la calzada»).
 - Si sueltas el acelerador, el coche va perdiendo velocidad poco a poco. Frenar lo detiene antes.
 - El coche solo gira cuando se mueve. A mucha velocidad gira un poco menos.
 - La marcha atrás solo se activa si pulsas abajo con el coche parado. Si frenas en marcha y mantienes la flecha, el coche se queda parado: suelta y vuelve a pulsar para ir marcha atrás.
 - Si pulsas arriba y abajo a la vez, gana el freno.
 - La cámara acompaña al coche y se mantiene detrás al girar.
 
-No puedes conducir hasta la señal de salida. Por ahora no hay penalización por salirte de la pista ni choques. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
+No puedes conducir hasta la señal de salida. Por ahora no hay choques. Los valores de conducción (velocidad máxima, aceleración, giro) son iniciales y pueden cambiar tras probarlos.
+
+## Salirse de la calzada
+
+Salirte de la carretera te hace ir más despacio. Vale igual para ti y para los rivales, con cualquier coche y en los cuatro circuitos.
+
+- Estás fuera cuando el centro del coche pasa del borde de la calzada. El borde blanco ya cuenta como fuera.
+- Si sales deprisa, el coche frena solo hasta quedarse en menos de la mitad de la velocidad máxima, aunque sigas acelerando.
+- Fuera también aceleras menos. La marcha atrás es igualmente más lenta.
+- Puedes girar y frenar como siempre para volver. En el asfalto recuperas la aceleración y la velocidad normales.
+- No hay penalización de puntos, ni aviso en pantalla o sonido.
+
+Además, mientras estás fuera no avanzas en la carrera:
+
+- Si pisas fuera un momento y vuelves casi donde estabas (hasta unos 10 m más adelante), sigues sumando con normalidad.
+- Si vuelves mucho más adelante, tu avance se queda parado. Puede pasar incluso al abrirte en una curva, aunque no ahorres camino.
+- Vuelve a contar cuando regresas al punto donde lo dejaste, o cuando pasas por el siguiente punto de control pendiente (ver «Vueltas»). En ese caso recuperas todo el tramo.
+- Este avance decide tu posición frente a los demás. Todavía no se ve en pantalla durante la carrera.
+
+Todos estos valores son iniciales y pueden cambiar tras probar el juego.
 
 ## Salida y cronómetro
 

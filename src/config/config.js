@@ -96,6 +96,22 @@ export const CONFIG = deepFreeze({
     maxPushIterations: 4, // pasadas para separar varios coches amontonados
   },
 
+  // Intensidad de los golpes (RF-034) contra coches, límites y obstáculos: valen igual para los diez coches.
+  // La intensidad es la velocidad de impacto: la de acercamiento en la dirección del choque. Valores
+  // iniciales (propuestas), pendientes de calibrar jugando.
+  impact: {
+    // Umbral de colisión (propuesta): desde esta velocidad de impacto el golpe es fuerte. En E5 será el que
+    // destruya el coche (RF-035).
+    strongSpeed: 20, // m/s
+    minSpeed: 2, // m/s: por debajo es un simple contacto (coches apoyados en el pelotón), sin daño
+    // Consecuencias de cada clase de golpe. `damage` es el daño visual que suma (de 0 a 1) sin pasar de
+    // `maxDamage`, y `effectDuration`, los segundos que dura la reacción (chispas, humo). La pérdida de
+    // velocidad de un golpe leve es la de `collision` y `carContact`; el fuerte, además, solo conserva la
+    // fracción `speedKeep` de la velocidad que le quedaría.
+    light: { damage: 0.1, maxDamage: 0.3, effectDuration: 0.25 },
+    strong: { speedKeep: 0.2, damage: 0.7, maxDamage: 1, effectDuration: 0.9 },
+  },
+
   // Catálogo de modelos de coche (RF-002). Los cuatro comparten el rendimiento de `carPerformance`
   // y las dimensiones de `race.car`: solo cambia el aspecto (RF-003, RN-07). Los nombres son
   // provisionales y el aspecto se genera con formas simples, a la espera de assets definitivos.
@@ -464,6 +480,39 @@ export const CONFIG = deepFreeze({
       stripe: { widthRatio: 0.2, thickness: 0.03 }, // proporción del ancho del coche; metros
       // Alerón trasero (`appearance.spoiler`): ala sobre un soporte central.
       spoiler: { widthRatio: 0.95, depth: 0.7, thickness: 0.1, lift: 0.45, postWidth: 0.15 }, // metros salvo la proporción
+    },
+    // Aspecto del daño (RF-034). La carrocería se oscurece hacia `sootColor` según el nivel de daño (hasta la
+    // fracción `maxDarkening`). Las marcas `light` aparecen con cualquier golpe y las `strong`, con uno
+    // fuerte; en cada una, `at` es [x en anchos, y en alturas de carrocería desde su base, z en largos],
+    // `size` son metros [ancho, alto, fondo] y `turn` su giro en rad respecto a la vertical.
+    damage: {
+      sootColor: 0x151515,
+      maxDarkening: 0.65,
+      markColor: 0x0d0d0d,
+      marks: {
+        light: [
+          { at: [0.18, 0.55, -0.505], size: [0.55, 0.07, 0.04], turn: 0 },
+          { at: [-0.51, 0.65, -0.05], size: [0.04, 0.07, 0.9], turn: 0 },
+          { at: [0.51, 0.5, 0.08], size: [0.04, 0.07, 0.9], turn: 0 },
+          { at: [-0.2, 1.04, 0.32], size: [0.07, 0.04, 0.8], turn: 0.5 },
+        ],
+        strong: [
+          { at: [-0.22, 1.05, -0.38], size: [0.8, 0.07, 0.8], turn: 0.4 },
+          { at: [0.24, 1.05, 0.34], size: [0.75, 0.07, 0.9], turn: -0.6 },
+          { at: [-0.52, 0.6, 0.18], size: [0.08, 0.35, 1.1], turn: 0.08 },
+          { at: [0.52, 0.5, -0.2], size: [0.08, 0.35, 1.1], turn: -0.08 },
+          { at: [0.08, 0.2, -0.54], size: [1.9, 0.2, 0.2], turn: 0.22 }, // parachoques suelto
+        ],
+      },
+      // Chispas de la reacción: cuántas, su tamaño (m) y hasta dónde se alejan del coche (m) según el golpe.
+      sparks: {
+        color: 0xffd23f,
+        rise: 1.4, // m: altura que alcanzan
+        light: { count: 6, size: 0.12, spread: 0.7 },
+        strong: { count: 20, size: 0.26, spread: 2.6 },
+      },
+      // Bocanadas de humo de un golpe fuerte: crecen y suben mientras dura la reacción.
+      smoke: { color: 0x4a4a4a, opacity: 0.55, count: 4, radius: 0.45, rise: 2.4, growth: 1.6 },
     },
     // Vista previa del coche en la selección (RF-002): plataforma giratoria y cámara fija.
     carPreview: {

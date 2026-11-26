@@ -15,6 +15,7 @@ export function createCarState(pose) {
     steer: 0, // dirección suavizada, de -1 (derecha) a 1 (izquierda)
     slideX: 0, // m/s de deslizamiento que deja un golpe de otro coche (véase `carContacts.js`)
     slideZ: 0,
+    impactSpeed: 0, // m/s: mayor velocidad de impacto de los golpes aún sin contar como daño (`impact.js`)
     brakeHeld: false, // el freno estaba pulsado en la actualización anterior
     reverseAllowed: false, // este pulso del freno puede dar marcha atrás (empezó con el coche parado)
   };

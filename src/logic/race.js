@@ -11,6 +11,7 @@ import { rankParticipants, standingsOf } from './standings.js';
 import { buildScenery } from './scenery.js';
 import { resolveSceneryCollision } from './collisions.js';
 import { applySlide, resolveCarContacts } from './carContacts.js';
+import { createDamage, stepDamage } from './impact.js';
 
 /**
  * Estado de cada participante, distinto de los estados de la partida.
@@ -74,6 +75,7 @@ export function createRace(
       finishTime: null, // tiempo real de llegada en s, congelado al terminar (RF-025)
       offRoad: false, // va fuera de la calzada (RF-013); la parrilla está sobre el asfalto
       surfaceSample: null, // última posición en la que se ha mirado la superficie ({x, z, along})
+      damage: createDamage(), // daño visual por golpes (RF-034); no cambia el rendimiento
       ...createCarState(slot), // pose en la parrilla más el estado dinámico del coche (parado)
       progress: createProgress(track, slot), // vueltas válidas, checkpoints y distancia válida (RN-01)
     };
@@ -188,12 +190,23 @@ function moveParticipant(race, participant, inputs, drivingTime, config) {
   const surface = participant.offRoad ? config.offRoad : null;
   const driven = stepCar(participant, input, drivingTime, config.carPerformance, surface);
   const moved = applySlide(driven, drivingTime, config.carContact);
-  return { previous: participant, next: resolveSceneryCollision(participant, moved, race.car, race.scenery, config.collision) };
+  const next = resolveSceneryCollision(participant, moved, race.car, race.scenery, config.collision, config.impact);
+  return { previous: participant, next };
+}
+
+/**
+ * Aplica a un participante el estado en que termina el paso y convierte los golpes recibidos en daño
+ * (RF-034), con la misma regla para los diez (RF-032).
+ */
+function settleParticipant(participant, state, drivingTime, config) {
+  const damage = stepDamage(participant.damage, state.impactSpeed, drivingTime, config.impact);
+  Object.assign(participant, state, { damage, impactSpeed: 0 });
 }
 
 /**
  * Avanza a los participantes que ya están en carrera: mueve a todos, resuelve los contactos entre coches
- * (RF-033), también los de quienes ya han terminado, y actualiza el progreso con la posición resultante.
+ * (RF-033), también los de quienes ya han terminado, anota el daño de los golpes y actualiza el progreso
+ * con la posición resultante.
  * Quien ya ha terminado se mueve por inercia, pero su progreso y su tiempo ya no cambian (RF-025, RF-027).
  * @returns {string[]} los que terminan en este paso
  */
@@ -202,7 +215,7 @@ function stepParticipants(race, inputs, drivingTime, config) {
   const racing = race.participants.filter((participant) => participant.status === ParticipantStatus.EN_CARRERA);
   const moves = racing.map((participant) => moveParticipant(race, participant, inputs, drivingTime, config));
   const states = resolveCarContacts(moves, race, drivingTime, config);
-  racing.forEach((participant, index) => Object.assign(participant, states[index]));
+  racing.forEach((participant, index) => settleParticipant(participant, states[index], drivingTime, config));
   return racing
     .filter((participant) => !participant.finished && updateProgress(race, participant, config.offRoad))
     .map((participant) => participant.id);
@@ -227,7 +240,8 @@ function recordWinner(race, finished) {
  * @param {Record<string, {accelerate: boolean, brake: boolean, left: boolean, right: boolean}>} inputs entradas por id de participante;
  *   los pilotos IA (`race.drivers`) sin entrada propia producen las suyas (RF-028)
  * @param {number} dt segundos desde la actualización anterior (se limita a `carPerformance.maxStep`)
- * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance`, `offRoad`, `collision` y `carContact`)
+ * @param {object} config CONFIG (secciones `race`, `ai`, `carPerformance`, `offRoad`, `collision`,
+ *   `carContact` e `impact`)
  * Al completar `race.totalLaps` vueltas válidas, el participante termina (RF-025): su tiempo de llegada
  * y su progreso quedan congelados, sus controles dejan de actuar y su coche rueda por inercia hasta
  * detenerse. El reloj de la carrera no se detiene.

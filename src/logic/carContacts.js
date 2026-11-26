@@ -8,9 +8,12 @@
 //   que el contacto nunca adelanta de golpe a un coche ni le regala recorrido (RN-01);
 // - intercambian velocidad como dos masas iguales: quien golpea la pierde y el golpeado la gana;
 // - lo que empuja de costado queda como deslizamiento (`slideX`, `slideZ`) que se apaga solo, y un golpe
-//   descentrado cambia el rumbo.
+//   descentrado cambia el rumbo;
+// - si se acercaban deprisa, el golpe es fuerte para los dos, que además pierden casi toda su velocidad
+//   (`impact.js`).
 // El resto del paso continúa con las velocidades nuevas.
 import { resolveSceneryCollision } from './collisions.js';
+import { applyImpact } from './impact.js';
 import { forwardOf } from './track.js';
 
 /** Holgura (m) con la que quedan separados dos coches, para que no sigan contando como contacto. */
@@ -119,7 +122,7 @@ function push(state, delta, point, keep, performance, params) {
  * Separa y hace reaccionar a dos coches que se solapan; modifica sus estados.
  * @returns {boolean} verdadero si se tocaban
  */
-function collide(a, b, car, performance, params) {
+function collide(a, b, car, performance, params, impact) {
   const contact = contactBetween(a, b, car);
   if (!contact) return false;
   const velocityA = velocityOf(a);
@@ -142,6 +145,9 @@ function collide(a, b, car, performance, params) {
     const keep = 1 - params.speedLoss * Math.min(1, closing / performance.maxSpeed);
     push(a, { x: contact.x * impulse, z: contact.z * impulse }, point, keep, performance, params);
     push(b, { x: -contact.x * impulse, z: -contact.z * impulse }, point, keep, performance, params);
+    // La velocidad de acercamiento es la intensidad del golpe, la misma para los dos.
+    Object.assign(a, applyImpact(a, closing, impact));
+    Object.assign(b, applyImpact(b, closing, impact));
   }
   return true;
 }
@@ -170,11 +176,11 @@ export function applySlide(state, dt, params) {
  *   resulta de conducir y de chocar con el escenario (ninguno se modifica)
  * @param {{car: {length: number, width: number}, scenery: object}} world dimensiones del coche y escenario
  * @param {number} dt segundos del paso
- * @param {{carContact: object, carPerformance: object, collision: object}} config secciones de CONFIG
+ * @param {{carContact: object, carPerformance: object, collision: object, impact: object}} config secciones de CONFIG
  * @returns {object[]} estado final de cada coche, en el mismo orden (`next` si no ha tocado a nadie)
  */
 export function resolveCarContacts(moves, { car, scenery }, dt, config) {
-  const { carContact: params, carPerformance: performance, collision } = config;
+  const { carContact: params, carPerformance: performance, collision, impact } = config;
   const radius = Math.hypot(car.length, car.width) / 2;
   // Lo más que se puede mover un coche en este paso, aunque un golpe le cambie la velocidad.
   const reach = moves.reduce((most, { previous, next }) => {
@@ -221,7 +227,7 @@ export function resolveCarContacts(moves, { car, scenery }, dt, config) {
     for (let pass = 0; pass < params.maxPushIterations && again; pass++) {
       again = false;
       for (const [i, j] of pairs) {
-        if (!collide(states[i], states[j], car, performance, params)) continue;
+        if (!collide(states[i], states[j], car, performance, params, impact)) continue;
         hit.add(i).add(j);
         again = true;
       }
@@ -235,7 +241,9 @@ export function resolveCarContacts(moves, { car, scenery }, dt, config) {
   }
 
   // Un golpe puede mandar un coche contra el muro o un obstáculo: tampoco se atraviesan.
-  for (const i of touched) results[i] = resolveSceneryCollision(moves[i].previous, states[i], car, scenery, collision);
+  for (const i of touched) {
+    results[i] = resolveSceneryCollision(moves[i].previous, states[i], car, scenery, collision, impact);
+  }
 
   // Último recurso, para un coche encajonado: quien aún solape vuelve a donde empezó el paso, donde no
   // tocaba a nadie, y casi parado. Cada coche vuelve como mucho una vez, así que siempre termina.

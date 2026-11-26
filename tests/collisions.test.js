@@ -15,6 +15,7 @@ import { requireTrackDefinition, trackDefinitions } from '../src/logic/trackCata
 const P = CONFIG.carPerformance;
 const CAR = CONFIG.race.car;
 const PARAMS = CONFIG.collision;
+const IMPACT = CONFIG.impact;
 const DT = 1 / 60;
 const NONE = { accelerate: false, brake: false, left: false, right: false };
 const GAS = { ...NONE, accelerate: true };
@@ -29,7 +30,7 @@ const carAt = (x, z, heading = 0, speed = 0) => ({ ...createCarState({ x, z, hea
 
 /** Un paso de conducción con sus colisiones. */
 function advance(car, input, scenery, dt = DT) {
-  return resolveSceneryCollision(car, stepCar(car, input, dt, P), CAR, scenery, PARAMS);
+  return resolveSceneryCollision(car, stepCar(car, input, dt, P), CAR, scenery, PARAMS, IMPACT);
 }
 
 const roadClearance = (track, point, radius = 0) => nearestOnCenterline(track, point.x, point.z).distance - radius - track.width / 2;
@@ -273,23 +274,25 @@ for (const definition of trackDefinitions(CONFIG)) {
 test('sin nada al alcance, la colisión no toca el estado que da la conducción', () => {
   const car = carAt(0, 0, 0.3, 20);
   const next = stepCar(car, GAS, DT, P);
-  assert.equal(resolveSceneryCollision(car, next, CAR, sceneryWith([{ x: 50, z: 50, radius: 1 }]), PARAMS), next);
+  assert.equal(resolveSceneryCollision(car, next, CAR, sceneryWith([{ x: 50, z: 50, radius: 1 }]), PARAMS, IMPACT), next);
 });
 
 test('un desplazamiento enorme en un solo paso tampoco atraviesa un obstáculo ni el límite (detección continua)', () => {
   const scenery = sceneryWith([{ x: 0, z: 10, radius: 0.5 }], 30);
   const car = carAt(0, 0, 0, 45);
-  const hit = resolveSceneryCollision(car, { ...car, z: 25 }, CAR, scenery, PARAMS);
+  const hit = resolveSceneryCollision(car, { ...car, z: 25 }, CAR, scenery, PARAMS, IMPACT);
   assert.ok(hit.z < 10 - 0.5 - CAR.length / 2 + 1e-3, `z ${hit.z}`);
   assert.ok(hit.speed < 0);
-  const out = resolveSceneryCollision(carAt(20, 0, Math.PI / 2, 45), { ...car, x: 200, z: 0, heading: Math.PI / 2 }, CAR, sceneryWith([], 30), PARAMS);
+  const out = resolveSceneryCollision(
+    carAt(20, 0, Math.PI / 2, 45), { ...car, x: 200, z: 0, heading: Math.PI / 2 }, CAR, sceneryWith([], 30), PARAMS, IMPACT,
+  );
   assert.ok(out.x <= 30 - CAR.length / 2);
 });
 
 test('de frente el coche rebota; de refilón pierde velocidad, se desvía y sigue adelante (RF-033)', () => {
   const wall = sceneryWith([], 20);
-  const frontal = advance(carAt(0, 17.5, 0, 30), GAS, wall);
-  assert.ok(Math.abs(frontal.speed + (30 + P.acceleration * DT) * PARAMS.bounce) < 1e-9);
+  const frontal = advance(carAt(0, 17.7, 0, 15), GAS, wall);
+  assert.ok(Math.abs(frontal.speed + (15 + P.acceleration * DT) * PARAMS.bounce) < 1e-9);
   assert.equal(frontal.heading, 0);
   assert.equal(touchesScenery(frontal, CAR, wall), false);
 

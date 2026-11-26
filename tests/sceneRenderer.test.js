@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Texture } from 'three';
 import { CONFIG } from '../src/config/config.js';
+import { createDamage, stepDamage } from '../src/logic/impact.js';
 import { createSeededRandom } from '../src/logic/random.js';
 import { createRaceFromSetup } from '../src/logic/raceSetup.js';
 import { SceneRenderer } from '../src/render/sceneRenderer.js';
@@ -186,4 +187,22 @@ test('cada circuito dibuja su muro exterior y sus obstáculos donde dice la lóg
       assert.equal(mesh.scale.z, obstacle.radius);
     }
   }
+});
+
+test('el coche dibujado muestra el daño de su participante y una carrera nueva sale sin daños (RF-034)', () => {
+  const { sceneRenderer, scene } = createHarness();
+  const strongMarks = () => {
+    const marks = [];
+    raceGroups(scene)[0].traverse((object) => { if (object.name === 'marks-strong') marks.push(object.visible); });
+    return marks;
+  };
+  const race = newRace(CONFIG.tracks.defaultId);
+  sceneRenderer.buildRace(race);
+  assert.deepEqual(strongMarks(), Array(10).fill(false));
+  race.participants[3].damage = stepDamage(createDamage(), CONFIG.impact.strongSpeed, 1 / 60, CONFIG.impact);
+  sceneRenderer.updateCar(race.participants[3]);
+  assert.deepEqual(strongMarks(), race.participants.map((_, i) => i === 3));
+
+  sceneRenderer.buildRace(newRace(CONFIG.tracks.defaultId));
+  assert.deepEqual(strongMarks(), Array(10).fill(false));
 });

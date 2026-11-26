@@ -5,7 +5,9 @@
 // El coche es su rectángulo real (`length` × `width`, orientado según su rumbo); los obstáculos, círculos,
 // y el límite exterior, un rectángulo del que no puede salir. Para que no se atraviese nada a ninguna
 // velocidad, el movimiento de cada paso se recorre en tramos de como mucho `maxSweepStep` metros y se
-// detiene en el primero que toca algo: allí se separa el coche del objeto y se responde al golpe.
+// detiene en el primero que toca algo: allí se separa el coche del objeto y se responde al golpe, según
+// su intensidad (`impact.js`).
+import { applyImpact } from './impact.js';
 
 /** Holgura (m) con la que queda separado un coche, para que no siga contando como contacto. */
 const SKIN = 1e-6;
@@ -83,6 +85,15 @@ export function touchesScenery(pose, car, scenery) {
   return separate(pose, car, scenery.bounds, scenery.obstacles, 0).touched;
 }
 
+/** Velocidad de impacto (m/s): lo deprisa que el coche iba hacia la superficie que lo empuja. */
+function impactSpeedAgainst(heading, motion, pushX, pushZ) {
+  const length = Math.hypot(pushX, pushZ);
+  if (length === 0) return 0;
+  const velocityX = Math.sin(heading) * motion.speed + (motion.slideX ?? 0);
+  const velocityZ = Math.cos(heading) * motion.speed + (motion.slideZ ?? 0);
+  return Math.max(0, -(velocityX * pushX + velocityZ * pushZ) / length);
+}
+
 /**
  * Velocidad y rumbo tras un golpe cuya superficie empuja el coche hacia (`pushX`, `pushZ`). De frente
  * (ángulo cerrado con la perpendicular) el coche rebota y sale en sentido contrario; de refilón pierde
@@ -118,10 +129,11 @@ function respond(pose, speed, pushX, pushZ, params) {
  * @param {{length: number, width: number}} car dimensiones del coche (`race.car`)
  * @param {{bounds: object, obstacles: ReadonlyArray<object>}} scenery escenario (`buildScenery`)
  * @param {object} params sección `collision` de CONFIG
+ * @param {object} impact sección `impact` de CONFIG
  * @returns {object} `next` si no toca nada; si choca, una copia con la posición, el rumbo y la velocidad
- *   que resultan del golpe
+ *   que resultan del golpe y con su velocidad de impacto anotada (`impactSpeed`)
  */
-export function resolveSceneryCollision(previous, next, car, scenery, params) {
+export function resolveSceneryCollision(previous, next, car, scenery, params, impact) {
   const radius = Math.hypot(car.length, car.width) / 2;
   const dx = next.x - previous.x;
   const dz = next.z - previous.z;
@@ -155,13 +167,15 @@ export function resolveSceneryCollision(previous, next, car, scenery, params) {
     const contact = solve(pose);
     if (!contact.touched) continue;
     const result = respond(pose, next.speed, contact.pushX, contact.pushZ, params);
+    const impactSpeed = impactSpeedAgainst(pose.heading, next, contact.pushX, contact.pushZ);
+    const motion = applyImpact({ ...next, speed: result.speed }, impactSpeed, impact);
     // El desvío del rumbo puede volver a meter una esquina: se separa de nuevo.
     const settled = solve({ x: contact.x, z: contact.z, heading: result.heading });
-    if (settled.free) return { ...next, x: settled.x, z: settled.z, heading: result.heading, speed: result.speed };
+    if (settled.free) return { ...next, ...motion, x: settled.x, z: settled.z, heading: result.heading };
     // Encajonado: se queda donde estaba antes de tocar.
     const last = poseAt(i - 1);
     const safe = solve(last);
-    return { ...next, x: safe.x, z: safe.z, heading: last.heading, speed: result.speed };
+    return { ...next, ...motion, x: safe.x, z: safe.z, heading: last.heading };
   }
   return next;
 }

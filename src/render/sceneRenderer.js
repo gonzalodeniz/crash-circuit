@@ -21,6 +21,7 @@ import {
 } from 'three';
 import { rightOf } from '../logic/track.js';
 import { createCarMesh } from './carMesh.js';
+import { createDamageVisuals } from './damageVisuals.js';
 
 export class SceneRenderer {
   #config;
@@ -32,6 +33,7 @@ export class SceneRenderer {
   #raceGroup = null;
   #raceDisposables = [];
   #carMeshes = new Map();
+  #carDamage = new Map();
   // Vista previa de la selección: plataforma fija y coche giratorio, con recursos aparte (RNF-04).
   #previewGroup = null;
   #previewDisposables = [];
@@ -82,7 +84,8 @@ export class SceneRenderer {
   }
 
   /**
-   * Crea la escena de la carrera: suelo, calzada, meta, límites, obstáculos y un coche por participante.
+   * Crea la escena de la carrera: suelo, calzada, meta, límites, obstáculos y un coche por participante,
+   * con su daño visual.
    * Si ya había una, la libera antes.
    * @param {{track: object, scenery: object, participants: object[], car: {length: number, width: number}}} race
    *   estado de la carrera (lógica)
@@ -217,22 +220,27 @@ export class SceneRenderer {
     wall(thickness, maxZ - minZ, maxX + thickness / 2, centerZ);
   }
 
-  // Coche del participante con el aspecto de su modelo (RF-002); sus recursos se liberan con la carrera.
+  // Coche del participante con el aspecto de su modelo (RF-002) y su daño visual (RF-034); sus recursos
+  // se liberan con la carrera.
   #addCar(participant, race) {
     const appearance = this.#carModels.find((model) => model.id === participant.carModelId).appearance;
-    const { group, disposables } = createCarMesh(race.car, this.#config.car, appearance);
-    this.#raceDisposables.push(...disposables);
+    const { group, disposables, body } = createCarMesh(race.car, this.#config.car, appearance);
+    const damage = createDamageVisuals(race.car, this.#config.damage, body);
+    group.add(damage.group);
+    this.#raceDisposables.push(...disposables, ...damage.disposables);
     this.#carMeshes.set(participant.id, group);
+    this.#carDamage.set(participant.id, damage);
     this.#raceGroup.add(group);
     this.updateCar(participant);
   }
 
-  /** Coloca el coche de un participante en su pose (x, z, rumbo). */
+  /** Coloca el coche de un participante en su pose (x, z, rumbo) y muestra su daño. */
   updateCar(participant) {
     const group = this.#carMeshes.get(participant.id);
     if (!group) return;
     group.position.set(participant.x, 0, participant.z);
     group.rotation.y = participant.heading;
+    this.#carDamage.get(participant.id).update(participant.damage);
   }
 
   /**
@@ -320,6 +328,7 @@ export class SceneRenderer {
     for (const resource of this.#raceDisposables) resource.dispose();
     this.#raceDisposables = [];
     this.#carMeshes.clear();
+    this.#carDamage.clear();
     this.#raceGroup = null;
   }
 

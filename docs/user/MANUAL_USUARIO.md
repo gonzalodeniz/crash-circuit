@@ -76,7 +76,7 @@ Los diez coches son sólidos: no se pueden atravesar (ver «Choques entre coches
 
 ### Cómo conducen los rivales
 
-Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completar las vueltas de la carrera. Si uno queda destruido, reaparece y sigue (ver «Coche destruido»).
+Cuando termina la cuenta atrás, los nueve rivales conducen solos hasta completar las vueltas de la carrera. Si uno queda destruido, reaparece y sigue conduciendo solo, salvo que ya hubiera terminado (ver «Coche destruido»).
 
 - Cada circuito tiene su propia trayectoria. Los rivales frenan antes de las curvas y aceleran en las rectas.
 - No van todos en fila. Cada rival se desplaza un poco hacia un lado o hacia otro de la calzada, y cada uno lleva un ritmo algo distinto. Por eso dos carreras con la misma configuración no son idénticas.
@@ -178,7 +178,7 @@ Las reglas son las mismas para los diez, con cualquier modelo.
 - Por eso un empujón puede dar posiciones, completar una vuelta e incluso ganar la carrera. Vale para ti y para los rivales.
 - Un empujón hacia atrás no suma. Tampoco cuenta una vuelta si falta algún punto de control.
 
-**Coches que ya han terminado:** se paran en la calzada, pasada la meta, y siguen siendo sólidos. Si chocas fuerte contra uno, quedáis destruidos los dos (salvo el que esté protegido). El que ya había terminado reaparece parado junto a la meta y se queda ahí. Si aún estás corriendo (por ejemplo, porque te han doblado), puede que tengas que rodearlos. Si hay varios en fila, no podrás apartarlos: da marcha atrás y pasa por un lado.
+**Coches que ya han terminado:** se paran en la calzada, pasada la meta, y siguen siendo sólidos. Si chocas fuerte contra uno, quedáis destruidos los dos (salvo el que esté protegido). El que ya había terminado reaparece junto a la meta, pegado a un borde de la calzada (ver «Reaparición de un coche que ya había terminado»). Si aún estás corriendo (por ejemplo, porque te han doblado), puede que tengas que rodearlos. Si hay varios en fila, no podrás apartarlos: da marcha atrás y pasa por un lado.
 
 Los choques dejan daños (ver «Golpes y daños»), y los fuertes destruyen los coches (ver «Coche destruido»). No dan ni quitan puntos y no tienen sonido. La fuerza de los choques es inicial y puede cambiar tras probar el juego.
 
@@ -217,7 +217,8 @@ Un golpe fuerte contra otro coche, el muro o un obstáculo destruye el coche. Se
 - Mientras está destruido no suma avance. Los demás pueden adelantarlo en la clasificación.
 - No es un abandono: sigue contando entre los diez participantes.
 - Los demás coches pueden pasar a través de él: mientras está destruido no es un obstáculo.
-- Las reglas son las mismas para los diez, con cualquier coche.
+- Las reglas de destrucción, espera, reaparición y protección son las mismas para ti y para los nueve rivales, con cualquier coche.
+- Puede haber varios coches destruidos a la vez. Por ejemplo, los dos de un choque fuerte. Cada uno cumple su espera y reaparece en su propio sitio. En la carrera siguen siempre los mismos diez participantes.
 - No resta puntos ni tiene sonido.
 - «Repetir» y las carreras nuevas empiezan con todos los coches intactos y sin protección.
 
@@ -242,9 +243,20 @@ Pasados los 3 segundos, el coche vuelve a la pista como nuevo, sin marcas.
 
 - Aparece sobre la calzada, junto al último punto en el que su avance contaba, y mirando en el sentido de la carrera.
 - Nunca aparece más adelante de ese punto. Si te habías salido mucho de la calzada, puedes volver bastante más atrás de donde chocaste.
-- Si ese sitio está ocupado, aparece a un lado o algo más atrás. Si no hubiera ningún hueco, espera hasta que lo haya.
+- El juego evita los sitios ocupados y aquellos por los que va a pasar enseguida un coche en marcha. Por eso a veces apareces a un lado o más atrás. Si no hubiera ningún hueco, el coche espera hasta que lo haya.
+- Varios coches que reaparecen a la vez no salen unos encima de otros.
+- Esto reduce los nuevos choques, pero no los impide. Si te quedas parado en la pista, un rival puede embestirte.
 - Sale parado. Tú vuelves a conducir con las flechas y los rivales siguen solos.
-- Conservas tus vueltas, los puntos de control ya pasados y, si habías terminado, tu tiempo. Reaparecer no suma ni quita vueltas.
+- Conservas tus vueltas y los puntos de control ya pasados. Reaparecer no suma ni quita vueltas.
+
+### Reaparición de un coche que ya había terminado
+
+Un coche que ya había cruzado su meta final también puede quedar destruido si recibe un golpe fuerte.
+
+- Conserva su llegada y su tiempo.
+- Reaparece junto a la meta, pegado a un borde de la calzada, para no quedarse en mitad de la pista. Si los dos bordes están ocupados, aparece más atrás.
+- No vuelve a conducir: se queda ahí parado.
+- Sigue siendo sólido. Si pasas pegado a ese borde, puedes chocar con él.
 
 ### Protección tras reaparecer
 
@@ -255,7 +267,7 @@ Durante unos 2 segundos el coche parpadea y está protegido.
 - La protección es solo suya. Si otro coche sin protección choca fuerte contra él, ese otro sí queda destruido.
 - Cuando deja de parpadear, un golpe fuerte vuelve a destruirlo.
 
-Los tiempos de espera y de protección, la forma de elegir el sitio y la salida en parado son valores iniciales y pueden cambiar tras probar el juego.
+Los tiempos de espera y de protección, la forma de elegir el sitio (incluida la antelación con la que se miran los coches en marcha, ahora 1 segundo) y la salida en parado son valores iniciales y pueden cambiar tras probar el juego.
 
 ## Salida y cronómetro
 
